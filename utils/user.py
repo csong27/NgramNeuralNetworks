@@ -1,10 +1,6 @@
 __author__ = 'Song'
-from path import Path
 import json
-from loadData import yelp_2013_train, yelp_2013_test
-
-yelp_2013_train_user = Path('D:\data\yelpdata\yelp_training_set\yelp_training_set_user.json')
-yelp_2013_test_user = Path('D:\data\yelpdata\yelp_test_set\yelp_test_set_user.json')
+from utils import yelp_2013_train, yelp_2013_test
 
 
 class User(object):

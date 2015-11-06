@@ -3,7 +3,8 @@ import json
 from path import Path
 from gensim.parsing import *
 from labelEmbedding.myWord2Vec import STAR_LABELS
-from loadData import yelp_2013_train
+from utils import yelp_2013_test, yelp_2013_train
+
 
 STOPWORDS = """
 a about across after afterwards against all almost alone along already also although always am among amongst amoungst an and another any anyhow anyone anything anyway anywhere are around as at be
@@ -39,22 +40,40 @@ DEFAULT_FILTERS = [lambda x: x.lower(), strip_punctuation, strip_multiple_whites
                    strip_numeric, my_remove_stopwords]
 
 
+def preprocess_review(text):
+    return preprocess_string(text, filters=DEFAULT_FILTERS)
+
+
 class MySentences(object):
-    def __init__(self, filename, label=False):
+    def __init__(self, filename, str_label=False, int_label=True):
+        '''
+        :param filename: input file
+        :param str_label: yield iterator with last word as label
+        :param int_label: yield tuple iterator, first element is label
+        '''
+
         self.filename = Path(filename)
-        self.label = label
+        if int_label and str_label:
+            raise ValueError
+        self.str_label = str_label
+        self.int_label = int_label
 
     def __iter__(self):
         for line in open(self.filename):
             json_object = json.loads(line)
             text = json_object['text']
             star = json_object['stars']
-            if self.label:
-                arr = preprocess_string(text, filters=DEFAULT_FILTERS)
+            if self.int_label:
+                arr = preprocess_review(text)
+                yield (star, arr)
+            elif self.str_label:
+                arr = preprocess_review(text)
                 arr.append(STAR_LABELS[int(star) - 1])
                 yield arr
             else:
-                yield preprocess_string(text, filters=DEFAULT_FILTERS)
+                yield preprocess_review(text)
 
 if __name__ == '__main__':
-    sentences = MySentences(yelp_2013_train, label=True)
+    sentences = MySentences(yelp_2013_train, str_label=False, int_label=True)
+    for sentence in sentences:
+        print sentence
