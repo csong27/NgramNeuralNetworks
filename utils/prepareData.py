@@ -9,10 +9,10 @@ from utils import yelp_2013_test, yelp_2013_train
 STOPWORDS = """
 a about across after afterwards against all almost alone along already also although always am among amongst amoungst an and another any anyhow anyone anything anyway anywhere are around as at be
 became because become becomes becoming been before beforehand behind being beside besides between beyond both bottom but by call can
-cannot cant co computer con could couldnt cry de describe
+cannot cant co computer could couldnt cry de describe
 detail did didn do does doesn doing don done down due during
 each eg eight either eleven else elsewhere empty enough etc even ever every everyone everything everywhere except few fifteen
-fify fill find fire first for former formerly forty found from front full further get give go
+fify fill find fire for former formerly forty found from front full further get give go
 had has hasnt have he hence her here hereafter hereby herein hereupon hers herself him himself his how however hundred i ie
 if in inc indeed interest into is it its itself keep last latter latterly ltd
 just
@@ -23,8 +23,8 @@ often on once only onto or other others otherwise our ours ourselves out over ow
 perhaps please put rather re
 quite
 rather really regarding
-same say see seem seemed seeming seems serious several she should show side since sincere sixty so someone something sometime sometimes somewhere still such system
-take ten that the their them themselves then thence there thereafter thereby therefore therein thereupon these they thick thin third this those though through throughout thru thus to together too top toward towards twelve twenty un
+same say see seem seemed seeming seems several she should show side since sincere sixty so someone something sometime sometimes somewhere still such system
+take ten that the their them themselves then thence there thereafter thereby therefore therein thereupon these they thick thin third this those though through throughout thru thus to together too toward towards twelve twenty un
 until up upon us used using via
 was we were what whatever when whence whenever where whereafter whereas whereby wherein whereupon wherever whether which while whither who whoever whole whom whose why will with within without would yet you
 your yours yourself yourselves
@@ -36,7 +36,7 @@ def my_remove_stopwords(s):
     s = utils.to_unicode(s)
     return " ".join(w for w in s.split() if w not in STOPWORDS)
 
-DEFAULT_FILTERS = [lambda x: x.lower(), strip_punctuation, strip_multiple_whitespaces, strip_short,
+DEFAULT_FILTERS = [lambda x: x.lower(), strip_punctuation, strip_multiple_whitespaces,
                    strip_numeric, my_remove_stopwords]
 
 

@@ -11,7 +11,7 @@ def plot_histogram(percentages, title='length', bins=50):
     plt.show()
 
 
-def read_test_data(p=yelp_2013_test, preprocess=True):
+def read_test_data(p=yelp_2013_test, preprocess=True, int_label=True):
     print "reading raw testing data..."
     f = open(p)
     test_x = []
@@ -22,12 +22,14 @@ def read_test_data(p=yelp_2013_test, preprocess=True):
         if preprocess:
             text = preprocess_review(text)
         star = json_object['stars']
+        if int_label:
+            star = int(star)
         test_x.append(text)
         test_y.append(star)
     return test_x, test_y
 
 
-def read_train_data(p=yelp_2013_train, validate_ratio=0.2, preprocess=True):
+def read_train_data(p=yelp_2013_train, validate_ratio=0.2, preprocess=True, int_label=True):
     print "reading raw training data..."
     f = open(p)
     documents = {}
@@ -39,6 +41,8 @@ def read_train_data(p=yelp_2013_train, validate_ratio=0.2, preprocess=True):
         if preprocess:
             text = preprocess_review(text)
         star = json_object['stars']
+        if int_label:
+            star = int(star)
         if star in documents:
             documents[star].append(text)
         else:

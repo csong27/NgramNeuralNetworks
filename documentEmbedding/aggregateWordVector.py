@@ -8,7 +8,7 @@ def get_review_vector(text, model, average=True):
     for word in text:
         if word in model:
             vector += model[word]
-    if average:
+    if average and len(text) > 0:
         vector /= len(text)
     return vector
 
@@ -19,10 +19,10 @@ def get_reviews_vectors(documents, model, average=True):
     return documents
 
 
-def get_document_vectors(average=True):
+def get_aggregated_vectors(average=True, int_label=True):
     model = read_glove_model()
-    train_x, train_y, validate_x, validate_y = read_train_data()
-    test_x, test_y = read_test_data()
+    train_x, train_y, validate_x, validate_y = read_train_data(int_label=int_label)
+    test_x, test_y = read_test_data(int_label=int_label)
     print "getting aggregate word vectors for documents..."
     train_x = get_reviews_vectors(train_x, model, average)
     validate_x = get_reviews_vectors(validate_x, model, average)
@@ -30,5 +30,5 @@ def get_document_vectors(average=True):
     return train_x, train_y, validate_x, validate_y, test_x, test_y
 
 if __name__ == '__main__':
-    train_x, train_y, validate_x, validate_y, test_x, test_y = get_document_vectors()
-    print train_x[0].shape
+    train_x, train_y, validate_x, validate_y, test_x, test_y = get_aggregated_vectors()
+    print test_y
