@@ -1,4 +1,4 @@
-from machineLearning import get_data
+from machine_learning import get_data
 import numpy as np
 from sklearn import linear_model
 from sklearn import metrics

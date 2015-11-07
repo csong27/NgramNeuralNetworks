@@ -1,5 +1,5 @@
 from sknn.mlp import Classifier, Layer
-from machineLearning import get_data
+from machine_learning import get_data
 from sklearn import metrics
 import numpy as np
 import sys

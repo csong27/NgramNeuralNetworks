@@ -2,7 +2,7 @@ __author__ = 'Song'
 import json
 from path import Path
 from gensim.parsing import *
-from labelEmbedding.myWord2Vec import STAR_LABELS
+from label_embedding.my_word2vec import STAR_LABELS
 from utils import yelp_2013_test, yelp_2013_train
 
 

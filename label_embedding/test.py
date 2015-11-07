@@ -1,6 +1,6 @@
 __author__ = 'Song'
 
-from myWord2Vec import Word2Vec
+from my_word2vec import Word2Vec
 
 if __name__ == '__main__':
     sentences = [['first', 'sentence'], ['second', 'sentence']]

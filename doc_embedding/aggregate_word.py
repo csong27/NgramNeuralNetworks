@@ -1,5 +1,5 @@
-from utils.loadData import read_train_data, read_test_data
-from utils.loadVector import read_glove_model
+from utils.load_data import read_train_data, read_test_data
+from utils.load_vector import read_glove_model
 import numpy as np
 
 

@@ -7,7 +7,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn import metrics
 import numpy as np
 
-from utils.loadData import read_train_data, read_test_data
+from utils.load_data import read_train_data, read_test_data
 
 
 def get_data():

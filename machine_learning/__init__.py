@@ -1,5 +1,5 @@
 __author__ = 'Song'
-from documentEmbedding.aggregateWordVector import get_aggregated_vectors
+from doc_embedding.aggregate_word import get_aggregated_vectors
 
 
 def get_data(vector="averaged_word", dim=300):

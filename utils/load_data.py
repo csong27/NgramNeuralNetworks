@@ -1,7 +1,7 @@
 __author__ = 'Song'
 import json
 from utils import yelp_2013_test, yelp_2013_train
-from prepareData import preprocess_review
+from prepare_data import preprocess_review
 from matplotlib import pyplot as plt
 
 
