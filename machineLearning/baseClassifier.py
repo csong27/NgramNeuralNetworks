@@ -11,18 +11,18 @@ def classification_baseline():
     validate_x = np.asarray(validate_x).astype('float64')
     test_x = np.asarray(test_x).astype('float64')
 
-    classifier = linear_model.SGDClassifier(loss='hinge', penalty='l2', n_iter=1)
+    classifier = linear_model.SGDClassifier(loss='hinge', penalty='l2', n_iter=1, warm_start=True, random_state=42)
 
     print "\ntraining regression model..."
     best_score = -1
     for i in xrange(50):
-        classifier = classifier.fit(train_x, train_y)
+        classifier.fit(train_x, train_y)
         predicted = classifier.predict(validate_x)
         score = np.mean(predicted == validate_y)
         if score > best_score:
             best_score = score
             best_classifier = classifier
-        print "at epoch %d, score is %f" % (i, score)
+        print "\nat epoch %d, score is %f" % (i, score)
 
     print "\nbest score on validation set is %f" % best_score
     print "\nfinal testing..."
