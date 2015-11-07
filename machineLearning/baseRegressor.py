@@ -31,7 +31,7 @@ def raw_decode(prediction, string=False):
     return prediction
 
 
-def regression_baseline(decode='raw'):
+def regression_baseline(decode='raw', epochs=100):
     train_x, train_y, validate_x, validate_y, test_x, test_y = get_data(dim=300)
 
     train_x = np.asarray(train_x).astype('float64')
@@ -43,19 +43,15 @@ def regression_baseline(decode='raw'):
     test_x = np.asarray(test_x).astype('float64')
     test_y = np.asarray(test_y).astype('float64')
 
-    if decode == 'logistic':
-        train_y /= 5
-        validate_y /= 5
-        test_y /= 5
-    elif decode != 'raw':
+    if decode not in ['logistic', 'raw']:
         raise NotImplementedError
 
-    regressor = linear_model.SGDRegressor(eta0=0.05, loss='squared_epsilon_insensitive', n_iter=1,
+    regressor = linear_model.SGDRegressor(eta0=0.1, loss='squared_epsilon_insensitive', n_iter=1,
                                           warm_start=True, random_state=42)
 
     print "\ntraining regression model..."
     best_score = -1
-    for i in xrange(50):
+    for i in xrange(epochs):
         regressor.fit(train_x, train_y)
         if decode == 'raw':
             predicted = raw_decode(regressor.predict(validate_x))
@@ -78,4 +74,4 @@ def regression_baseline(decode='raw'):
 
 
 if __name__ == '__main__':
-    regression_baseline(decode='logistic')
+    regression_baseline(decode='raw')
