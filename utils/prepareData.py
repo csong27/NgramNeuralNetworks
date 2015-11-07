@@ -15,14 +15,10 @@ each eg eight either eleven else elsewhere empty enough etc even ever every ever
 fify fill find fire for former formerly forty found from front full further get give go
 had has hasnt have he hence her here hereafter hereby herein hereupon hers herself him himself his how however hundred i ie
 if in inc indeed interest into is it its itself keep last latter latterly ltd
-just
-kg km
-made make many may me meanwhile might mill mine more moreover most mostly move much must my myself name namely
+just kg km made make many may me meanwhile might mill mine more moreover move much must my myself name namely
 neither never nevertheless next nine no nobody none noone nor not nothing now nowhere of off
 often on once only onto or other others otherwise our ours ourselves out over own part per
-perhaps please put rather re
-quite
-rather really regarding
+perhaps please put rather re quite rather really regarding
 same say see seem seemed seeming seems several she should show side since sincere sixty so someone something sometime sometimes somewhere still such system
 take ten that the their them themselves then thence there thereafter thereby therefore therein thereupon these they thick thin third this those though through throughout thru thus to together too toward towards twelve twenty un
 until up upon us used using via
@@ -36,8 +32,7 @@ def my_remove_stopwords(s):
     s = utils.to_unicode(s)
     return " ".join(w for w in s.split() if w not in STOPWORDS)
 
-DEFAULT_FILTERS = [lambda x: x.lower(), strip_punctuation, strip_multiple_whitespaces,
-                   strip_numeric, my_remove_stopwords]
+DEFAULT_FILTERS = [lambda x: x.lower(), strip_punctuation, strip_multiple_whitespaces, my_remove_stopwords]
 
 
 def preprocess_review(text):

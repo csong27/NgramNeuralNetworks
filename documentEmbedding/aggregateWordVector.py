@@ -19,8 +19,8 @@ def get_reviews_vectors(documents, model, average=True):
     return documents
 
 
-def get_aggregated_vectors(average=True, int_label=True):
-    model = read_glove_model()
+def get_aggregated_vectors(average=True, int_label=True, dim=300):
+    model = read_glove_model(dim=dim)
     train_x, train_y, validate_x, validate_y = read_train_data(int_label=int_label)
     test_x, test_y = read_test_data(int_label=int_label)
     print "getting aggregate word vectors for documents..."
