@@ -1,5 +1,5 @@
 from sknn.mlp import Classifier, Layer
-from machine_learning import get_data
+from train import get_data
 from sklearn import metrics
 import numpy as np
 import sys
@@ -11,8 +11,8 @@ logging.basicConfig(
             stream=sys.stdout)
 
 
-def classification_neural_network(epochs=5):
-    train_x, train_y, validate_x, validate_y, test_x, test_y = get_data(dim=300)
+def classification_neural_network(epochs=50):
+    train_x, train_y, validate_x, validate_y, test_x, test_y = get_data(dim=300, vector="naive_bigram")
 
     train_x = np.asarray(train_x).astype('float64')
     train_y = np.asarray(train_y).astype('float64')
@@ -38,6 +38,10 @@ def classification_neural_network(epochs=5):
     predicted = nn.predict(test_x)
     print nn.score(test_x, test_y)
     print(metrics.classification_report(test_y, predicted))
+
+
+def regression_neural_network():
+    raise NotImplementedError
 
 if __name__ == '__main__':
     classification_neural_network()

@@ -1,0 +1,2 @@
+from aggregate_word import get_aggregated_vectors
+from naive_bigram import get_naive_bigram_vectors

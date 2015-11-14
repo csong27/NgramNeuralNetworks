@@ -4,7 +4,8 @@ from path import Path
 from gensim.parsing import *
 from label_embedding.my_word2vec import STAR_LABELS
 from utils import yelp_2013_test, yelp_2013_train
-
+from gensim.models.doc2vec import TaggedDocument
+from nltk.tokenize import sent_tokenize
 
 STOPWORDS = """
 a about across after afterwards against all almost alone along already also although always am among amongst amoungst an and another any anyhow anyone anything anyway anywhere are around as at be
@@ -39,7 +40,7 @@ def preprocess_review(text):
     return preprocess_string(text, filters=DEFAULT_FILTERS)
 
 
-class MySentences(object):
+class MyDocuments:
     def __init__(self, filename, str_label=False, int_label=True):
         '''
         :param filename: input file
@@ -68,7 +69,28 @@ class MySentences(object):
             else:
                 yield preprocess_review(text)
 
+
+class MySentences:
+    def __init__(self, filename):
+        '''
+        :param filename: input file
+        :param str_label: yield iterator with last word as label
+        :param int_label: yield tuple iterator, first element is label
+        '''
+        self.filename = Path(filename)
+
+    def __iter__(self):
+        for line in open(self.filename):
+            json_object = json.loads(line)
+            text = json_object['text']
+            review_id = json_object['review_id']
+            sentences = sent_tokenize(text)
+            for i, sentence in enumerate(sentences):
+                tag = ["%s;%d" % (review_id, i)]
+                yield TaggedDocument(words=preprocess_review(sentence), tags=tag)
+
+
 if __name__ == '__main__':
-    sentences = MySentences(yelp_2013_train, str_label=False, int_label=True)
+    sentences = MySentences(yelp_2013_train)
     for sentence in sentences:
         print sentence

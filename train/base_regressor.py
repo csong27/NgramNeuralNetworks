@@ -1,4 +1,4 @@
-from machine_learning import get_data
+from train import get_data
 from sklearn import linear_model
 from sklearn import metrics
 import numpy as np
@@ -31,8 +31,8 @@ def raw_decode(prediction, string=False):
     return prediction
 
 
-def regression_baseline(decode='raw', epochs=100):
-    train_x, train_y, validate_x, validate_y, test_x, test_y = get_data(dim=300)
+def regression_baseline(vector='cov_bigram', decode='raw', epochs=100, kernel=(1, 1)):
+    train_x, train_y, validate_x, validate_y, test_x, test_y = get_data(dim=300, vector=vector, kernel=kernel)
 
     train_x = np.asarray(train_x).astype('float64')
     train_y = np.asarray(train_y).astype('float64')
@@ -46,8 +46,8 @@ def regression_baseline(decode='raw', epochs=100):
     if decode not in ['logistic', 'raw']:
         raise NotImplementedError
 
-    regressor = linear_model.SGDRegressor(eta0=0.1, loss='squared_epsilon_insensitive', n_iter=1,
-                                          warm_start=True, random_state=42)
+    regressor = linear_model.SGDRegressor(eta0=0.025, loss='squared_epsilon_insensitive', n_iter=1, penalty='elasticnet',
+                                          learning_rate='constant', warm_start=True, random_state=42)
 
     print "\ntraining regression model..."
     best_score = -1
