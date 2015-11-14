@@ -1,18 +1,17 @@
 import numpy
-import theano.tensor.shared_randomstreams
 import theano
 import theano.tensor as T
 
 
 class BigramLayer(object):
-    def __init__(self, rng, input, n_in, n_out, non_linear="tanh"):
+    def __init__(self, rng, input, n_in, n_out, non_linear="tanh", use_bias=False):
         """
         Allocate a BigramLayer with shared variable internal parameters.
         """
 
         self.input = input
         self.non_linear = non_linear
-
+        self.use_bias = use_bias
         # initialize weights with random weights
         W_bound = numpy.sqrt(6. / (n_in + n_out))
 
@@ -24,18 +23,20 @@ class BigramLayer(object):
         b_values = numpy.zeros((n_out,), dtype=theano.config.floatX)
         self.b = theano.shared(value=b_values, name='b_cov')
         self.output = self.convolutional_bigram()
-        self.params = [self.Tr, self.Tl, self.b]
+        self.params = [self.Tr, self.Tl, self.b] if use_bias else [self.Tr, self.Tl]
 
     def convolutional_bigram(self):
         def inner_loop(i):
             results, _ = theano.scan(
-                lambda t_0, t_p1, prior_result, Tl, Tr, b: prior_result + T.tanh(T.dot(Tl, t_0) + T.dot(Tr, t_p1)),
+                lambda t_0, t_p1, prior_result, Tl, Tr: prior_result + T.tanh(T.dot(Tl, t_0) + T.dot(Tr, t_p1)),
                 sequences=dict(input=i, taps=[0, 1]),
                 outputs_info=T.zeros_like(self.b, dtype='float64'),
-                non_sequences=[self.Tl, self.Tr, self.b],
+                non_sequences=[self.Tl, self.Tr],
                 )
-            return [results[-1]]
-
+            if self.use_bias:
+                return [results[-1] + self.b]
+            else:
+                return [results[-1]]
         results, _ = theano.scan(inner_loop, sequences=self.input)
 
         return results
