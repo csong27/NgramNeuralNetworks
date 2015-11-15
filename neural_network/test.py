@@ -8,23 +8,13 @@ b = theano.shared(numpy.ones((3,), dtype=theano.config.floatX))
 
 s = T.tensor3('s')
 
+dot1 = T.dot(s, Tl)[:, : -1]
 
-def inner_loop(i):
-    results, _ = theano.scan(
-        lambda t_0, t_p1, prior_result, Tl, Tr, b: prior_result + T.tanh(T.dot(Tl, t_0) + T.dot(Tr, t_p1)),
-        sequences=dict(input=i, taps=[0, 1]),
-        outputs_info=T.zeros_like(b, dtype='float64'),
-        non_sequences=[Tl, Tr, b],
-        )
-    return [results[-1]]
+dot2 = T.dot(s, Tr)[:, 1:]
 
-results, _ = theano.scan(inner_loop, sequences=s)
+out = T.nnet.ultra_fast_sigmoid(T.sum(dot1 + dot2, axis=1) + b)
 
-cost = T.sum(T.dot(results, Tr))
-
-grad = [T.grad(cost, param) for param in [Tl, Tr]]
-
-f = theano.function([s], results)
+f = theano.function([s], out)
 
 
-print f([[[1, 1, 1], [0, 0, 0], [0, 0, 0], [0, 0, 0]]])
+print f([[[1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4]], [[5, 5, 5], [6, 6, 6], [7, 7, 7], [8, 8, 8]]])

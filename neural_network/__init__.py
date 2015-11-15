@@ -1,4 +1,4 @@
-from bigram_layer import BigramLayer
+from ngram_layer import BigramLayer, UnigramLayer
 from networks import *
 from non_linear import *
 from update_rules import *

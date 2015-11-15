@@ -88,6 +88,12 @@ class LogisticRegression(object):
     def negative_log_likelihood(self, y):
         return -T.mean(T.log(self.p_y_given_x)[T.arange(y.shape[0]), y])
 
+    def cross_entropy(self, y):
+        return T.mean(T.nnet.categorical_crossentropy(self.p_y_given_x, y))
+
+    def multiclass_hinge_loss(self, y):
+        return T.mean(multiclass_hinge_loss(self.p_y_given_x, y))
+
     def errors(self, y):
         # check if y has same dimension of y_pred
         if y.ndim != self.y_pred.ndim:
@@ -101,3 +107,66 @@ class LogisticRegression(object):
             return T.mean(T.neq(self.y_pred, y))
         else:
             raise NotImplementedError()
+
+
+def binary_hinge_loss(predictions, targets, binary=True, delta=1):
+    """Computes the binary hinge loss between predictions and targets.
+    .. math:: L_i = \\max(0, \\delta - t_i p_i)
+    Parameters
+    ----------
+    predictions : Theano tensor
+        Predictions in (0, 1), such as sigmoidal output of a neural network.
+    targets : Theano tensor
+        Targets in {0, 1} (or in {-1, 1} depending on `binary`), such as
+        ground truth labels.
+    binary : bool, default True
+        ``True`` if targets are in {0, 1}, ``False`` if they are in {-1, 1}
+    delta : scalar, default 1
+        The hinge loss margin
+    Returns
+    -------
+    Theano tensor
+        An expression for the element-wise binary hinge loss
+    Notes
+    -----
+    This is an alternative to the binary cross-entropy loss for binary
+    classification problems
+    """
+    if binary:
+        targets = 2 * targets - 1
+    return theano.tensor.nnet.relu(delta - predictions * targets)
+
+
+def multiclass_hinge_loss(predictions, targets, delta=1):
+    """Computes the multi-class hinge loss between predictions and targets.
+    .. math:: L_i = \\max_{j \\not = p_i} (0, t_j - t_{p_i} + \\delta)
+    Parameters
+    ----------
+    predictions : Theano 2D tensor
+        Predictions in (0, 1), such as softmax output of a neural network,
+        with data points in rows and class probabilities in columns.
+    targets : Theano 2D tensor or 1D tensor
+        Either a vector of int giving the correct class index per data point
+        or a 2D tensor of one-hot encoding of the correct class in the same
+        layout as predictions (non-binary targets in [0, 1] do not work!)
+    delta : scalar, default 1
+        The hinge loss margin
+    Returns
+    -------
+    Theano 1D tensor
+        An expression for the item-wise multi-class hinge loss
+    Notes
+    -----
+    This is an alternative to the categorical cross-entropy loss for
+    multi-class classification problems
+    """
+    num_cls = predictions.shape[1]
+    if targets.ndim == predictions.ndim - 1:
+        targets = theano.tensor.extra_ops.to_one_hot(targets, num_cls)
+    elif targets.ndim != predictions.ndim:
+        raise TypeError('rank mismatch between targets and predictions')
+    corrects = predictions[targets.nonzero()]
+    rest = theano.tensor.reshape(predictions[(1-targets).nonzero()],
+                                 (-1, num_cls-1))
+    rest = theano.tensor.max(rest, axis=1)
+    return theano.tensor.nnet.relu(rest - corrects + delta)

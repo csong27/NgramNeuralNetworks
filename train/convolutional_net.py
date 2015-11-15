@@ -2,22 +2,26 @@ from neural_network import *
 from doc_embedding import get_document_matrices
 
 
-def train_bigram_conv_net(
+def train_ngram_conv_net(
+        bigram=True,
         n_epochs=25,
+        use_bias=False,
         shuffle_batch=True,
         batch_size=50,
         dim=50,
-        dropout=False,
-        n_hidden=50,
-        activation=tanh,
-        dropout_rate=0.1,
-        lr_decay=0.95,
-        epsilon=1e-6,
-        sqr_norm_lim=9,
+        cutoff=50,
+        dropout=True,
+        n_hidden=100,
+        activation=relu,
+        dropout_rate=0.3,
+        update_rule='adadelta',
+        lr_rate=0.01,
+        momentum_ratio=0.9
 ):
+
     rng = np.random.RandomState(23455)
 
-    train_x, train_y, validate_x, validate_y, test_x, test_y = get_document_matrices(dim=dim, cutoff=50)
+    train_x, train_y, validate_x, validate_y, test_x, test_y = get_document_matrices(dim=dim, cutoff=cutoff)
     train_x, train_y = shared_dataset((train_x, train_y))
     validate_x, validate_y = shared_dataset((validate_x, validate_y))
     test_x, test_y = shared_dataset((test_x, test_y))
@@ -25,25 +29,31 @@ def train_bigram_conv_net(
     n_train_batches = train_x.get_value(borrow=True).shape[0]
     n_train_batches /= batch_size
 
-    print 'building network, number of mini-batches are %d' % n_train_batches
+    print 'building network, number of mini-batches are %d...' % n_train_batches
 
     index = T.lscalar()  # index to a [mini]batch
 
     x = T.tensor3('x')
     y = T.ivector('y')
 
-    bigram_layer = BigramLayer(rng=rng, input=x, n_in=dim, n_out=dim)
-    mlp_input = bigram_layer.output
+    if bigram:
+        ngram_layer = BigramLayer(rng=rng, input=x, n_in=dim, n_out=dim)
+    else:
+        ngram_layer = UnigramLayer(rng=rng, input=x, n_in=dim, n_out=dim)
+
+    mlp_input = ngram_layer.output
 
     if dropout:
+        layer_sizes = [dim, n_hidden, 5]
         mlp = MLPDropout(
             rng=rng,
             input=mlp_input,
-            layer_sizes=[n_hidden, 5],
+            layer_sizes=layer_sizes,
             dropout_rates=[dropout_rate],
-            activations=[activation]
+            activations=[activation],
+            use_bias=use_bias
         )
-        cost = mlp.dropout_negative_log_likelihood(y)
+        cost = mlp.negative_log_likelihood(y)
     else:
         mlp = MLP(
             rng=rng,
@@ -55,9 +65,20 @@ def train_bigram_conv_net(
         )
         cost = mlp.negative_log_likelihood(y)
 
-    params = bigram_layer.params + mlp.params
+    params = ngram_layer.params + mlp.params
 
-    grad_updates = updates_adadelta(params, cost, lr_decay, epsilon, sqr_norm_lim)
+    if update_rule == 'adadelta':
+        grad_updates = adadelta(loss_or_grads=cost, params=params, learning_rate=lr_rate, rho=0.95, epsilon=1e-6)
+    elif update_rule == 'adagrad':
+        grad_updates = adagrad(loss_or_grads=cost, params=params, learning_rate=lr_rate, epsilon=1e-6)
+    elif update_rule == 'adam':
+        grad_updates = adam(loss_or_grads=cost, params=params, learning_rate=lr_rate, beta1=0.9, beta2=0.999, epsilon=1e-8)
+    elif update_rule == 'momentum':
+        grad_updates = momentum(loss_or_grads=cost, params=params, momentum=momentum_ratio, learning_rate=lr_rate)
+    elif update_rule == 'sgd':
+        grad_updates = sgd(loss_or_grads=cost, params=params, learning_rate=lr_rate)
+    else:
+        raise NotImplementedError("This optimization method is not implemented %s" % update_rule)
 
     train_model = theano.function([index], cost, updates=grad_updates,
                                   givens={
@@ -69,7 +90,7 @@ def train_bigram_conv_net(
 
     test_model = theano.function([index], mlp.errors(y), on_unused_input='ignore', givens={x: test_x, y: test_y})
 
-    print '... training'
+    print 'training with %s...' % update_rule
     epoch = 0
     best_val_accuracy = 0
     test_accuracy = 0
@@ -77,20 +98,30 @@ def train_bigram_conv_net(
         epoch += 1
         cost_list = []
         indices = np.random.permutation(range(n_train_batches)) if shuffle_batch else xrange(n_train_batches)
-        for minibatch_index in indices:
+        for iter, minibatch_index in enumerate(indices):
             cost_mini = train_model(minibatch_index)
             cost_list.append(cost_mini)
-
+            val_accuracy = 1 - val_model(epoch)
+            print 'iter %i, mini-batch train cost %f, validate accuracy %f' % (iter, cost_mini, val_accuracy * 100.)
+            if val_accuracy >= best_val_accuracy:
+                best_val_accuracy = val_accuracy
+                test_accuracy = 1 - test_model(epoch)
         cost_epoch = np.mean(cost_list)
-        val_error = val_model(epoch)
-        val_accuracy = 1 - np.mean(val_error)
-        print 'epoch %i, train cost %f, validate accuracy %f' % (epoch, cost_epoch, val_accuracy * 100.)
-        if val_accuracy >= best_val_accuracy:
-            best_val_accuracy = val_accuracy
-            test_loss = test_model(epoch)
-            test_accuracy = 1 - test_loss
+        print '\nepoch %i, train cost %f, validate accuracy %f' % (epoch, cost_epoch, val_accuracy * 100.)
 
-    print test_accuracy
+    print "\nbest test accuracy is %f" % test_accuracy
+
 
 if __name__ == '__main__':
-    train_bigram_conv_net()
+    train_ngram_conv_net(
+        bigram=True,
+        use_bias=True,
+        cutoff=50,
+        lr_rate=0.001,
+        dropout=True,
+        dropout_rate=0.1,
+        n_hidden=40,
+        activation=relu,
+        batch_size=5,
+        update_rule='adadelta'
+    )

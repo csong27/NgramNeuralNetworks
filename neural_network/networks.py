@@ -57,9 +57,14 @@ class MLPDropout(object):
         # Use the negative log likelihood of the logistic regression layer as
         # the objective.
         self.dropout_negative_log_likelihood = self.dropout_layers[-1].negative_log_likelihood
+        self.dropout_cross_entropy = self.dropout_layers[-1].cross_entropy
+        self.dropout_hinge_loss = self.dropout_layers[-1].multiclass_hinge_loss
+
         self.dropout_errors = self.dropout_layers[-1].errors
 
         self.negative_log_likelihood = self.layers[-1].negative_log_likelihood
+        self.cross_entropy = self.layers[-1].cross_entropy
+
         self.errors = self.layers[-1].errors
 
         # Grab all the parameters together.
@@ -98,7 +103,10 @@ class MLP(object):
             n_in=n_hidden,
             n_out=n_out)
 
+        self.cross_entropy = self.logRegressionLayer.cross_entropy
         self.negative_log_likelihood = self.logRegressionLayer.negative_log_likelihood
+        self.multiclass_hinge_loss = self.logRegressionLayer.multiclass_hinge_loss
+
         # same holds for the function computing the number of errors
         self.errors = self.logRegressionLayer.errors
 

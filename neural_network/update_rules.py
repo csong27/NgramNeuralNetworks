@@ -2,6 +2,7 @@ import theano
 import theano.tensor as T
 import numpy as np
 from collections import OrderedDict
+from lasagne.updates import *
 
 
 def updates_momentum(cost, params, learning_rate, momentum):
