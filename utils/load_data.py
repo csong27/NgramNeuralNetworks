@@ -40,6 +40,8 @@ def read_train_data(p=yelp_2013_train, validate_ratio=0.2, preprocess=True, int_
         text = json_object['text']
         if preprocess:
             text = preprocess_review(text)
+            if len(text) == 0:
+                continue
         star = json_object['stars']
         if int_label:
             star = int(star)

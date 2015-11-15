@@ -5,22 +5,30 @@ import numpy as np
 max_count = 0
 
 
-def get_document_matrix(text, model, cutoff=300, uniform=True):
-    matrix = []
-    zero_vector = np.zeros(model.vector_size)
-    rand_vector = np.random.uniform(-0.25, 0.25, model.vector_size) if uniform \
-        else np.random.normal(0, 0.25, model.vector_size)
+def get_document_matrix(text, model, cutoff=300, uniform=True, scale=0.25):
+    matrix = None
+    rand_vector = np.random.uniform(-scale, scale, model.vector_size) if uniform \
+        else np.random.normal(0, scale, model.vector_size)
     for word in text:
         if word in model:
-            matrix.append(model[word])
+            if matrix is None:
+                matrix = np.asarray([model[word]])
+            else:
+                matrix = np.concatenate((matrix, [model[word]]))
         else:
-            matrix.append(rand_vector)
-    length = len(matrix)
+            if matrix is None:
+                matrix = np.asarray([rand_vector])
+            else:
+                matrix = np.concatenate((matrix, [rand_vector]))
+    if matrix is None:
+        return np.zeros((cutoff, model.vector_size))
+    length = matrix.shape[0]
     if length < cutoff:
-        matrix += [zero_vector] * (cutoff - length)
+        padding = np.zeros((cutoff - length, model.vector_size))
+        matrix = np.concatenate((matrix, padding))
     elif length > cutoff:
         matrix = matrix[:cutoff]
-    return np.asarray(matrix)
+    return matrix
 
 
 def get_review_vector(text, model, average=True):
@@ -58,13 +66,13 @@ def get_aggregated_vectors(average=True, int_label=True, dim=300):
     return train_x, train_y, validate_x, validate_y, test_x, test_y
 
 
-def get_document_matrices(int_label=True, dim=300, cutoff=300, uniform=True):
+def get_document_matrices(int_label=True, dim=50, cutoff=300, uniform=True):
     model = read_glove_model(dim=dim)
     train_x, train_y, validate_x, validate_y = read_train_data(int_label=int_label)
     test_x, test_y = read_test_data(int_label=int_label)
     print "getting concatenated word vectors for documents..."
-    # train_x = get_reviews_vectors(train_x, model, aggregate=False, cutoff=cutoff, uniform=uniform)
-    # validate_x = get_reviews_vectors(validate_x, model, aggregate=False, cutoff=cutoff, uniform=uniform)
+    train_x = get_reviews_vectors(train_x, model, aggregate=False, cutoff=cutoff, uniform=uniform)
+    validate_x = get_reviews_vectors(validate_x, model, aggregate=False, cutoff=cutoff, uniform=uniform)
     test_x = get_reviews_vectors(test_x, model, aggregate=False, cutoff=cutoff, uniform=uniform)
     return train_x, train_y, validate_x, validate_y, test_x, test_y
 

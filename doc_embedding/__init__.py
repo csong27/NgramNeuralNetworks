@@ -1,2 +1,2 @@
-from word_vector import get_aggregated_vectors
+from word_vector import get_aggregated_vectors, get_document_matrices
 from naive_bigram import get_naive_bigram_vectors
