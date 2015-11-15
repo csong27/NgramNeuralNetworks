@@ -63,7 +63,7 @@ class MLPDropout(object):
         self.errors = self.layers[-1].errors
 
         # Grab all the parameters together.
-        self.params = [ param for layer in self.dropout_layers for param in layer.params ]
+        self.params = [param for layer in self.dropout_layers for param in layer.params]
 
     def predict(self, new_data):
         next_layer_input = new_data
@@ -86,10 +86,10 @@ class MLPDropout(object):
 
 
 class MLP(object):
-    def __init__(self, rng, input, n_in, n_hidden, n_out):
+    def __init__(self, rng, input, n_in, n_hidden, n_out, activation):
         self.hiddenLayer = HiddenLayer(rng=rng, input=input,
                                        n_in=n_in, n_out=n_hidden,
-                                       activation=T.tanh)
+                                       activation=activation)
 
         # The logistic regression layer gets as input the hidden units
         # of the hidden layer
