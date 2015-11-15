@@ -6,7 +6,7 @@ def relu(x):
     return T.maximum(0.0, x)
 
 
-def LeakyReLU(x, alpha):
+def leaky_relu(x, alpha):
     return theano.tensor.switch(x > 0, x, x/alpha)
 
 
