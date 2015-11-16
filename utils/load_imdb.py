@@ -1,6 +1,6 @@
 dataset_path = 'D:/data/nlpdata/aclImdb/'
 from preprocess import preprocess_review
-import numpy as np
+from sklearn.cross_validation import train_test_split
 import cPickle as pkl
 import glob
 import os
@@ -10,17 +10,9 @@ def read_imdb_pickle(path='imdb.pkl', valid_portion=0.1):
     f = open(path, 'rb')
     train_x, train_y = pkl.load(f)
     test_x, test_y = pkl.load(f)
-
-    n_samples = len(train_x)
-    sidx = np.random.permutation(n_samples)
-    n_train = int(np.round(n_samples * (1. - valid_portion)))
-    valid_x = [train_x[s] for s in sidx[n_train:]]
-    valid_y = [train_y[s] for s in sidx[n_train:]]
-    train_x = [train_x[s] for s in sidx[:n_train]]
-    train_y = [train_y[s] for s in sidx[:n_train]]
-
-    print len(train_x)
-    print len(valid_x)
+    train_x, validate_x, train_y, validate_y = train_test_split(train_x, train_y, test_size=valid_portion,
+                                                                random_state=42)
+    return train_x, train_y, validate_x, validate_y, test_x, test_y
 
 
 def grab_data(path):

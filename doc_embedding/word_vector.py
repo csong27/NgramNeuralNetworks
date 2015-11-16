@@ -1,4 +1,5 @@
 from utils.load_yelp import read_train_data, read_test_data
+from utils.load_rotten import read_rotten_pickle
 from utils.load_vector import read_glove_model
 import numpy as np
 
@@ -86,6 +87,15 @@ def get_aggregated_vectors(average=True, int_label=True, dim=300):
     return train_x, train_y, validate_x, validate_y, test_x, test_y
 
 
+def get_document_matrices_rotten(dim=50, cutoff=50, uniform=True):
+    model = read_glove_model(dim=dim)
+    x, y = read_rotten_pickle()
+    print "getting concatenated word vectors for documents..."
+    x = get_reviews_vectors(x, model, aggregate=False, cutoff=cutoff, uniform=uniform)
+    y = np.asarray(y)
+    return x, y
+
+
 def get_document_matrices(int_label=True, dim=50, cutoff=300, uniform=True, for_theano=True):
     model = read_glove_model(dim=dim)
     train_x, train_y, validate_x, validate_y = read_train_data(int_label=int_label)
@@ -104,8 +114,6 @@ def get_document_matrices(int_label=True, dim=50, cutoff=300, uniform=True, for_
 
 
 if __name__ == '__main__':
-    # train_x, train_y, validate_x, validate_y, test_x, test_y = get_aggregated_vectors()
-    # print max_count
-    train_x, train_y, validate_x, validate_y, test_x, test_y = get_document_matrices()
-    print test_x[0].shape
-    print test_x[0]
+    x, y = get_document_matrices_rotten()
+    print x[0].shape
+    print x[0]
