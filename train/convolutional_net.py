@@ -3,13 +3,12 @@ from doc_embedding import get_document_matrices
 
 
 def train_ngram_conv_net(
+        datasets,
         bigram=True,
         n_epochs=25,
         use_bias=False,
         shuffle_batch=False,
         batch_size=50,
-        dim=50,
-        cutoff=50,
         dropout=True,
         n_hidden=100,
         activation=relu,
@@ -18,10 +17,9 @@ def train_ngram_conv_net(
         lr_rate=0.01,
         momentum_ratio=0.9
 ):
-
     rng = np.random.RandomState(23455)
+    train_x, train_y, validate_x, validate_y, test_x, test_y = datasets
 
-    train_x, train_y, validate_x, validate_y, test_x, test_y = get_document_matrices(dim=dim, cutoff=cutoff)
     train_x, train_y = shared_dataset((train_x, train_y))
     validate_x, validate_y = shared_dataset((validate_x, validate_y))
     test_x, test_y = shared_dataset((test_x, test_y))
@@ -109,14 +107,16 @@ def train_ngram_conv_net(
         print 'epoch %i, train cost %f, validate accuracy %f' % (epoch, cost_epoch, val_accuracy * 100.)
 
     print "\nbest test accuracy is %f" % test_accuracy
-
+    return test_accuracy
 
 if __name__ == '__main__':
+    dim = 50
+    cutoff = 50
+    datasets = get_document_matrices(dim=dim, cutoff=cutoff)
     train_ngram_conv_net(
+        datasets=datasets,
         bigram=True,
         use_bias=False,
-        cutoff=50,
-        dim=100,
         lr_rate=0.001,
         dropout=True,
         dropout_rate=0.5,

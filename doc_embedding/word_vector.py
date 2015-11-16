@@ -92,6 +92,7 @@ def get_document_matrices_rotten(dim=50, cutoff=50, uniform=True):
     x, y = read_rotten_pickle()
     print "getting concatenated word vectors for documents..."
     x = get_reviews_vectors(x, model, aggregate=False, cutoff=cutoff, uniform=uniform)
+    x = np.asarray(x)
     y = np.asarray(y)
     return x, y
 
