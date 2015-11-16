@@ -33,14 +33,21 @@ def my_remove_stopwords(s):
     s = utils.to_unicode(s)
     return " ".join(w for w in s.split() if w not in STOPWORDS)
 
-DEFAULT_FILTERS = [lambda x: x.lower(), strip_punctuation, strip_multiple_whitespaces, my_remove_stopwords]
+
+def my_strip_short(s, minsize=2):
+    s = utils.to_unicode(s)
+    return " ".join(e for e in s.split() if len(e) >= minsize)
+
+
+DEFAULT_FILTERS = [lambda x: x.lower(), strip_punctuation, strip_multiple_whitespaces,
+                   my_remove_stopwords, my_strip_short]
 
 
 def preprocess_review(text):
     return preprocess_string(text, filters=DEFAULT_FILTERS)
 
 
-class MyDocuments:
+class MyDocuments(object):
     def __init__(self, filename, str_label=False, int_label=True):
         '''
         :param filename: input file
@@ -67,17 +74,19 @@ class MyDocuments:
                 arr.append(STAR_LABELS[int(star) - 1])
                 yield arr
             else:
-                yield preprocess_review(text)
+                review_id = json_object['review_id']
+                yield TaggedDocument(words=preprocess_review(text), tags=[review_id])
 
 
-class MySentences:
-    def __init__(self, filename):
+class MySentences(object):
+    def __init__(self, filename, document=True):
         '''
         :param filename: input file
         :param str_label: yield iterator with last word as label
         :param int_label: yield tuple iterator, first element is label
         '''
         self.filename = Path(filename)
+        self.document = document
 
     def __iter__(self):
         for line in open(self.filename):

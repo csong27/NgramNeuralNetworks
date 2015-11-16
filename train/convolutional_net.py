@@ -6,7 +6,7 @@ def train_ngram_conv_net(
         bigram=True,
         n_epochs=25,
         use_bias=False,
-        shuffle_batch=True,
+        shuffle_batch=False,
         batch_size=50,
         dim=50,
         cutoff=50,
@@ -98,16 +98,15 @@ def train_ngram_conv_net(
         epoch += 1
         cost_list = []
         indices = np.random.permutation(range(n_train_batches)) if shuffle_batch else xrange(n_train_batches)
-        for iter, minibatch_index in enumerate(indices):
+        for minibatch_index in indices:
             cost_mini = train_model(minibatch_index)
             cost_list.append(cost_mini)
-            val_accuracy = 1 - val_model(epoch)
-            print 'iter %i, mini-batch train cost %f, validate accuracy %f' % (iter, cost_mini, val_accuracy * 100.)
-            if val_accuracy >= best_val_accuracy:
-                best_val_accuracy = val_accuracy
-                test_accuracy = 1 - test_model(epoch)
+        val_accuracy = 1 - val_model(epoch)
+        if val_accuracy >= best_val_accuracy:
+            best_val_accuracy = val_accuracy
+            test_accuracy = 1 - test_model(epoch)
         cost_epoch = np.mean(cost_list)
-        print '\nepoch %i, train cost %f, validate accuracy %f' % (epoch, cost_epoch, val_accuracy * 100.)
+        print 'epoch %i, train cost %f, validate accuracy %f' % (epoch, cost_epoch, val_accuracy * 100.)
 
     print "\nbest test accuracy is %f" % test_accuracy
 
@@ -115,13 +114,14 @@ def train_ngram_conv_net(
 if __name__ == '__main__':
     train_ngram_conv_net(
         bigram=True,
-        use_bias=True,
+        use_bias=False,
         cutoff=50,
+        dim=100,
         lr_rate=0.001,
         dropout=True,
-        dropout_rate=0.1,
-        n_hidden=40,
+        dropout_rate=0.5,
+        n_hidden=200,
         activation=relu,
-        batch_size=5,
-        update_rule='adadelta'
+        batch_size=1000,
+        update_rule='adagrad'
     )

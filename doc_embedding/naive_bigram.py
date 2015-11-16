@@ -1,4 +1,4 @@
-from utils.load_data import read_train_data, read_test_data
+from utils.load_yelp import read_train_data, read_test_data
 from utils.load_vector import read_glove_model
 from nltk.collocations import ngrams
 import numpy as np

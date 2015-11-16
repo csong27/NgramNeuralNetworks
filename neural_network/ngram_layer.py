@@ -31,7 +31,7 @@ class UnigramLayer(object):
 
 
 class BigramLayer(object):
-    def __init__(self, rng, input, n_in, n_out, activation=relu, use_bias=False):
+    def __init__(self, rng, input, n_in, n_out, activation=tanh, use_bias=False):
         """
         Allocate a BigramLayer with shared variable internal parameters.
         """
@@ -73,19 +73,4 @@ class BigramLayer(object):
                 return [results[-1]]
         results, _ = theano.scan(inner_loop, sequences=self.input)
 
-        return results
-
-
-def test():
-    s = T.tensor3('s')
-    rng = numpy.random.RandomState(1234)
-
-    bigram_layer = UnigramLayer(rng=rng, input=s, n_in=3, n_out=3, activation=relu)
-
-    f = theano.function([s], bigram_layer.output)
-
-    print f([[[1, 1, 1], [0, 0, 0]], [[1, 1, 1], [1, 1, 1]]])
-
-
-if __name__ == '__main__':
-    test()
+        raise DeprecationWarning

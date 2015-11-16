@@ -1,29 +1,44 @@
-from utils.load_data import read_train_data, read_test_data
+from utils.load_yelp import read_train_data, read_test_data
 from utils.load_vector import read_glove_model
 import numpy as np
 
 max_count = 0
 
 
-def get_document_matrix(text, model, cutoff=300, uniform=True, scale=0.25):
+def chunks(l, n):
+    """Yield successive n-sized chunks from l."""
+    for i in xrange(0, len(l), n):
+        yield l[i:i+n]
+
+
+def get_document_matrix(text, model, cutoff=300, uniform=True, scale=0.1, shrink=True):
     matrix = None
     rand_vector = np.random.uniform(-scale, scale, model.vector_size) if uniform \
         else np.random.normal(0, scale, model.vector_size)
     count = 0
-    for word in text:
-        if word in model:
+    if shrink and len(text) > cutoff:
+        shrink_size = int(round(len(text) / float(cutoff) + 0.4))
+        word_chunks = chunks(text, shrink_size)
+        for chunk in word_chunks:
+            avg_vector = np.zeros(model.vector_size)
+            for word in chunk:
+                word_vector = model[word] if word in model else rand_vector
+                avg_vector += word_vector
+            avg_vector /= len(chunk)
             if matrix is None:
-                matrix = np.asarray([model[word]])
+                matrix = np.asarray([avg_vector])
             else:
-                matrix = np.concatenate((matrix, [model[word]]))
-        else:
+                matrix = np.concatenate((matrix, [avg_vector]))
+    else:
+        for word in text:
+            word_vector = model[word] if word in model else rand_vector
             if matrix is None:
-                matrix = np.asarray([rand_vector])
+                matrix = np.asarray([word_vector])
             else:
-                matrix = np.concatenate((matrix, [rand_vector]))
-        count += 1
-        if count >= cutoff:
-            break
+                matrix = np.concatenate((matrix, [word_vector]))
+            count += 1
+            if count >= cutoff:
+                break
 
     if matrix is None:
         return np.zeros((cutoff, model.vector_size))
