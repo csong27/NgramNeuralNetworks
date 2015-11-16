@@ -5,6 +5,7 @@ from doc_embedding import get_document_matrices
 def train_ngram_conv_net(
         datasets,
         bigram=True,
+        dim=50,
         n_epochs=25,
         use_bias=False,
         shuffle_batch=False,
@@ -117,6 +118,7 @@ if __name__ == '__main__':
         datasets=datasets,
         bigram=True,
         use_bias=False,
+        dim=dim,
         lr_rate=0.001,
         dropout=True,
         dropout_rate=0.5,

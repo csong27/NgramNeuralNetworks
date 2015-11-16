@@ -6,12 +6,12 @@ import numpy as np
 
 
 def cross_validation(validation_ratio=0.1):
-    x, y = get_document_matrices_rotten(dim=50, cutoff=50)
+    dim = 100
+    x, y = get_document_matrices_rotten(dim=dim, cutoff=56)
     skf = StratifiedKFold(y, n_folds=10)
-
     accuracy_list = []
     for i, indices in enumerate(skf):
-        print "at cross validation iter %i" % i
+        print "\nat cross validation iter %i" % i
         print "\n**********************\n"
         train, test = indices
         train_x = x[train]
@@ -24,14 +24,15 @@ def cross_validation(validation_ratio=0.1):
         test_accuracy = train_ngram_conv_net(
             datasets=datasets,
             bigram=True,
+            dim=dim,
             use_bias=False,
-            lr_rate=0.001,
-            dropout=False,
+            lr_rate=0.01,
+            dropout=True,
             dropout_rate=0.5,
-            n_hidden=30,
+            n_hidden=80,
             activation=relu,
             batch_size=1000,
-            update_rule='adagrad'
+            update_rule='adadelta'
         )
         accuracy_list.append(test_accuracy)
 
