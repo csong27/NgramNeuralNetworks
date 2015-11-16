@@ -5,8 +5,7 @@ from neural_network.non_linear import *
 import numpy as np
 
 
-def cross_validation(validation_ratio=0.1):
-    dim = 100
+def cross_validation(validation_ratio=0.1, dim=200):
     x, y = get_document_matrices_rotten(dim=dim, cutoff=56)
     skf = StratifiedKFold(y, n_folds=10)
     accuracy_list = []
@@ -23,20 +22,21 @@ def cross_validation(validation_ratio=0.1):
         datasets = (train_x, train_y, validate_x, validate_y, test_x, test_y)
         test_accuracy = train_ngram_conv_net(
             datasets=datasets,
+            n_epochs=50,
             bigram=True,
             dim=dim,
             use_bias=False,
-            lr_rate=0.01,
+            lr_rate=0.025,
             dropout=True,
-            dropout_rate=0.5,
-            n_hidden=80,
+            dropout_rate=0.25,
+            n_hidden=100,
             activation=relu,
-            batch_size=1000,
-            update_rule='adadelta'
+            batch_size=50,
+            update_rule='adagrad'
         )
         accuracy_list.append(test_accuracy)
 
     print "\n**********************\nfinal result: %f" % np.mean(accuracy_list)
 
 if __name__ == '__main__':
-    cross_validation()
+    cross_validation(dim=300)
