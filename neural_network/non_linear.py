@@ -6,7 +6,7 @@ def relu(x):
     return T.nnet.relu(x)
 
 
-def leaky_relu(x, alpha=0.2):
+def leaky_relu(x, alpha=0.01):
     return T.nnet.relu(x, alpha=alpha)
 
 

@@ -1,11 +1,12 @@
 from neural_network import *
-from doc_embedding import get_document_matrices
+from doc_embedding import get_document_matrices_yelp
 
 
 def train_ngram_conv_net(
         datasets,
         bigram=True,
         dim=50,
+        ngram_activation=tanh,
         n_epochs=25,
         use_bias=False,
         shuffle_batch=False,
@@ -36,9 +37,9 @@ def train_ngram_conv_net(
     y = T.ivector('y')
 
     if bigram:
-        ngram_layer = BigramLayer(rng=rng, input=x, n_in=dim, n_out=dim)
+        ngram_layer = BigramLayer(rng=rng, input=x, n_in=dim, n_out=dim, activation=ngram_activation, use_bias=use_bias)
     else:
-        ngram_layer = UnigramLayer(rng=rng, input=x, n_in=dim, n_out=dim)
+        ngram_layer = UnigramLayer(rng=rng, input=x, n_in=dim, n_out=dim, activation=ngram_activation, use_bias=use_bias)
 
     mlp_input = ngram_layer.output
 
@@ -113,7 +114,7 @@ def train_ngram_conv_net(
 if __name__ == '__main__':
     dim = 50
     cutoff = 50
-    datasets = get_document_matrices(dim=dim, cutoff=cutoff)
+    datasets = get_document_matrices_yelp(dim=dim, cutoff=cutoff)
     train_ngram_conv_net(
         datasets=datasets,
         bigram=True,

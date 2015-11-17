@@ -1,13 +1,13 @@
 __author__ = 'Song'
-from sklearn.pipeline import Pipeline
+import numpy as np
+from sklearn import metrics
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.linear_model import SGDClassifier
 from sklearn.naive_bayes import MultinomialNB
-from sklearn import metrics
-import numpy as np
+from sklearn.pipeline import Pipeline
 
-from utils.load_yelp import read_train_data, read_test_data
+from utils.load_data.load_yelp import read_train_data, read_test_data
 
 
 def get_data():
