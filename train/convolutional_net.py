@@ -40,7 +40,7 @@ def train_ngram_conv_net(
     x = T.tensor3('x')
     y = T.ivector('y')
 
-    ngram_net = NgramNetworks(rng=rng, input=x, dim=dim, ngrams=ngrams, activation=ngram_activation, use_bias=ngram_bias)
+    ngram_net = NgramNetwork(rng=rng, input=x, dim=dim, ngrams=ngrams, activation=ngram_activation, use_bias=ngram_bias)
 
     mlp_input = ngram_net.output
 

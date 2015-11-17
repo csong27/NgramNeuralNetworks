@@ -100,7 +100,7 @@ def get_review_vector(text, model, average=True):
     return vector
 
 
-def get_reviews_vectors(documents, model, average=True, aggregate=True, cutoff=300, uniform=True, bigram=False):
+def get_reviews_vectors(documents, model, average=True, aggregate=False, cutoff=300, uniform=True, bigram=False):
     for i in xrange(len(documents)):
         if aggregate:
             documents[i] = get_review_vector(documents[i], model, average)
@@ -224,4 +224,4 @@ def read_matrices_pickle(data='rotten', google=True, cv=True, bigram=False):
 
 
 if __name__ == '__main__':
-    save_matrices_pickle(google=False, data='rotten', cv=True, bigram=True)
+    save_matrices_pickle(google=False, data='rotten', cv=True, bigram=False)

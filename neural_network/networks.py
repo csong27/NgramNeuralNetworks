@@ -117,7 +117,7 @@ class MLP(object):
         self.params = self.hiddenLayer.params + self.logRegressionLayer.params
 
 
-class NgramNetworks(object):
+class NgramNetwork(object):
     def __init__(self, rng, input, dim, ngrams=(3, 2, 1), use_bias=False, activation=tanh):
         self.layers = []
         prev_out = input

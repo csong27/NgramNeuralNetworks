@@ -5,7 +5,7 @@ from neural_network.non_linear import *
 import numpy as np
 
 
-def cross_validation(validation_ratio=0.1, data=ROTTEN_TOMATOES):
+def cross_validation(validation_ratio=0.1, data=ROTTEN_TOMATOES, shuffle=True):
     x, y = read_matrices_pickle(google=False, data=data)
     dim = x[0].shape[1]
     n_out = len(np.unique(y))
@@ -21,19 +21,19 @@ def cross_validation(validation_ratio=0.1, data=ROTTEN_TOMATOES):
         test_y = y[test]
         train_x, validate_x, train_y, validate_y = train_test_split(train_x, train_y, test_size=validation_ratio,
                                                                     random_state=42, stratify=train_y)
-        shuffle_indices = np.random.permutation(train_x.shape[0])
+        shuffle_indices = np.random.permutation(train_x.shape[0]) if shuffle else np.arange(train_x.shape[0])
         datasets = (train_x[shuffle_indices], train_y[shuffle_indices], validate_x, validate_y, test_x, test_y)
         test_accuracy = train_ngram_conv_net(
             datasets=datasets,
-            n_epochs=25,
-            ngrams=(1, 3, 2),
+            n_epochs=10,
+            ngrams=(2, ),
             dim=dim,
             ngram_bias=False,
             use_bias=True,
             lr_rate=0.01,
             dropout=True,
             dropout_rate=0.5,
-            n_hidden=200,
+            n_hidden=256,
             n_out=n_out,
             ngram_activation=leaky_relu,
             activation=leaky_relu,

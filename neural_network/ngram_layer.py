@@ -24,8 +24,9 @@ class UnigramLayer(object):
         self.b = theano.shared(value=b_values, name='b_cov')
 
         lin_out = T.dot(input, self.W) + self.b if use_bias else T.dot(input, self.W)
-        unigram_sum = T.sum(lin_out, axis=1)
-        self.output = activation(unigram_sum) if sum_out else activation(lin_out)
+        activation_out = activation(lin_out)
+        unigram_sum = T.sum(activation_out, axis=1)
+        self.output = unigram_sum if sum_out else activation_out
 
         self.params = [self.W, self.b] if use_bias else [self.W]
 
@@ -55,9 +56,10 @@ class BigramLayer(object):
         right = T.dot(input, self.Tr)[:, 1:]
 
         lin_out = left + right + self.b if use_bias else left + right
-        bigram_sum = T.sum(lin_out, axis=1)
+        activation_out = activation(lin_out)
+        bigram_sum = T.sum(activation_out, axis=1)
 
-        self.output = activation(bigram_sum) if sum_out else activation(lin_out)
+        self.output = bigram_sum if sum_out else activation_out
         self.params = [self.Tr, self.Tl, self.b] if use_bias else [self.Tr, self.Tl]
 
 
@@ -88,7 +90,8 @@ class TrigramLayer(object):
         right = T.dot(input, self.T3)[:, 1:]
 
         lin_out = left + center + right + self.b if use_bias else left + center + right
-        trigram_sum = T.sum(lin_out, axis=1)
+        activation_out = activation(lin_out)
+        trigram_sum = T.sum(activation_out, axis=1)
 
-        self.output = activation(trigram_sum) if sum_out else activation(lin_out)
+        self.output = trigram_sum if sum_out else activation_out
         self.params = [self.T1, self.T2, self.T3, self.b] if use_bias else [self.T1, self.T2, self.T3]
