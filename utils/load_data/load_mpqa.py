@@ -22,8 +22,6 @@ def read_data(p):
 def save_mpqa_pickle():
     pos_x, pos_y = read_data(pos)
     neg_x, neg_y = read_data(neg)
-    print pos_y[0]
-    print neg_y[0]
     x = pos_x + neg_x
     y = pos_y + neg_y
     f = open('mpqa.pkl', 'wb')
@@ -35,5 +33,3 @@ def read_mpqa_pickle():
     f = open(mpqa_pickle, 'rb')
     x, y = pkl.load(f)
     return x, y
-
-save_mpqa_pickle()

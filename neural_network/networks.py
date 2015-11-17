@@ -1,4 +1,6 @@
 from regular_layer import _dropout_from_layer, DropoutHiddenLayer, HiddenLayer, LogisticRegression
+from ngram_layer import UnigramLayer, BigramLayer, TrigramLayer
+from non_linear import *
 import theano.tensor as T
 
 
@@ -113,3 +115,37 @@ class MLP(object):
         # the parameters of the model are the parameters of the two layer it is
         # made out of
         self.params = self.hiddenLayer.params + self.logRegressionLayer.params
+
+
+class NgramNetworks(object):
+    def __init__(self, rng, input, dim, ngrams=(3, 2, 1), use_bias=False, activation=tanh):
+        self.layers = []
+        prev_out = input
+        for ngram in ngrams[:-1]:
+            x = prev_out
+            if ngram == 1:
+                ngram_layer = UnigramLayer(rng=rng, input=x, n_in=dim, n_out=dim, activation=activation, use_bias=use_bias, sum_out=False)
+            elif ngram == 2:
+                ngram_layer = BigramLayer(rng=rng, input=x, n_in=dim, n_out=dim, activation=activation, use_bias=use_bias, sum_out=False)
+            elif ngram == 3:
+                ngram_layer = TrigramLayer(rng=rng, input=x, n_in=dim, n_out=dim, activation=activation, use_bias=use_bias, sum_out=False)
+            else:
+                raise NotImplementedError('This %d gram layer is not implemented' % ngram)
+            self.layers.append(ngram_layer)
+            prev_out = ngram_layer.output
+
+        ngram = ngrams[-1]
+
+        x = self.layers[-1].output if len(self.layers) >= 1 else input
+        if ngram == 1:
+            last_layer = UnigramLayer(rng=rng, input=x, n_in=dim, n_out=dim, activation=activation, use_bias=use_bias)
+        elif ngram == 2:
+            last_layer = BigramLayer(rng=rng, input=x, n_in=dim, n_out=dim, activation=activation, use_bias=use_bias)
+        elif ngram == 3:
+            last_layer = TrigramLayer(rng=rng, input=x, n_in=dim, n_out=dim, activation=activation, use_bias=use_bias)
+        else:
+            raise NotImplementedError('This %d gram layer is not implemented' % ngram)
+
+        self.layers.append(last_layer)
+        self.output = self.layers[-1].output
+        self.params = [param for layer in self.layers for param in layer.params]

@@ -20,3 +20,11 @@ def softplus(x):
 
 def tanh(x):
     return T.tanh(x)
+
+
+def identity(x):
+    return x
+
+
+def cube(x):
+    return T.power(x, 3)

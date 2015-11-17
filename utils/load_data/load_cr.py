@@ -32,5 +32,3 @@ def read_cr_pickle():
     f = open(cr_pickle, 'rb')
     x, y = pkl.load(f)
     return x, y
-
-save_cr_pickle()

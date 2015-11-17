@@ -114,6 +114,19 @@ def read_su_sentiment_rotten_tomatoes(dirname, lowercase=True):
     return phrases
 
 
+def get_int_label(score):
+    if 0 <= score <= 0.2:
+        return 0
+    if 0.2 < score <= 0.4:
+        return 1
+    if 0.4 < score <= 0.6:
+        return 2
+    if 0.6 < score <= 0.8:
+        return 3
+    else:
+        return 4
+
+
 def save_sentence_pickle():
     phrases = read_su_sentiment_rotten_tomatoes(dirname=treebank_path)
     train_x = []
@@ -123,15 +136,16 @@ def save_sentence_pickle():
     test_x = []
     test_y = []
     for phrase in phrases:
+        label = get_int_label(phrase.sentiment)
         if phrase.split == 'train':
             train_x.append(phrase.words)
-            train_y.append(phrase.sentiment)
+            train_y.append(label)
         elif phrase.split == 'dev':
             validate_x.append(phrase.words)
-            validate_y.append(phrase.sentiment)
+            validate_y.append(label)
         elif phrase.split == 'test':
             test_x.append(phrase.words)
-            test_y.append(phrase.sentiment)
+            test_y.append(label)
 
     f = open('sst_sent.pkl', 'wb')
     pkl.dump((train_x, train_y), f, -1)
@@ -145,7 +159,6 @@ def read_sst_sent_pickle():
     train_x, train_y = pkl.load(f)
     validate_x, validate_y = pkl.load(f)
     test_x, test_y = pkl.load(f)
-    print len(train_y)
     return train_x, train_y, validate_x, validate_y, test_x, test_y
 
 if __name__ == '__main__':

@@ -1,18 +1,20 @@
 from neural_network import *
-from doc_embedding import get_document_matrices_yelp
+from doc_embedding import *
 
 
 def train_ngram_conv_net(
         datasets,
-        bigram=True,
+        ngrams=(2, 1),
         dim=50,
         ngram_activation=tanh,
         n_epochs=25,
         use_bias=False,
-        shuffle_batch=False,
+        ngram_bias=False,
+        shuffle_batch=True,
         batch_size=50,
         dropout=True,
         n_hidden=100,
+        n_out=2,
         activation=relu,
         dropout_rate=0.3,
         update_rule='adadelta',
@@ -21,6 +23,8 @@ def train_ngram_conv_net(
 ):
     rng = np.random.RandomState(23455)
     train_x, train_y, validate_x, validate_y, test_x, test_y = datasets
+
+    print 'size of train, validation, test set are %d, %d, %d' %(train_y.shape[0], validate_y.shape[0], test_y.shape[0])
 
     train_x, train_y = shared_dataset((train_x, train_y))
     validate_x, validate_y = shared_dataset((validate_x, validate_y))
@@ -36,15 +40,12 @@ def train_ngram_conv_net(
     x = T.tensor3('x')
     y = T.ivector('y')
 
-    if bigram:
-        ngram_layer = BigramLayer(rng=rng, input=x, n_in=dim, n_out=dim, activation=ngram_activation, use_bias=use_bias)
-    else:
-        ngram_layer = UnigramLayer(rng=rng, input=x, n_in=dim, n_out=dim, activation=ngram_activation, use_bias=use_bias)
+    ngram_net = NgramNetworks(rng=rng, input=x, dim=dim, ngrams=ngrams, activation=ngram_activation, use_bias=ngram_bias)
 
-    mlp_input = ngram_layer.output
+    mlp_input = ngram_net.output
 
     if dropout:
-        layer_sizes = [dim, n_hidden, 5]
+        layer_sizes = [dim, n_hidden, n_out]
         mlp = MLPDropout(
             rng=rng,
             input=mlp_input,
@@ -53,19 +54,19 @@ def train_ngram_conv_net(
             activations=[activation],
             use_bias=use_bias
         )
-        cost = mlp.negative_log_likelihood(y)
+        cost = mlp.dropout_negative_log_likelihood(y)
     else:
         mlp = MLP(
             rng=rng,
             input=mlp_input,
             n_in=dim,
             n_hidden=n_hidden,
-            n_out=5,
+            n_out=n_out,
             activation=activation
         )
         cost = mlp.negative_log_likelihood(y)
 
-    params = ngram_layer.params + mlp.params
+    params = ngram_net.params + mlp.params
 
     if update_rule == 'adadelta':
         grad_updates = adadelta(loss_or_grads=cost, params=params, learning_rate=lr_rate, rho=0.95, epsilon=1e-6)
@@ -111,20 +112,51 @@ def train_ngram_conv_net(
     print "\nbest test accuracy is %f" % test_accuracy
     return test_accuracy
 
-if __name__ == '__main__':
+
+def wrapper(data=TREC):
+    train_x, train_y, validate_x, validate_y, test_x, test_y = read_matrices_pickle(google=False, data=data, cv=False)
+    dim = train_x[0].shape[1]
+    n_out = len(np.unique(test_y))
+    shuffle_indices = np.random.permutation(train_x.shape[0])
+    datasets = (train_x[shuffle_indices], train_y[shuffle_indices], validate_x, validate_y, test_x, test_y)
+    train_ngram_conv_net(
+        datasets=datasets,
+        ngrams=(2, 1),
+        use_bias=True,
+        ngram_bias=False,
+        dim=dim,
+        lr_rate=0.01,
+        dropout=True,
+        dropout_rate=0.5,
+        n_hidden=200,
+        n_out=n_out,
+        activation=tanh,
+        ngram_activation=leaky_relu,
+        batch_size=50,
+        update_rule='adagrad'
+    )
+
+
+def wrapper_yelp():
     dim = 50
     cutoff = 50
     datasets = get_document_matrices_yelp(dim=dim, cutoff=cutoff)
     train_ngram_conv_net(
         datasets=datasets,
-        bigram=True,
+        ngrams=(2, 1),
         use_bias=False,
+        ngram_bias=False,
         dim=dim,
         lr_rate=0.001,
         dropout=True,
         dropout_rate=0.5,
         n_hidden=200,
         activation=relu,
-        batch_size=1000,
+        ngram_activation=leaky_relu,
+        batch_size=50,
         update_rule='adagrad'
     )
+
+
+if __name__ == '__main__':
+    wrapper()
