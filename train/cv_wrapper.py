@@ -5,7 +5,7 @@ from neural_network.non_linear import *
 import numpy as np
 
 
-def cross_validation(validation_ratio=0.1, data=MPQA):
+def cross_validation(validation_ratio=0.1, data=ROTTEN_TOMATOES):
     x, y = read_matrices_pickle(google=False, data=data)
     dim = x[0].shape[1]
     n_out = len(np.unique(y))
@@ -26,7 +26,7 @@ def cross_validation(validation_ratio=0.1, data=MPQA):
         test_accuracy = train_ngram_conv_net(
             datasets=datasets,
             n_epochs=25,
-            ngrams=(2, 1),
+            ngrams=(1, 3, 2),
             dim=dim,
             ngram_bias=False,
             use_bias=True,
@@ -35,7 +35,7 @@ def cross_validation(validation_ratio=0.1, data=MPQA):
             dropout_rate=0.5,
             n_hidden=200,
             n_out=n_out,
-            ngram_activation=tanh,
+            ngram_activation=leaky_relu,
             activation=leaky_relu,
             batch_size=50,
             update_rule='adagrad'

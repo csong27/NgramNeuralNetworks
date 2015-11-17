@@ -55,7 +55,7 @@ class BigramLayer(object):
         right = T.dot(input, self.Tr)[:, 1:]
 
         lin_out = left + right + self.b if use_bias else left + right
-        bigram_sum = T.sum(lin_out / 2, axis=1)
+        bigram_sum = T.sum(lin_out, axis=1)
 
         self.output = activation(bigram_sum) if sum_out else activation(lin_out)
         self.params = [self.Tr, self.Tl, self.b] if use_bias else [self.Tr, self.Tl]
