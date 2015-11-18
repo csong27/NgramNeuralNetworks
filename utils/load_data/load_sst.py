@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+from sklearn.cross_validation import train_test_split
 from path import Path
 import os
 import logging
@@ -10,6 +12,9 @@ kaggle_train_path = Path('C:/Users/Song/Course/571/hw3/train.tsv')
 kaggle_test_path = Path('C:/Users/Song/Course/571/hw3/test.tsv')
 treebank_path = 'D:/data/nlpdata/stanfordSentimentTreebank/'
 sst_sent_pickle = Path('C:/Users/Song/Course/571/project/pickled_data/sst_sent.pkl')
+sst_kaggle_pickle = Path('C:/Users/Song/Course/571/project/pickled_data/sst_kaggle.pkl')
+
+SentimentDocument = namedtuple('SentimentDocument', 'words tags split sentiment')
 
 
 def construct_sentence_data(p):
@@ -30,8 +35,6 @@ def construct_sentence_data(p):
             labels.append(int(label))
             prev_sent_id = sent_id
     print len(sentences)
-
-SentimentDocument = namedtuple('SentimentDocument', 'words tags split sentiment')
 
 
 def read_su_sentiment_rotten_tomatoes(dirname, lowercase=True):
@@ -161,5 +164,55 @@ def read_sst_sent_pickle():
     test_x, test_y = pkl.load(f)
     return train_x, train_y, validate_x, validate_y, test_x, test_y
 
+
+def save_sst_kaggle_pickle(validate_ratio=0.2):
+    train_x, train_y = read_kaggle_train()
+    train_x, validate_x, train_y, validate_y = train_test_split(train_x, train_y, test_size=validate_ratio,
+                                                                random_state=42, stratify=train_y)
+    test_x = read_kaggle_test()
+    f = open('sst_kaggle.pkl', 'wb')
+    pkl.dump((train_x, train_y), f, -1)
+    pkl.dump((validate_x, validate_y), f, -1)
+    pkl.dump(test_x, f, -1)
+    f.close()
+
+
+def read_sst_kaggle_pickle():
+    f = open(sst_kaggle_pickle, 'rb')
+    train_x, train_y = pkl.load(f)
+    validate_x, validate_y = pkl.load(f)
+    test_x = pkl.load(f)
+    return train_x, train_y, validate_x, validate_y, test_x
+
+
+def read_kaggle_train(p=kaggle_train_path):
+    f = open(p)
+    f.readline()
+    x = []
+    y = []
+    for line in f:
+        data = line.split('\t')
+        label = int(data[-1])
+        review = data[2].lower().split(' ')
+        x.append(review)
+        y.append(label)
+    return x, y
+
+
+def read_kaggle_test(p=kaggle_test_path):
+    f = open(p)
+    f.readline()
+    x = []
+    prev = 156060
+    for line in f:
+        data = line.split('\t')
+        curr = int(data[0])
+        if curr - prev == 1:
+            print curr
+        prev = curr
+        review = data[2].lower().split(' ')
+        x.append(review)
+    return x
+
 if __name__ == '__main__':
-    read_sst_sent_pickle()
+    read_kaggle_test()

@@ -19,12 +19,17 @@ def train_ngram_conv_net(
         dropout_rate=0.3,
         update_rule='adadelta',
         lr_rate=0.01,
-        momentum_ratio=0.9
+        momentum_ratio=0.9,
+        no_test_y=False,
 ):
     rng = np.random.RandomState(23455)
-    train_x, train_y, validate_x, validate_y, test_x, test_y = datasets
+    if no_test_y:
+        train_x, train_y, validate_x, validate_y, test_x = datasets
+        test_y = np.asarray([])
+    else:
+        train_x, train_y, validate_x, validate_y, test_x, test_y = datasets
 
-    print 'size of train, validation, test set are %d, %d, %d' %(train_y.shape[0], validate_y.shape[0], test_y.shape[0])
+    print 'size of train, validation, test set are %d, %d, %d' % (train_y.shape[0], validate_y.shape[0], test_x.shape[0])
 
     train_x, train_y = shared_dataset((train_x, train_y))
     validate_x, validate_y = shared_dataset((validate_x, validate_y))
@@ -91,10 +96,14 @@ def train_ngram_conv_net(
 
     test_model = theano.function([index], mlp.errors(y), on_unused_input='ignore', givens={x: test_x, y: test_y})
 
+    predict_output = mlp.layers[-1].y_pred if dropout else mlp.logRegressionLayer.y_pred
+    predict_model = theano.function([index], predict_output, on_unused_input='ignore', givens={x: test_x, y: test_y})
+
     print 'training with %s...' % update_rule
     epoch = 0
     best_val_accuracy = 0
     test_accuracy = 0
+    best_prediction = None
     while epoch < n_epochs:
         epoch += 1
         cost_list = []
@@ -105,58 +114,14 @@ def train_ngram_conv_net(
         val_accuracy = 1 - val_model(epoch)
         if val_accuracy >= best_val_accuracy:
             best_val_accuracy = val_accuracy
-            test_accuracy = 1 - test_model(epoch)
+            if not no_test_y:
+                test_accuracy = 1 - test_model(epoch)
+            else:
+                best_prediction = predict_model(epoch)
         cost_epoch = np.mean(cost_list)
         print 'epoch %i, train cost %f, validate accuracy %f' % (epoch, cost_epoch, val_accuracy * 100.)
-
-    print "\nbest test accuracy is %f" % test_accuracy
-    return test_accuracy
-
-
-def wrapper(data=TREC):
-    train_x, train_y, validate_x, validate_y, test_x, test_y = read_matrices_pickle(google=False, data=data, cv=False)
-    dim = train_x[0].shape[1]
-    n_out = len(np.unique(test_y))
-    shuffle_indices = np.random.permutation(train_x.shape[0])
-    datasets = (train_x[shuffle_indices], train_y[shuffle_indices], validate_x, validate_y, test_x, test_y)
-    train_ngram_conv_net(
-        datasets=datasets,
-        ngrams=(2, 1),
-        use_bias=True,
-        ngram_bias=False,
-        dim=dim,
-        lr_rate=0.01,
-        dropout=True,
-        dropout_rate=0.5,
-        n_hidden=200,
-        n_out=n_out,
-        activation=tanh,
-        ngram_activation=leaky_relu,
-        batch_size=50,
-        update_rule='adagrad'
-    )
-
-
-def wrapper_yelp():
-    dim = 50
-    cutoff = 50
-    datasets = get_document_matrices_yelp(dim=dim, cutoff=cutoff)
-    train_ngram_conv_net(
-        datasets=datasets,
-        ngrams=(2, 1),
-        use_bias=False,
-        ngram_bias=False,
-        dim=dim,
-        lr_rate=0.001,
-        dropout=True,
-        dropout_rate=0.5,
-        n_hidden=200,
-        activation=relu,
-        ngram_activation=leaky_relu,
-        batch_size=50,
-        update_rule='adagrad'
-    )
-
-
-if __name__ == '__main__':
-    wrapper()
+    if not no_test_y:
+        print "\nbest test accuracy is %f" % test_accuracy
+        return test_accuracy
+    else:
+        return best_prediction

@@ -42,7 +42,7 @@ def my_strip_short(s, minsize=2):
 DEFAULT_FILTERS = [lambda x: x.lower(), strip_punctuation, strip_multiple_whitespaces,
                    my_remove_stopwords, my_strip_short]
 
-SIMPLE_FILTERS = [lambda x: x.lower(), strip_punctuation, strip_multiple_whitespaces]
+SIMPLE_FILTERS = [lambda x: x.lower(), strip_multiple_whitespaces]
 
 
 def preprocess_review(text, filters=DEFAULT_FILTERS):
