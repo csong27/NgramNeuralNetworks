@@ -56,9 +56,9 @@ def wrapper_kaggle():
 
     best_prediction = train_ngram_conv_net(
         datasets=datasets,
-        ngrams=(1, 2),
+        ngrams=(1, 2, 3),
         use_bias=True,
-        n_epochs=30,
+        n_epochs=40,
         ngram_bias=False,
         dim=dim,
         lr_rate=0.05,
@@ -68,7 +68,7 @@ def wrapper_kaggle():
         n_hidden=100,
         activation=leaky_relu,
         ngram_activation=leaky_relu,
-        batch_size=50,
+        batch_size=200,
         update_rule='adagrad',
         no_test_y=True
     )

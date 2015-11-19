@@ -8,7 +8,7 @@ b = theano.shared(numpy.ones((3,), dtype=theano.config.floatX))
 
 s = T.tensor3('s')
 
-dot1 = T.dot(s, Tl)[:, 1: -1]
+dot1 = T.dot(s, Tl)
 
 dot2 = T.dot(s, Tr)[:, 1:]
 
