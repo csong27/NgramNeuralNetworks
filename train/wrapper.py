@@ -1,6 +1,8 @@
 from convolutional_net import train_ngram_conv_net
 from neural_network.non_linear import *
 from doc_embedding import *
+from utils.load_data import *
+import numpy as np
 
 
 def wrapper(data=TREC):

@@ -82,7 +82,7 @@ def save_doc2vec_pickle(dm=True, concat=True, data=SST_KAGGLE):
 
 
 def read_doc2vec_pickle(dm=True, concat=True, data=SST_KAGGLE):
-    save_path = "D:/data/nlpdata/doc2vec/"
+    save_path = "D:/data/nlpdata/pickled_data/doc2vec/"
     save_path += data
     if dm and concat:
         model_name = "_dm_concat.pkl"
@@ -94,11 +94,11 @@ def read_doc2vec_pickle(dm=True, concat=True, data=SST_KAGGLE):
 
     print "reading doc2vec from %s" % save_path
 
-    f = open(Path(save_path), "wb")
+    f = open(Path(save_path), "rb")
     train_x, validate_x, test_x = pkl.load(f)
     f.close()
     return train_x, validate_x, test_x
 
 
 if __name__ == '__main__':
-    save_doc2vec_pickle()
+    train_x, validate_x, test_x = read_doc2vec_pickle()
