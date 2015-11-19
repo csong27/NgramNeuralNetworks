@@ -1,5 +1,8 @@
 from neural_network import *
-from doc_embedding import *
+from utils.load_data import *
+from doc_embedding import read_matrices_kaggle_pickle
+from path import Path
+import cPickle as pkl
 
 
 def train_ngram_conv_net(
@@ -21,6 +24,7 @@ def train_ngram_conv_net(
         lr_rate=0.01,
         momentum_ratio=0.9,
         no_test_y=False,
+        save_ngram=False,
 ):
     rng = np.random.RandomState(23455)
     if no_test_y:
@@ -86,18 +90,23 @@ def train_ngram_conv_net(
     else:
         raise NotImplementedError("This optimization method is not implemented %s" % update_rule)
 
+    # functions for training
     train_model = theano.function([index], cost, updates=grad_updates,
                                   givens={
                                       x: train_x[index * batch_size:(index + 1) * batch_size],
                                       y: train_y[index * batch_size:(index + 1) * batch_size]
                                   })
-
     val_model = theano.function([index], mlp.errors(y), on_unused_input='ignore', givens={x: validate_x, y: validate_y})
-
     test_model = theano.function([index], mlp.errors(y), on_unused_input='ignore', givens={x: test_x, y: test_y})
 
+    # functions for making prediction
     predict_output = mlp.layers[-1].y_pred if dropout else mlp.logRegressionLayer.y_pred
     predict_model = theano.function([index], predict_output, on_unused_input='ignore', givens={x: test_x, y: test_y})
+
+    # functions for getting document vectors
+    save_train = theano.function([index], ngram_net.output, on_unused_input='ignore', givens={x: train_x, y: train_y})
+    save_validate = theano.function([index], ngram_net.output, on_unused_input='ignore', givens={x: validate_x, y: validate_y})
+    save_test = theano.function([index], ngram_net.output, on_unused_input='ignore', givens={x: test_x, y: test_y})
 
     print 'training with %s...' % update_rule
     epoch = 0
@@ -118,10 +127,74 @@ def train_ngram_conv_net(
                 test_accuracy = 1 - test_model(epoch)
             else:
                 best_prediction = predict_model(epoch)
+            # saving best pretrained vectors
+            if save_ngram:
+                saved_train = save_train(epoch)
+                saved_validate = save_validate(epoch)
+                saved_test = save_test(epoch)
+
         cost_epoch = np.mean(cost_list)
         print 'epoch %i, train cost %f, validate accuracy %f' % (epoch, cost_epoch, val_accuracy * 100.)
+    if save_ngram:
+        return saved_train, saved_validate, saved_test
     if not no_test_y:
         print "\nbest test accuracy is %f" % test_accuracy
         return test_accuracy
     else:
         return best_prediction
+
+
+def save_ngram_vectors(data=SST_KAGGLE):
+    if data == SST_KAGGLE:
+        train_x, train_y, validate_x, validate_y, test_x = read_matrices_kaggle_pickle()
+        datasets = (train_x, train_y, validate_x, validate_y, test_x)
+        no_test_y = True
+    else:
+        raise NotImplementedError
+
+    dim = train_x[0].shape[1]
+    n_out = len(np.unique(validate_y))
+    saved_train, saved_validate, saved_test = train_ngram_conv_net(
+        datasets=datasets,
+        ngrams=(2,),
+        use_bias=True,
+        n_epochs=20,
+        ngram_bias=False,
+        dim=dim,
+        lr_rate=0.1,
+        n_out=n_out,
+        dropout=True,
+        dropout_rate=0.5,
+        n_hidden=100,
+        activation=leaky_relu,
+        ngram_activation=leaky_relu,
+        batch_size=200,
+        update_rule='adagrad',
+        no_test_y=no_test_y,
+        save_ngram=True
+    )
+
+    print saved_train.shape
+
+    save_path = "D:/data/nlpdata/pickled_data/doc2vec/"
+    save_path += data + "_ngram.pkl"
+    print "saving doc2vec to %s" % save_path
+
+    f = open(Path(save_path), "wb")
+    pkl.dump((saved_train, saved_validate, saved_test), f, -1)
+    f.close()
+
+
+def read_ngram_vectors(data=SST_KAGGLE):
+    save_path = "D:/data/nlpdata/pickled_data/doc2vec/"
+    save_path += data + "_ngram.pkl"
+    print "reading doc2vec from %s" % save_path
+
+    f = open(Path(save_path), "rb")
+    saved_train, saved_validate, saved_test = pkl.load(f)
+    f.close()
+
+    return saved_train, saved_validate, saved_test
+
+if __name__ == '__main__':
+    save_ngram_vectors()

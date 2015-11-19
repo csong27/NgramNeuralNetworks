@@ -32,7 +32,7 @@ def get_vectors(model, docs, trained=True):
     return np.asarray(vectors)
 
 
-def train_doc2vec(data, dm=True, concat=True, negative=20, size=100, epochs=20, alpha=0.025, min_alpha=0.001):
+def train_doc2vec(data, dm=True, concat=False, negative=25, size=100, epochs=20, alpha=0.025, min_alpha=0.001):
     if data == SST_KAGGLE:
         train_x, train_y, validate_x, validate_y, test_x = read_sst_kaggle_pickle()
     else:
@@ -62,7 +62,7 @@ def train_doc2vec(data, dm=True, concat=True, negative=20, size=100, epochs=20, 
     return train_x, validate_x, test_x
 
 
-def save_doc2vec_pickle(dm=True, concat=True, data=SST_KAGGLE):
+def save_doc2vec_pickle(dm=True, concat=True, size=200, data=SST_KAGGLE):
     save_path = "D:/data/nlpdata/pickled_data/doc2vec/"
     save_path += data
     if dm and concat:
@@ -72,7 +72,7 @@ def save_doc2vec_pickle(dm=True, concat=True, data=SST_KAGGLE):
     else:
         model_name = "_dbow.pkl"
     save_path += model_name
-    train_x, validate_x, test_x = train_doc2vec(data=SST_KAGGLE, dm=dm, concat=concat)
+    train_x, validate_x, test_x = train_doc2vec(data=SST_KAGGLE, dm=dm, concat=concat, size=size)
 
     print "saving doc2vec to %s" % save_path
 
@@ -101,4 +101,4 @@ def read_doc2vec_pickle(dm=True, concat=True, data=SST_KAGGLE):
 
 
 if __name__ == '__main__':
-    train_x, validate_x, test_x = read_doc2vec_pickle()
+    save_doc2vec_pickle(dm=True, concat=False)

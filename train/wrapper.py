@@ -1,4 +1,5 @@
-from convolutional_net import train_ngram_conv_net
+from convolutional_net import train_ngram_conv_net, read_ngram_vectors
+from path import Path
 from neural_network.non_linear import *
 from doc_embedding import *
 from utils.load_data import *
