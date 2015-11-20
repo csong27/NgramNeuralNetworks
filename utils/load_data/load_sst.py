@@ -165,24 +165,21 @@ def read_sst_sent_pickle():
     return train_x, train_y, validate_x, validate_y, test_x, test_y
 
 
-def save_sst_kaggle_pickle(validate_ratio=0.2):
+def save_sst_kaggle_pickle():
     train_x, train_y = read_kaggle_train()
-    train_x, validate_x, train_y, validate_y = train_test_split(train_x, train_y, test_size=validate_ratio,
-                                                                random_state=42, stratify=train_y)
     test_x = read_kaggle_test()
+    print len(test_x)
     f = open('sst_kaggle.pkl', 'wb')
     pkl.dump((train_x, train_y), f, -1)
-    pkl.dump((validate_x, validate_y), f, -1)
-    pkl.dump(test_x, f, -1)
+    pkl.dump((test_x, []), f, -1)
     f.close()
 
 
 def read_sst_kaggle_pickle():
     f = open(sst_kaggle_pickle, 'rb')
     train_x, train_y = pkl.load(f)
-    validate_x, validate_y = pkl.load(f)
-    test_x = pkl.load(f)
-    return train_x, train_y, validate_x, validate_y, test_x
+    test_x, _ = pkl.load(f)
+    return train_x, train_y, test_x
 
 
 def read_kaggle_train(p=kaggle_train_path):
@@ -203,16 +200,36 @@ def read_kaggle_test(p=kaggle_test_path):
     f = open(p)
     f.readline()
     x = []
-    prev = 156060
     for line in f:
         data = line.split('\t')
-        curr = int(data[0])
-        if curr - prev == 1:
-            print curr
-        prev = curr
         review = data[2].lower().split(' ')
         x.append(review)
     return x
 
+
+def read_kaggle_raw(validate_ratio=0.2):
+    f = open(kaggle_train_path)
+    f.readline()
+    train_x = []
+    train_y = []
+    for line in f:
+        data = line.split('\t')
+        label = int(data[-1])
+        train_x.append(data[2])
+        train_y.append(label)
+    f.close()
+
+    f = open(kaggle_test_path)
+    f.readline()
+    test_x = []
+    for line in f:
+        data = line.split('\t')
+        test_x.append(data[2])
+    train_x, validate_x, train_y, validate_y = train_test_split(train_x, train_y, test_size=validate_ratio,
+                                                                random_state=42, stratify=train_y)
+    return train_x, train_y, validate_x, validate_y, test_x
+
+
 if __name__ == '__main__':
-    read_kaggle_test()
+    train_x, train_y, test_x = read_sst_kaggle_pickle()
+    print len(test_x)

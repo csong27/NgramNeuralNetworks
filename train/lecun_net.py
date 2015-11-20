@@ -4,15 +4,13 @@ from utils.load_data import *
 from path import Path
 
 
-def get_evaluate_model(tensor_variables, conv_layers, classifier, evaluate_set, nkerns, predict=False, img_size=30):
+def get_evaluate_model(tensor_variables, conv_layer, classifier, evaluate_set, predict=False, img_size=30):
     index = T.lscalar()
     x, y = tensor_variables
     evaluate_x, evaluate_y = evaluate_set
     test_size = evaluate_x.get_value(borrow=True).shape[0]
     test_layer_input = x.reshape((test_size, 1, img_size, img_size))
-    for i, conv_layer in enumerate(conv_layers):
-        test_layer_output = conv_layer.predict(test_layer_input, test_size, nkerns[i])
-        test_layer_input = test_layer_output
+    test_layer_output = conv_layer.predict(test_layer_input, test_size, 1)
     test_y_pred = classifier.predict(test_layer_output.flatten(2))
     test_error = T.mean(T.neq(test_y_pred, y))
     test_model = theano.function([index], test_error, on_unused_input='ignore', givens={x: evaluate_x, y: evaluate_y})
@@ -24,15 +22,18 @@ def get_evaluate_model(tensor_variables, conv_layers, classifier, evaluate_set, 
 
 
 def train_lecun_net(
-        img_size,
         datasets,
+        img_size,
+        filter_size=13,
+        pool_size=2,
         n_epochs=25,
         shuffle_batch=True,
+        user_bias=False,
         batch_size=50,
         n_hidden=100,
         n_out=2,
         activation=relu,
-        nkerns=[10, 20],
+        nkerns=10,
         dropout_rate=0.5,
         update_rule='adadelta',
         lr_rate=0.01,
@@ -74,53 +75,38 @@ def train_lecun_net(
     x = T.matrix('x')   # the data is presented as rasterized images
     y = T.ivector('y')  # the labels are presented as 1D vector of
 
-    layer0_input = x.reshape((batch_size, 1, img_size, img_size))
+    conv_layer_input = x.reshape((batch_size, 1, img_size, img_size))
 
     # Construct the first convolutional pooling layer:
-    # filtering reduces the image size to (30-7+1 , 30-7+1) = (24, 24)
-    # maxpooling reduces this further to (24/2, 24/2) = (12, 12)
-    # 4D output tensor is thus of shape (batch_size, nkerns[0], 12, 12)
-    layer0 = LeNetConvPoolLayer(
+    # filtering reduces the image size to (30-13+1 , 30-13+1) = (18, 18)
+    # maxpooling reduces this further to (18/2, 18/2) = (9, 9)
+    # 4D output tensor is thus of shape (batch_size, nkerns[0], 9, 9)
+    conv_layer = LeNetConvPoolLayer(
         rng,
-        input=layer0_input,
+        input=conv_layer_input,
         image_shape=(batch_size, 1, img_size, img_size),
-        filter_shape=(nkerns[0], 1, 7, 7),
-        poolsize=(2, 2),
+        filter_shape=(nkerns, 1, filter_size, filter_size),
+        poolsize=(pool_size, pool_size),
         activation=activation
     )
+    assert (img_size - filter_size + 1) % pool_size == 0
+    pool_out_size = (img_size - filter_size + 1) / pool_size
 
-    # Construct the second convolutional pooling layer
-    # filtering reduces the image size to (12-5+1, 12-5+1) = (8, 8)
-    # maxpooling reduces this further to (8/2, 8/2) = (4, 4)
-    # 4D output tensor is thus of shape (batch_size, nkerns[1], 4, 4)
-    layer1 = LeNetConvPoolLayer(
-        rng,
-        input=layer0.output,
-        image_shape=(batch_size, nkerns[0], 12, 12),
-        filter_shape=(nkerns[1], nkerns[0], 5, 5),
-        poolsize=(2, 2),
-        activation=activation
-    )
-
-    # the HiddenLayer being fully-connected, it operates on 2D matrices of
-    # shape (batch_size, num_pixels) (i.e matrix of rasterized images).
-    # This will generate a matrix of shape (batch_size, nkerns[1] * 4 * 4),
-    # or (500, 50 * 4 * 4) = (500, 800) with the default values.
-    mlp_input = layer1.output.flatten(2)
-    n_in = nkerns[1] * 4 * 4
+    mlp_input = conv_layer.output.flatten(2)
+    n_in = nkerns * pool_out_size ** 2
     mlp = MLPDropout(
         rng=rng,
         input=mlp_input,
         layer_sizes=[n_in, n_hidden, n_out],
         dropout_rates=[dropout_rate],
         activations=[activation],
-        use_bias=False
+        use_bias=user_bias
     )
     # the cost we minimize during training is the NLL of the model
     cost = mlp.negative_log_likelihood(y)
 
     # create a list of all model parameters to be fit by gradient descent
-    params = mlp.params + layer1.params + layer0.params
+    params = mlp.params + conv_layer.params
 
     if update_rule == 'adadelta':
         grad_updates = adadelta(loss_or_grads=cost, params=params, learning_rate=lr_rate, rho=0.95, epsilon=1e-6)
@@ -141,10 +127,10 @@ def train_lecun_net(
                                       y: train_y[index * batch_size:(index + 1) * batch_size]
                                   })
 
-    val_model = get_evaluate_model(conv_layers=[layer0, layer1], classifier=mlp, evaluate_set=(validate_x, validate_y),
-                                   tensor_variables=(x, y), predict=False, nkerns=[1] + nkerns)
-    test_model, predict_model = get_evaluate_model(conv_layers=[layer0, layer1], classifier=mlp, evaluate_set=(test_x, test_y),
-                                                   tensor_variables=(x, y), predict=True, nkerns=[1] + nkerns)
+    val_model = get_evaluate_model(conv_layer=conv_layer, classifier=mlp, evaluate_set=(validate_x, validate_y),
+                                   tensor_variables=(x, y), predict=False, img_size=img_size)
+    test_model, predict_model = get_evaluate_model(conv_layer=conv_layer, classifier=mlp, evaluate_set=(test_x, test_y),
+                                                   tensor_variables=(x, y), predict=True, img_size=img_size)
 
     print 'training with %s...' % update_rule
     epoch = 0
@@ -174,7 +160,6 @@ def train_lecun_net(
         return best_prediction
 
 
-
 def wrapper_kaggle():
     train_x, validate_x, test_x = get_concatenated_document_vectors(data=SST_KAGGLE)
     _, train_y, _, validate_y, _ = read_sst_kaggle_pickle()
@@ -193,15 +178,17 @@ def wrapper_kaggle():
     best_prediction = train_lecun_net(
         img_size=img_size,
         datasets=datasets,
+        filter_size=9,
         n_epochs=30,
-        lr_rate=0.05,
+        lr_rate=0.025,
         n_out=n_out,
         dropout_rate=0.5,
-        n_hidden=500,
-        nkerns=[20, 30],
+        n_hidden=300,
+        nkerns=16,
         activation=leaky_relu,
         batch_size=100,
         update_rule='adagrad',
+        user_bias=True,
         no_test_y=True
     )
     import csv

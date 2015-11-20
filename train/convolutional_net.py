@@ -2,6 +2,7 @@ from neural_network import *
 from utils.load_data import *
 from doc_embedding import read_matrices_kaggle_pickle
 from path import Path
+from sklearn.cross_validation import train_test_split
 import cPickle as pkl
 
 
@@ -128,7 +129,7 @@ def train_ngram_conv_net(
             else:
                 best_prediction = predict_model(epoch)
             # saving best pretrained vectors
-            if save_ngram:
+            if save_ngram and epoch >= 10:
                 saved_train = save_train(epoch)
                 saved_validate = save_validate(epoch)
                 saved_test = save_test(epoch)
@@ -144,9 +145,11 @@ def train_ngram_conv_net(
         return best_prediction
 
 
-def save_ngram_vectors(data=SST_KAGGLE):
+def save_ngram_vectors(data=SST_KAGGLE, validate_ratio=0.2):
     if data == SST_KAGGLE:
-        train_x, train_y, validate_x, validate_y, test_x = read_matrices_kaggle_pickle()
+        train_x, train_y, test_x = read_matrices_kaggle_pickle()
+        train_x, validate_x, train_y, validate_y = train_test_split(train_x, train_y, test_size=validate_ratio,
+                                                                    random_state=42, stratify=train_y)
         datasets = (train_x, train_y, validate_x, validate_y, test_x)
         no_test_y = True
     else:
@@ -161,7 +164,7 @@ def save_ngram_vectors(data=SST_KAGGLE):
         n_epochs=20,
         ngram_bias=False,
         dim=dim,
-        lr_rate=0.03,
+        lr_rate=0.05,
         n_out=n_out,
         dropout=True,
         dropout_rate=0.5,
@@ -173,13 +176,14 @@ def save_ngram_vectors(data=SST_KAGGLE):
         no_test_y=no_test_y,
         save_ngram=True
     )
+    saved_train = np.append(saved_train, saved_validate)
 
     save_path = "D:/data/nlpdata/pickled_data/doc2vec/"
     save_path += data + "_ngram.pkl"
     print "saving doc2vec to %s" % save_path
 
     f = open(Path(save_path), "wb")
-    pkl.dump((saved_train, saved_validate, saved_test), f, -1)
+    pkl.dump((saved_train, saved_test), f, -1)
     f.close()
 
 
@@ -189,10 +193,10 @@ def read_ngram_vectors(data=SST_KAGGLE):
     print "reading doc2vec from %s" % save_path
 
     f = open(Path(save_path), "rb")
-    saved_train, saved_validate, saved_test = pkl.load(f)
+    saved_train, saved_test = pkl.load(f)
     f.close()
 
-    return saved_train, saved_validate, saved_test
+    return saved_train, saved_test
 
 if __name__ == '__main__':
     save_ngram_vectors()

@@ -2,6 +2,7 @@ from neural_network import *
 from doc_embedding import *
 from utils.load_data import *
 from convolutional_net import read_ngram_vectors
+from sklearn.cross_validation import train_test_split
 from path import Path
 import numpy as np
 
@@ -126,20 +127,21 @@ def train_dropout_net(
 
 
 def get_concatenated_document_vectors(data=SST_KAGGLE):
-    train_x_1, validate_x_1, test_x_1 = read_doc2vec_pickle(dm=True, concat=False, data=data)
-    train_x_2, validate_x_2, test_x_2 = read_doc2vec_pickle(dm=False, concat=False, data=data)
-    train_x_3, validate_x_3, test_x_3 = read_ngram_vectors(data=data)
+    train_x_1, test_x_1 = read_doc2vec_pickle(dm=True, concat=False, data=data)
+    train_x_2, test_x_2 = read_doc2vec_pickle(dm=False, concat=False, data=data)
+    train_x_3, test_x_3 = read_ngram_vectors(data=data)
 
     train_x = np.concatenate((train_x_1, train_x_2, train_x_3), axis=1)
-    validate_x = np.concatenate((validate_x_1, validate_x_2, validate_x_3), axis=1)
     test_x = np.concatenate((test_x_1, test_x_2, test_x_3), axis=1)
 
-    return train_x, validate_x, test_x
+    return train_x, test_x
 
 
-def wrapper_kaggle():
-    train_x, validate_x, test_x = get_concatenated_document_vectors(data=SST_KAGGLE)
-    _, train_y, _, validate_y, _ = read_sst_kaggle_pickle()
+def wrapper_kaggle(validate_ratio=0.1):
+    train_x, test_x = get_concatenated_document_vectors(data=SST_KAGGLE)
+    _, train_y, _ = read_sst_kaggle_pickle()
+    train_x, validate_x, train_y, validate_y = train_test_split(train_x, train_y, test_size=validate_ratio,
+                                                                random_state=42, stratify=train_y)
 
     train_y = np.asarray(train_y)
     validate_y = np.asarray(validate_y)
@@ -149,6 +151,7 @@ def wrapper_kaggle():
     n_out = len(np.unique(validate_y))
     datasets = (train_x, train_y, validate_x, validate_y, test_x)
 
+    n_layers = 2
     best_prediction = train_dropout_net(
         datasets=datasets,
         use_bias=True,
@@ -157,9 +160,9 @@ def wrapper_kaggle():
         lr_rate=0.05,
         n_out=n_out,
         dropout=True,
-        dropout_rates=[0.5] * 3,
-        n_hidden=[600, 400, 200],
-        activations=[leaky_relu] * 3,
+        dropout_rates=[0.5] * n_layers,
+        n_hidden=[300] * n_layers,
+        activations=[leaky_relu] * n_layers,
         batch_size=100,
         update_rule='adagrad',
         no_test_y=True

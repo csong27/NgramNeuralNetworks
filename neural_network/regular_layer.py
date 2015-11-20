@@ -131,7 +131,7 @@ class LeNetConvPoolLayer(object):
         fan_out = (filter_shape[0] * numpy.prod(filter_shape[2:]) / numpy.prod(poolsize))
         # initialize weights with random weights
         if "relu" in activation.func_name:
-            self.W = theano.shared(numpy.asarray(rng.uniform(low=-0.01,high=0.01, size=filter_shape),
+            self.W = theano.shared(numpy.asarray(rng.uniform(low=-0.01, high=0.01, size=filter_shape),
                                                  dtype=theano.config.floatX), borrow=True, name="W_conv")
         else:
             W_bound = numpy.sqrt(6. / (fan_in + fan_out))

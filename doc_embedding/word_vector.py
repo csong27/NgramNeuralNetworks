@@ -3,6 +3,7 @@ import numpy as np
 from nltk.collocations import ngrams
 from utils.load_data import *
 from utils.load_vector_model import read_glove_model, read_google_model
+from sklearn.cross_validation import train_test_split
 from path import Path
 
 max_count = 0
@@ -166,17 +167,14 @@ def get_document_matrices(google=False, dim=100, cutoff=60, uniform=True, data='
 
         return train_x, train_y, validate_x, validate_y, test_x, test_y
     elif kaggle:
-        cutoff = 40
-        train_x, train_y, validate_x, validate_y, test_x = read_sst_kaggle_pickle()
+        cutoff = 35
+        train_x, train_y, test_x = read_sst_kaggle_pickle()
         train_x = get_reviews_vectors(train_x, model, aggregate=False, cutoff=cutoff, uniform=uniform, bigram=bigram)
-        validate_x = get_reviews_vectors(validate_x, model, aggregate=False, cutoff=cutoff, uniform=uniform, bigram=bigram)
         test_x = get_reviews_vectors(test_x, model, aggregate=False, cutoff=cutoff, uniform=uniform, bigram=bigram)
         train_x = np.asarray(train_x)
         train_y = np.asarray(train_y)
-        validate_x = np.asarray(validate_x)
-        validate_y = np.asarray(validate_y)
         test_x = np.asarray(test_x)
-        return train_x, train_y, validate_x, validate_y, test_x
+        return train_x, train_y, test_x
     else:
         return Exception('Something went wrong')
 
@@ -200,10 +198,10 @@ def get_document_matrices_yelp(google=False, int_label=True, dim=50, cutoff=300,
 
 def save_matrices_pickle(google=True, data='rotten', cv=True, bigram=False, kaggle=False):
     path = 'D:/data/nlpdata/pickled_data/'
-    filename = data + '_google.pkl' if google else data + '_glove.pkl'
+    dataname = data + '_google.pkl' if google else data + '_glove.pkl'
     if bigram:
-        filename = 'bigram_' + filename
-    filename = Path(path + filename)
+        dataname = 'bigram_' + dataname
+    filename = Path(path + dataname)
     print 'saving data to %s...' % filename
     f = open(filename, 'wb')
     if cv:
@@ -217,8 +215,14 @@ def save_matrices_pickle(google=True, data='rotten', cv=True, bigram=False, kagg
         pkl.dump((validate_x, validate_y), f, -1)
         pkl.dump((test_x, test_y), f, -1)
     elif kaggle:
-        train_x, train_y, validate_x, validate_y, test_x = get_document_matrices(google=google, data=data, cv=False,
-                                                                                 bigram=bigram, kaggle=kaggle, dim=100)
+        train_x, train_y, test_x = get_document_matrices(google=google, data=data, cv=False,
+                                                         bigram=bigram, kaggle=kaggle, dim=100)
+        f_train = open('D:/data/nlpdata/pickled_data/kaggle/train_' + dataname, 'wb')
+        f_test = open('D:/data/nlpdata/pickled_data/kaggle/test_' + dataname, 'wb')
+        np.save(f_train, train_x)
+        np.save(f_test, test_x)
+        f_train.close()
+        f_test.close()
     f.close()
 
 
@@ -240,27 +244,21 @@ def read_matrices_pickle(data='rotten', google=True, cv=True, bigram=False):
         return train_x, train_y, validate_x, validate_y, test_x, test_y
 
 
-def read_matrices_kaggle_pickle(data='sst_kaggle'):
+def read_matrices_kaggle_pickle():
     path = 'D:/data/nlpdata/pickled_data/kaggle/'
-    train_filename = 'train_' + data + '_glove.pkl'
+    train_filename = 'train_' + SST_KAGGLE + '_glove.pkl'
     filename = Path(path + train_filename)
     print 'loading data from %s...' % filename
     f = open(filename, 'rb')
     train_x = np.load(f)
-    valid_filename = 'validate_' + data + '_glove.pkl'
-    filename = Path(path + valid_filename)
-    print 'loading data from %s...' % filename
-    f = open(filename, 'rb')
-    validate_x = np.load(f)
-    test_filename = 'test_' + data + '_glove.pkl'
+    test_filename = 'test_' + SST_KAGGLE + '_glove.pkl'
     filename = Path(path + test_filename)
     print 'loading data from %s...' % filename
     f = open(filename, 'rb')
     test_x = np.load(f)
-    _, train_y, _, validate_y, _ = read_sst_kaggle_pickle()
+    _, train_y, _ = read_sst_kaggle_pickle()
     train_y = np.asarray(train_y)
-    validate_y = np.asarray(validate_y)
-    return train_x, train_y, validate_x, validate_y, test_x
+    return train_x, train_y, test_x
 
 if __name__ == '__main__':
-    read_matrices_kaggle_pickle()
+    save_matrices_pickle(google=False, data=SST_KAGGLE, cv=False, kaggle=True)
