@@ -42,9 +42,9 @@ def train_doc2vec(data, dm=True, concat=False, negative=25, size=100, epochs=20,
     if dm and concat:
         model = Doc2Vec(dm=1, dm_concat=1, size=size, window=5, negative=negative, hs=0, min_count=2, workers=cores)
     elif dm:
-        model = Doc2Vec(dm=1, dm_mean=1, size=size, window=10, negative=negative, hs=0, min_count=2, workers=cores)
+        model = Doc2Vec(dm=1, dm_mean=1, size=size, window=8, negative=negative, hs=0, min_count=2, workers=cores)
     else:
-        model = Doc2Vec(dm=0, size=size, negative=negative, hs=0, min_count=2, workers=cores)
+        model = Doc2Vec(dm=0, size=size, negative=negative, window=8, hs=0, min_count=2, workers=cores)
     train_doc = train_x + validate_x
     model.build_vocab(train_doc)
 
@@ -101,4 +101,4 @@ def read_doc2vec_pickle(dm=True, concat=True, data=SST_KAGGLE):
 
 
 if __name__ == '__main__':
-    save_doc2vec_pickle(dm=True, concat=False)
+    save_doc2vec_pickle(dm=False, concat=False, size=400)

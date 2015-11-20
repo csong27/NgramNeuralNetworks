@@ -2,6 +2,8 @@ import numpy
 import theano.tensor.shared_randomstreams
 import theano
 import theano.tensor as T
+from theano.tensor.signal import downsample
+from theano.tensor.nnet import conv
 
 
 class HiddenLayer(object):
@@ -109,57 +111,70 @@ class LogisticRegression(object):
             raise NotImplementedError()
 
 
+class LeNetConvPoolLayer(object):
+    """Pool Layer of a convolutional network """
+    def __init__(self, rng, input, filter_shape, image_shape, poolsize=(2, 2)):
+
+        assert image_shape[1] == filter_shape[1]
+        self.input = input
+
+        # there are "num input feature maps * filter height * filter width"
+        # inputs to each hidden unit
+        fan_in = numpy.prod(filter_shape[1:])
+        # each unit in the lower layer receives a gradient from:
+        # "num output feature maps * filter height * filter width" /
+        #   pooling size
+        fan_out = (filter_shape[0] * numpy.prod(filter_shape[2:]) /
+                   numpy.prod(poolsize))
+        # initialize weights with random weights
+        W_bound = numpy.sqrt(6. / (fan_in + fan_out))
+        self.W = theano.shared(
+            numpy.asarray(
+                rng.uniform(low=-W_bound, high=W_bound, size=filter_shape),
+                dtype=theano.config.floatX
+            ),
+            borrow=True
+        )
+
+        # the bias is a 1D tensor -- one bias per output feature map
+        b_values = numpy.zeros((filter_shape[0],), dtype=theano.config.floatX)
+        self.b = theano.shared(value=b_values, borrow=True)
+
+        # convolve input feature maps with filters
+        conv_out = conv.conv2d(
+            input=input,
+            filters=self.W,
+            filter_shape=filter_shape,
+            image_shape=image_shape
+        )
+
+        # downsample each feature map individually, using maxpooling
+        pooled_out = downsample.max_pool_2d(
+            input=conv_out,
+            ds=poolsize,
+            ignore_border=True
+        )
+
+        # add the bias term. Since the bias is a vector (1D array), we first
+        # reshape it to a tensor of shape (1, n_filters, 1, 1). Each bias will
+        # thus be broadcasted across mini-batches and feature map
+        # width & height
+        self.output = T.tanh(pooled_out + self.b.dimshuffle('x', 0, 'x', 'x'))
+
+        # store parameters of this layer
+        self.params = [self.W, self.b]
+
+        # keep track of model input
+        self.input = input
+
+
 def binary_hinge_loss(predictions, targets, binary=True, delta=1):
-    """Computes the binary hinge loss between predictions and targets.
-    .. math:: L_i = \\max(0, \\delta - t_i p_i)
-    Parameters
-    ----------
-    predictions : Theano tensor
-        Predictions in (0, 1), such as sigmoidal output of a neural network.
-    targets : Theano tensor
-        Targets in {0, 1} (or in {-1, 1} depending on `binary`), such as
-        ground truth labels.
-    binary : bool, default True
-        ``True`` if targets are in {0, 1}, ``False`` if they are in {-1, 1}
-    delta : scalar, default 1
-        The hinge loss margin
-    Returns
-    -------
-    Theano tensor
-        An expression for the element-wise binary hinge loss
-    Notes
-    -----
-    This is an alternative to the binary cross-entropy loss for binary
-    classification problems
-    """
     if binary:
         targets = 2 * targets - 1
     return theano.tensor.nnet.relu(delta - predictions * targets)
 
 
 def multiclass_hinge_loss(predictions, targets, delta=1):
-    """Computes the multi-class hinge loss between predictions and targets.
-    .. math:: L_i = \\max_{j \\not = p_i} (0, t_j - t_{p_i} + \\delta)
-    Parameters
-    ----------
-    predictions : Theano 2D tensor
-        Predictions in (0, 1), such as softmax output of a neural network,
-        with data points in rows and class probabilities in columns.
-    targets : Theano 2D tensor or 1D tensor
-        Either a vector of int giving the correct class index per data point
-        or a 2D tensor of one-hot encoding of the correct class in the same
-        layout as predictions (non-binary targets in [0, 1] do not work!)
-    delta : scalar, default 1
-        The hinge loss margin
-    Returns
-    -------
-    Theano 1D tensor
-        An expression for the item-wise multi-class hinge loss
-    Notes
-    -----
-    This is an alternative to the categorical cross-entropy loss for
-    multi-class classification problems
-    """
     num_cls = predictions.shape[1]
     if targets.ndim == predictions.ndim - 1:
         targets = theano.tensor.extra_ops.to_one_hot(targets, num_cls)

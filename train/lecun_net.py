@@ -1,27 +1,23 @@
 from neural_network import *
-from doc_embedding import *
+from dropout_net import get_concatenated_document_vectors
 from utils.load_data import *
-from convolutional_net import read_ngram_vectors
 from path import Path
-import numpy as np
 
 
-def train_dropout_net(
+def train_lecun_net(
+        img_size,
         datasets,
-        dim=50,
         n_epochs=25,
-        use_bias=False,
         shuffle_batch=True,
         batch_size=50,
-        dropout=True,
-        n_hidden=[100],
+        n_hidden=100,
         n_out=2,
-        activations=[relu],
-        dropout_rates=[0.3],
+        activation=relu,
+        nkerns=[10, 20],
         update_rule='adadelta',
         lr_rate=0.01,
         momentum_ratio=0.9,
-        no_test_y=False,
+        no_test_y=False
 ):
     rng = np.random.RandomState(23455)
     if no_test_y:
@@ -32,6 +28,16 @@ def train_dropout_net(
 
     print 'size of train, validation, test set are %d, %d, %d' % (train_y.shape[0], validate_y.shape[0], test_x.shape[0])
 
+    # if dataset size is not a multiple of mini batches, replicate
+    residual = train_x.shape[0] % batch_size
+    if residual > 0:
+        extra_data_num = batch_size - residual
+        extra_indices = np.random.permutation(np.arange(train_x.shape[0]))[:extra_data_num]
+        extra_x = train_x[extra_indices]
+        extra_y = train_y[extra_indices]
+        train_x = np.append(train_x, extra_x, axis=0)
+        train_y = np.append(train_y, extra_y, axis=0)
+
     train_x, train_y = shared_dataset((train_x, train_y))
     validate_x, validate_y = shared_dataset((validate_x, validate_y))
     test_x, test_y = shared_dataset((test_x, test_y))
@@ -41,35 +47,62 @@ def train_dropout_net(
 
     print 'building network, number of mini-batches are %d...' % n_train_batches
 
+    # allocate symbolic variables for the data
     index = T.lscalar()  # index to a [mini]batch
 
-    x = T.matrix('x')
-    y = T.ivector('y')
-    mlp_input = x
+    # start-snippet-1
+    x = T.matrix('x')   # the data is presented as rasterized images
+    y = T.ivector('y')  # the labels are presented as 1D vector of
 
-    if dropout:
-        layer_sizes = [dim] + n_hidden + [n_out]
-        mlp = MLPDropout(
-            rng=rng,
-            input=mlp_input,
-            layer_sizes=layer_sizes,
-            dropout_rates=dropout_rates,
-            activations=activations,
-            use_bias=use_bias
-        )
-        cost = mlp.dropout_negative_log_likelihood(y)
-    else:
-        mlp = MLP(
-            rng=rng,
-            input=mlp_input,
-            n_in=dim,
-            n_hidden=n_hidden[0],
-            n_out=n_out,
-            activation=activations[0]
-        )
-        cost = mlp.negative_log_likelihood(y)
+    layer0_input = x.reshape((batch_size, 1, img_size, img_size))
 
-    params = mlp.params
+    # Construct the first convolutional pooling layer:
+    # filtering reduces the image size to (30-7+1 , 30-7+1) = (24, 24)
+    # maxpooling reduces this further to (24/2, 24/2) = (12, 12)
+    # 4D output tensor is thus of shape (batch_size, nkerns[0], 12, 12)
+    layer0 = LeNetConvPoolLayer(
+        rng,
+        input=layer0_input,
+        image_shape=(batch_size, 1, img_size, img_size),
+        filter_shape=(nkerns[0], 1, 7, 7),
+        poolsize=(2, 2)
+    )
+
+    # Construct the second convolutional pooling layer
+    # filtering reduces the image size to (12-5+1, 12-5+1) = (8, 8)
+    # maxpooling reduces this further to (8/2, 8/2) = (4, 4)
+    # 4D output tensor is thus of shape (batch_size, nkerns[1], 4, 4)
+    layer1 = LeNetConvPoolLayer(
+        rng,
+        input=layer0.output,
+        image_shape=(batch_size, nkerns[0], 12, 12),
+        filter_shape=(nkerns[1], nkerns[0], 5, 5),
+        poolsize=(2, 2)
+    )
+
+    # the HiddenLayer being fully-connected, it operates on 2D matrices of
+    # shape (batch_size, num_pixels) (i.e matrix of rasterized images).
+    # This will generate a matrix of shape (batch_size, nkerns[1] * 4 * 4),
+    # or (500, 50 * 4 * 4) = (500, 800) with the default values.
+    layer2_input = layer1.output.flatten(2)
+
+    # construct a fully-connected sigmoidal layer
+    layer2 = HiddenLayer(
+        rng,
+        input=layer2_input,
+        n_in=nkerns[1] * 4 * 4,
+        n_out=n_hidden,
+        activation=activation
+    )
+
+    # classify the values of the fully-connected sigmoidal layer
+    layer3 = LogisticRegression(input=layer2.output, n_in=n_hidden, n_out=n_out)
+
+    # the cost we minimize during training is the NLL of the model
+    cost = layer3.negative_log_likelihood(y)
+
+    # create a list of all model parameters to be fit by gradient descent
+    params = layer3.params + layer2.params + layer1.params + layer0.params
 
     if update_rule == 'adadelta':
         grad_updates = adadelta(loss_or_grads=cost, params=params, learning_rate=lr_rate, rho=0.95, epsilon=1e-6)
@@ -90,11 +123,11 @@ def train_dropout_net(
                                       y: train_y[index * batch_size:(index + 1) * batch_size]
                                   })
 
-    val_model = theano.function([index], mlp.errors(y), on_unused_input='ignore', givens={x: validate_x, y: validate_y})
+    val_model = theano.function([index], layer3.errors(y), on_unused_input='ignore', givens={x: validate_x, y: validate_y})
 
-    test_model = theano.function([index], mlp.errors(y), on_unused_input='ignore', givens={x: test_x, y: test_y})
+    test_model = theano.function([index], layer3.errors(y), on_unused_input='ignore', givens={x: test_x, y: test_y})
 
-    predict_output = mlp.layers[-1].y_pred if dropout else mlp.logRegressionLayer.y_pred
+    predict_output = layer3.y_pred
     predict_model = theano.function([index], predict_output, on_unused_input='ignore', givens={x: test_x, y: test_y})
 
     print 'training with %s...' % update_rule
@@ -125,19 +158,7 @@ def train_dropout_net(
         return best_prediction
 
 
-def get_concatenated_document_vectors(data=SST_KAGGLE):
-    train_x_1, validate_x_1, test_x_1 = read_doc2vec_pickle(dm=True, concat=False, data=data)
-    train_x_2, validate_x_2, test_x_2 = read_doc2vec_pickle(dm=False, concat=False, data=data)
-    train_x_3, validate_x_3, test_x_3 = read_ngram_vectors(data=data)
-
-    train_x = np.concatenate((train_x_1, train_x_2, train_x_3), axis=1)
-    validate_x = np.concatenate((validate_x_1, validate_x_2, validate_x_3), axis=1)
-    test_x = np.concatenate((test_x_1, test_x_2, test_x_3), axis=1)
-
-    return train_x, validate_x, test_x
-
-
-def wrapper_kaggle():
+if __name__ == '__main__':
     train_x, validate_x, test_x = get_concatenated_document_vectors(data=SST_KAGGLE)
     _, train_y, _, validate_y, _ = read_sst_kaggle_pickle()
 
@@ -146,25 +167,24 @@ def wrapper_kaggle():
 
     dim = train_x[0].shape[0]
     print "input dimension is %d" % dim
+
+    img_size = int(np.sqrt(dim))
+
     n_out = len(np.unique(validate_y))
     datasets = (train_x, train_y, validate_x, validate_y, test_x)
 
-    best_prediction = train_dropout_net(
+    best_prediction = train_lecun_net(
+        img_size=img_size,
         datasets=datasets,
-        use_bias=True,
         n_epochs=40,
-        dim=dim,
         lr_rate=0.05,
         n_out=n_out,
-        dropout=True,
-        dropout_rates=[0.5] * 3,
-        n_hidden=[600, 400, 200],
-        activations=[leaky_relu] * 3,
+        n_hidden=300,
+        activation=leaky_relu,
         batch_size=100,
         update_rule='adagrad',
         no_test_y=True
     )
-
     import csv
     save_path = Path('C:/Users/Song/Course/571/hw3/kaggle_result.csv')
     with open(save_path, 'wb') as f:
@@ -173,6 +193,3 @@ def wrapper_kaggle():
         phrase_ids = np.arange(156061, 222353)
         for phrase_id, sentiment in zip(phrase_ids, best_prediction):
             writer.writerow([phrase_id, sentiment])
-
-if __name__ == '__main__':
-    wrapper_kaggle()

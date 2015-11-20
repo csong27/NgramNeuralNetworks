@@ -156,16 +156,16 @@ def save_ngram_vectors(data=SST_KAGGLE):
     n_out = len(np.unique(validate_y))
     saved_train, saved_validate, saved_test = train_ngram_conv_net(
         datasets=datasets,
-        ngrams=(2,),
+        ngrams=(2, ),
         use_bias=True,
         n_epochs=20,
         ngram_bias=False,
         dim=dim,
-        lr_rate=0.1,
+        lr_rate=0.03,
         n_out=n_out,
         dropout=True,
         dropout_rate=0.5,
-        n_hidden=100,
+        n_hidden=128,
         activation=leaky_relu,
         ngram_activation=leaky_relu,
         batch_size=200,
@@ -173,8 +173,6 @@ def save_ngram_vectors(data=SST_KAGGLE):
         no_test_y=no_test_y,
         save_ngram=True
     )
-
-    print saved_train.shape
 
     save_path = "D:/data/nlpdata/pickled_data/doc2vec/"
     save_path += data + "_ngram.pkl"
