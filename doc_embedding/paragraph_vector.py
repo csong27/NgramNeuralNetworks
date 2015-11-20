@@ -32,7 +32,7 @@ def get_vectors(model, docs, trained=True):
     return np.asarray(vectors)
 
 
-def train_doc2vec(data, dm=True, concat=False, negative=20, size=100, epochs=30, alpha=0.05, min_alpha=0.001):
+def train_doc2vec(data, dm=True, concat=False, negative=20, size=100, epochs=30, alpha=0.05, min_alpha=0.025):
     if data == SST_KAGGLE:
         train_x, train_y, test_x = read_sst_kaggle_pickle()
     else:
@@ -100,3 +100,4 @@ def read_doc2vec_pickle(dm=True, concat=True, data=SST_KAGGLE):
 
 if __name__ == '__main__':
     save_doc2vec_pickle(dm=True, concat=False, size=150)
+    save_doc2vec_pickle(dm=False, concat=False, size=150)

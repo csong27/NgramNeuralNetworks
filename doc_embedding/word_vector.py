@@ -167,7 +167,7 @@ def get_document_matrices(google=False, dim=100, cutoff=60, uniform=True, data='
 
         return train_x, train_y, validate_x, validate_y, test_x, test_y
     elif kaggle:
-        cutoff = 35
+        cutoff = 40
         train_x, train_y, test_x = read_sst_kaggle_pickle()
         train_x = get_reviews_vectors(train_x, model, aggregate=False, cutoff=cutoff, uniform=uniform, bigram=bigram)
         test_x = get_reviews_vectors(test_x, model, aggregate=False, cutoff=cutoff, uniform=uniform, bigram=bigram)
