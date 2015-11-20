@@ -4,6 +4,25 @@ from utils.load_data import *
 from path import Path
 
 
+def get_evaluate_model(tensor_variables, conv_layers, classifier, evaluate_set, nkerns, predict=False, img_size=30):
+    index = T.lscalar()
+    x, y = tensor_variables
+    evaluate_x, evaluate_y = evaluate_set
+    test_size = evaluate_x.get_value(borrow=True).shape[0]
+    test_layer_input = x.reshape((test_size, 1, img_size, img_size))
+    for i, conv_layer in enumerate(conv_layers):
+        test_layer_output = conv_layer.predict(test_layer_input, test_size, nkerns[i])
+        test_layer_input = test_layer_output
+    test_y_pred = classifier.predict(test_layer_output.flatten(2))
+    test_error = T.mean(T.neq(test_y_pred, y))
+    test_model = theano.function([index], test_error, on_unused_input='ignore', givens={x: evaluate_x, y: evaluate_y})
+    predict_model = theano.function([index], test_y_pred, on_unused_input='ignore', givens={x: evaluate_x, y: evaluate_y})
+    if predict:
+        return test_model, predict_model
+    else:
+        return test_model
+
+
 def train_lecun_net(
         img_size,
         datasets,
@@ -14,6 +33,7 @@ def train_lecun_net(
         n_out=2,
         activation=relu,
         nkerns=[10, 20],
+        dropout_rate=0.5,
         update_rule='adadelta',
         lr_rate=0.01,
         momentum_ratio=0.9,
@@ -26,8 +46,6 @@ def train_lecun_net(
     else:
         train_x, train_y, validate_x, validate_y, test_x, test_y = datasets
 
-    print 'size of train, validation, test set are %d, %d, %d' % (train_y.shape[0], validate_y.shape[0], test_x.shape[0])
-
     # if dataset size is not a multiple of mini batches, replicate
     residual = train_x.shape[0] % batch_size
     if residual > 0:
@@ -37,6 +55,8 @@ def train_lecun_net(
         extra_y = train_y[extra_indices]
         train_x = np.append(train_x, extra_x, axis=0)
         train_y = np.append(train_y, extra_y, axis=0)
+
+    print 'size of train, validation, test set are %d, %d, %d' % (train_y.shape[0], validate_y.shape[0], test_x.shape[0])
 
     train_x, train_y = shared_dataset((train_x, train_y))
     validate_x, validate_y = shared_dataset((validate_x, validate_y))
@@ -65,7 +85,8 @@ def train_lecun_net(
         input=layer0_input,
         image_shape=(batch_size, 1, img_size, img_size),
         filter_shape=(nkerns[0], 1, 7, 7),
-        poolsize=(2, 2)
+        poolsize=(2, 2),
+        activation=activation
     )
 
     # Construct the second convolutional pooling layer
@@ -77,32 +98,29 @@ def train_lecun_net(
         input=layer0.output,
         image_shape=(batch_size, nkerns[0], 12, 12),
         filter_shape=(nkerns[1], nkerns[0], 5, 5),
-        poolsize=(2, 2)
+        poolsize=(2, 2),
+        activation=activation
     )
 
     # the HiddenLayer being fully-connected, it operates on 2D matrices of
     # shape (batch_size, num_pixels) (i.e matrix of rasterized images).
     # This will generate a matrix of shape (batch_size, nkerns[1] * 4 * 4),
     # or (500, 50 * 4 * 4) = (500, 800) with the default values.
-    layer2_input = layer1.output.flatten(2)
-
-    # construct a fully-connected sigmoidal layer
-    layer2 = HiddenLayer(
-        rng,
-        input=layer2_input,
-        n_in=nkerns[1] * 4 * 4,
-        n_out=n_hidden,
-        activation=activation
+    mlp_input = layer1.output.flatten(2)
+    n_in = nkerns[1] * 4 * 4
+    mlp = MLPDropout(
+        rng=rng,
+        input=mlp_input,
+        layer_sizes=[n_in, n_hidden, n_out],
+        dropout_rates=[dropout_rate],
+        activations=[activation],
+        use_bias=False
     )
-
-    # classify the values of the fully-connected sigmoidal layer
-    layer3 = LogisticRegression(input=layer2.output, n_in=n_hidden, n_out=n_out)
-
     # the cost we minimize during training is the NLL of the model
-    cost = layer3.negative_log_likelihood(y)
+    cost = mlp.negative_log_likelihood(y)
 
     # create a list of all model parameters to be fit by gradient descent
-    params = layer3.params + layer2.params + layer1.params + layer0.params
+    params = mlp.params + layer1.params + layer0.params
 
     if update_rule == 'adadelta':
         grad_updates = adadelta(loss_or_grads=cost, params=params, learning_rate=lr_rate, rho=0.95, epsilon=1e-6)
@@ -123,12 +141,10 @@ def train_lecun_net(
                                       y: train_y[index * batch_size:(index + 1) * batch_size]
                                   })
 
-    val_model = theano.function([index], layer3.errors(y), on_unused_input='ignore', givens={x: validate_x, y: validate_y})
-
-    test_model = theano.function([index], layer3.errors(y), on_unused_input='ignore', givens={x: test_x, y: test_y})
-
-    predict_output = layer3.y_pred
-    predict_model = theano.function([index], predict_output, on_unused_input='ignore', givens={x: test_x, y: test_y})
+    val_model = get_evaluate_model(conv_layers=[layer0, layer1], classifier=mlp, evaluate_set=(validate_x, validate_y),
+                                   tensor_variables=(x, y), predict=False, nkerns=[1] + nkerns)
+    test_model, predict_model = get_evaluate_model(conv_layers=[layer0, layer1], classifier=mlp, evaluate_set=(test_x, test_y),
+                                                   tensor_variables=(x, y), predict=True, nkerns=[1] + nkerns)
 
     print 'training with %s...' % update_rule
     epoch = 0
@@ -158,7 +174,8 @@ def train_lecun_net(
         return best_prediction
 
 
-if __name__ == '__main__':
+
+def wrapper_kaggle():
     train_x, validate_x, test_x = get_concatenated_document_vectors(data=SST_KAGGLE)
     _, train_y, _, validate_y, _ = read_sst_kaggle_pickle()
 
@@ -176,10 +193,12 @@ if __name__ == '__main__':
     best_prediction = train_lecun_net(
         img_size=img_size,
         datasets=datasets,
-        n_epochs=40,
+        n_epochs=30,
         lr_rate=0.05,
         n_out=n_out,
-        n_hidden=300,
+        dropout_rate=0.5,
+        n_hidden=500,
+        nkerns=[20, 30],
         activation=leaky_relu,
         batch_size=100,
         update_rule='adagrad',
@@ -193,3 +212,6 @@ if __name__ == '__main__':
         phrase_ids = np.arange(156061, 222353)
         for phrase_id, sentiment in zip(phrase_ids, best_prediction):
             writer.writerow([phrase_id, sentiment])
+
+if __name__ == '__main__':
+    wrapper_kaggle()
