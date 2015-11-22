@@ -1,4 +1,5 @@
-from convolutional_net import train_ngram_conv_net, read_ngram_vectors
+from convolutional_net import train_ngram_conv_net
+from sklearn.cross_validation import train_test_split
 from path import Path
 from neural_network.non_linear import *
 from doc_embedding import *
@@ -51,8 +52,10 @@ def wrapper_yelp():
     )
 
 
-def wrapper_kaggle():
-    train_x, train_y, validate_x, validate_y, test_x = read_matrices_kaggle_pickle()
+def wrapper_kaggle(validate_ratio=0.2):
+    train_x, train_y, test_x = read_matrices_kaggle_pickle()
+    train_x, validate_x, train_y, validate_y = train_test_split(train_x, train_y, test_size=validate_ratio,
+                                                                random_state=42, stratify=train_y)
     dim = train_x[0].shape[1]
     n_out = len(np.unique(validate_y))
     datasets = (train_x, train_y, validate_x, validate_y, test_x)
@@ -68,10 +71,10 @@ def wrapper_kaggle():
         n_out=n_out,
         dropout=True,
         dropout_rate=0.5,
-        n_hidden=100,
+        n_hidden=200,
         activation=leaky_relu,
         ngram_activation=leaky_relu,
-        batch_size=200,
+        batch_size=100,
         update_rule='adagrad',
         no_test_y=True
     )

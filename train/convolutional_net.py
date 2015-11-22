@@ -129,7 +129,7 @@ def train_ngram_conv_net(
             else:
                 best_prediction = predict_model(epoch)
             # saving best pretrained vectors
-            if save_ngram and epoch >= 10:
+            if save_ngram and epoch:
                 saved_train = save_train(epoch)
                 saved_validate = save_validate(epoch)
                 saved_test = save_test(epoch)

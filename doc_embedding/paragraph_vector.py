@@ -2,6 +2,7 @@ from gensim.models import Doc2Vec
 from gensim.models.doc2vec import TaggedDocument
 from utils.load_data import *
 from random import shuffle
+from copy import copy
 from path import Path
 import cPickle as pkl
 import numpy as np
@@ -32,24 +33,24 @@ def get_vectors(model, docs, trained=True):
     return np.asarray(vectors)
 
 
-def train_doc2vec(data, dm=True, concat=False, negative=20, size=100, epochs=30, alpha=0.05, min_alpha=0.025):
+def train_doc2vec(data, dm=True, concat=False, negative=20, size=100, epochs=20, alpha=0.025, min_alpha=0.001):
     if data == SST_KAGGLE:
         train_x, train_y, test_x = read_sst_kaggle_pickle()
     else:
         return
     train_x = get_tagged_document(train_x, 'train')
     if dm and concat:
-        model = Doc2Vec(dm=1, dm_concat=1, size=size, window=5, negative=negative, hs=0, min_count=2, workers=cores)
+        model = Doc2Vec(dm=1, dm_concat=1, size=size, window=5, negative=negative, hs=0, min_count=1, workers=cores)
     elif dm:
-        model = Doc2Vec(dm=1, dm_mean=1, size=size, window=8, negative=negative, hs=0, min_count=2, workers=cores)
+        model = Doc2Vec(dm=1, dm_mean=1, size=size, window=10, negative=negative, hs=0, min_count=1, workers=cores)
     else:
-        model = Doc2Vec(dm=0, size=size, negative=negative, window=8, hs=0, min_count=2, workers=cores)
-    train_doc = train_x
+        model = Doc2Vec(dm=0, size=size, negative=negative, window=10, hs=0, min_count=1, workers=cores)
+    train_doc = copy(train_x)
     model.build_vocab(train_doc)
 
     alpha_delta = (alpha - min_alpha) / epochs
     for epoch in range(epochs):
-        shuffle(train_doc)
+        np.random.shuffle(train_doc)
         model.alpha, model.min_alpha = alpha, alpha
         model.train(train_doc)
         alpha -= alpha_delta
@@ -99,5 +100,5 @@ def read_doc2vec_pickle(dm=True, concat=True, data=SST_KAGGLE):
 
 
 if __name__ == '__main__':
-    save_doc2vec_pickle(dm=True, concat=False, size=150)
-    save_doc2vec_pickle(dm=False, concat=False, size=150)
+    save_doc2vec_pickle(dm=True, concat=False, size=400)
+    save_doc2vec_pickle(dm=False, concat=False, size=300)

@@ -228,8 +228,3 @@ def read_kaggle_raw(validate_ratio=0.2):
     train_x, validate_x, train_y, validate_y = train_test_split(train_x, train_y, test_size=validate_ratio,
                                                                 random_state=42, stratify=train_y)
     return train_x, train_y, validate_x, validate_y, test_x
-
-
-if __name__ == '__main__':
-    train_x, train_y, test_x = read_sst_kaggle_pickle()
-    print len(test_x)

@@ -131,13 +131,13 @@ def get_concatenated_document_vectors(data=SST_KAGGLE):
     train_x_2, test_x_2 = read_doc2vec_pickle(dm=False, concat=False, data=data)
     train_x_3, test_x_3 = read_ngram_vectors(data=data)
 
-    train_x = np.concatenate((train_x_1, train_x_2, train_x_3), axis=1)
-    test_x = np.concatenate((test_x_1, test_x_2, test_x_3), axis=1)
+    train_x = np.concatenate((train_x_1, train_x_2), axis=1)
+    test_x = np.concatenate((test_x_1, test_x_2), axis=1)
 
     return train_x, test_x
 
 
-def wrapper_kaggle(validate_ratio=0.1):
+def wrapper_kaggle(validate_ratio=0.2):
     train_x, test_x = get_concatenated_document_vectors(data=SST_KAGGLE)
     _, train_y, _ = read_sst_kaggle_pickle()
     train_x, validate_x, train_y, validate_y = train_test_split(train_x, train_y, test_size=validate_ratio,
@@ -147,17 +147,19 @@ def wrapper_kaggle(validate_ratio=0.1):
     validate_y = np.asarray(validate_y)
 
     dim = train_x[0].shape[0]
-    print "input dimension is %d" % dim
     n_out = len(np.unique(validate_y))
     datasets = (train_x, train_y, validate_x, validate_y, test_x)
 
-    n_layers = 2
+    n_layers = 1
+
+    print "input dimension is %d, output dimension is %d" % (dim, n_out)
+
     best_prediction = train_dropout_net(
         datasets=datasets,
         use_bias=True,
         n_epochs=40,
         dim=dim,
-        lr_rate=0.05,
+        lr_rate=0.5,
         n_out=n_out,
         dropout=True,
         dropout_rates=[0.5] * n_layers,
