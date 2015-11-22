@@ -190,7 +190,10 @@ def read_kaggle_train(p=kaggle_train_path):
     for line in f:
         data = line.split('\t')
         label = int(data[-1])
-        review = data[2].lower().split(' ')
+        review = data[2]
+        if review[-1] == '\n':
+            review = review[:-1]
+        review = review.lower().split(' ')
         x.append(review)
         y.append(label)
     return x, y
@@ -202,7 +205,10 @@ def read_kaggle_test(p=kaggle_test_path):
     x = []
     for line in f:
         data = line.split('\t')
-        review = data[2].lower().split(' ')
+        review = data[2]
+        if review[-1] == '\n':
+            review = review[:-1]
+        review = review.lower().split(' ')
         x.append(review)
     return x
 
@@ -228,3 +234,7 @@ def read_kaggle_raw(validate_ratio=0.2):
     train_x, validate_x, train_y, validate_y = train_test_split(train_x, train_y, test_size=validate_ratio,
                                                                 random_state=42, stratify=train_y)
     return train_x, train_y, validate_x, validate_y, test_x
+
+
+if __name__ == '__main__':
+    save_sst_kaggle_pickle()

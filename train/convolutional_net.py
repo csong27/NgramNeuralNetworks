@@ -2,7 +2,7 @@ from neural_network import *
 from utils.load_data import *
 from doc_embedding import read_matrices_kaggle_pickle
 from path import Path
-from sklearn.cross_validation import train_test_split
+from sklearn.cross_validation import StratifiedShuffleSplit
 import cPickle as pkl
 
 
@@ -148,15 +148,16 @@ def train_ngram_conv_net(
 def save_ngram_vectors(data=SST_KAGGLE, validate_ratio=0.2):
     if data == SST_KAGGLE:
         train_x, train_y, test_x = read_matrices_kaggle_pickle()
-        train_x, validate_x, train_y, validate_y = train_test_split(train_x, train_y, test_size=validate_ratio,
-                                                                    random_state=42, stratify=train_y)
-        datasets = (train_x, train_y, validate_x, validate_y, test_x)
+        sss_indices = StratifiedShuffleSplit(y=train_y, n_iter=1, test_size=validate_ratio, random_state=42)
+        for indices in sss_indices:
+            train_index, test_index = indices
+        datasets = (train_x[train_index], train_y[train_index], train_x[test_index], train_y[test_index], test_x)
         no_test_y = True
     else:
         raise NotImplementedError
 
     dim = train_x[0].shape[1]
-    n_out = len(np.unique(validate_y))
+    n_out = len(np.unique(train_y))
     saved_train, saved_validate, saved_test = train_ngram_conv_net(
         datasets=datasets,
         ngrams=(1, 2),
@@ -171,19 +172,21 @@ def save_ngram_vectors(data=SST_KAGGLE, validate_ratio=0.2):
         n_hidden=200,
         activation=leaky_relu,
         ngram_activation=leaky_relu,
-        batch_size=200,
+        batch_size=100,
         update_rule='adagrad',
         no_test_y=no_test_y,
         save_ngram=True
     )
-    saved_train = np.append(saved_train, saved_validate, axis=0)
+    saved_train_all = np.zeros((train_x.shape[0], dim))
+    saved_train_all[train_index] = saved_train
+    saved_train_all[test_index] = saved_validate
 
     save_path = "D:/data/nlpdata/pickled_data/doc2vec/"
     save_path += data + "_ngram.pkl"
     print "saving doc2vec to %s" % save_path
 
     f = open(Path(save_path), "wb")
-    pkl.dump((saved_train, saved_test), f, -1)
+    pkl.dump((saved_train_all, saved_test), f, -1)
     f.close()
 
 
