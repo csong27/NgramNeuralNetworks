@@ -2,8 +2,6 @@ __author__ = 'Song'
 import json
 from path import Path
 from gensim.parsing import *
-from label_embedding.my_word2vec import STAR_LABELS
-from utils import yelp_2013_test, yelp_2013_train
 from gensim.models.doc2vec import TaggedDocument
 from nltk.tokenize import sent_tokenize
 
@@ -73,7 +71,7 @@ class MyDocuments(object):
                 yield (star, arr)
             elif self.str_label:
                 arr = preprocess_review(text)
-                arr.append(STAR_LABELS[int(star) - 1])
+                arr.append(str(int(star) - 1))
                 yield arr
             else:
                 review_id = json_object['review_id']
@@ -101,7 +99,3 @@ class MySentences(object):
                 yield TaggedDocument(words=preprocess_review(sentence), tags=tag)
 
 
-if __name__ == '__main__':
-    sentences = MySentences(yelp_2013_train)
-    for sentence in sentences:
-        print sentence

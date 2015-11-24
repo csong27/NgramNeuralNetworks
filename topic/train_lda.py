@@ -1,35 +1,16 @@
 import logging
+from corpus import get_documents, MyCorpus
 from utils.load_data import *
 from path import Path
-from gensim import corpora, models
+from gensim import models
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
-lda_pickled_path = "D:/data/nlpdata/pickled_data/lda_"
+lda_pickled_path = "D:/data/nlpdata/pickled_data/topic/lda_"
 
 
-def get_documents(data):
-    if data == SST_KAGGLE:
-        train_x, _, test_x = read_sst_kaggle_pickle(use_textblob=True)
-        document = train_x + test_x
-        return document
-    else:
-        raise NotImplementedError
-
-
-class MyCorpus(object):
-    def __init__(self, documents):
-        self.documents = documents
-        self.dictionary = corpora.Dictionary(documents)
-        self.dictionary.filter_extremes(no_below=2, no_above=0.75)
-
-    def __iter__(self):
-        for tokens in self.documents:
-            yield self.dictionary.doc2bow(tokens)
-
-
-def train_lda(data=SST_KAGGLE, save_model=True):
+def train_lda(data=SST_KAGGLE, num_topics=30, save_model=True):
     documents = get_documents(data=data)
     corpus = MyCorpus(documents=documents)
-    lda = models.LdaMulticore(corpus, id2word=corpus.dictionary, num_topics=30, workers=2, chunksize=10000,
+    lda = models.LdaMulticore(corpus, id2word=corpus.dictionary, num_topics=num_topics, workers=2, chunksize=10000,
                               iterations=100)
     print documents[0]
     print lda[corpus.dictionary.doc2bow(documents[0])]
@@ -47,4 +28,5 @@ def load_lda(data=SST_KAGGLE):
 
 
 if __name__ == '__main__':
-    train_lda()
+    lda = load_lda()
+    lda.print_topics(num_topics=30, num_words=15)
