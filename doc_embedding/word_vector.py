@@ -3,7 +3,6 @@ import numpy as np
 from nltk.collocations import ngrams
 from utils.load_data import *
 from utils.load_vector_model import read_glove_model, read_google_model
-from sklearn.cross_validation import train_test_split
 from path import Path
 
 max_count = 0

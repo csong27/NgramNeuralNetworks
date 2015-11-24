@@ -24,7 +24,7 @@ same say see seem seemed seeming seems several she should show side since sincer
 take ten that the their them themselves then thence there thereafter thereby therefore therein thereupon these they thick thin third this those though through throughout thru thus to together too toward towards twelve twenty un
 until up upon us used using via
 was we were what whatever when whence whenever where whereafter whereas whereby wherein whereupon wherever whether which while whither who whoever whole whom whose why will with within without would yet you
-your yours yourself yourselves
+your yours yourself yourselves 's
 """
 STOPWORDS = frozenset(w for w in STOPWORDS.split() if w)
 
