@@ -1,6 +1,7 @@
 from utils.load_data import *
 from gensim import corpora
 
+
 def get_documents(data):
     if data == SST_KAGGLE:
         train_x, _, test_x = read_sst_kaggle_pickle(use_textblob=True)

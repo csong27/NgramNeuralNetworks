@@ -12,10 +12,6 @@ def train_lda(data=SST_KAGGLE, num_topics=30, save_model=True):
     corpus = MyCorpus(documents=documents)
     lda = models.LdaMulticore(corpus, id2word=corpus.dictionary, num_topics=num_topics, workers=2, chunksize=10000,
                               iterations=100)
-    print documents[0]
-    print lda[corpus.dictionary.doc2bow(documents[0])]
-    print '\n***********************\n'
-    lda.print_topics(num_topics=30, num_words=15)
     if save_model:
         fname = Path(lda_pickled_path + data + ".pkl")
         lda.save(fname=fname)
@@ -28,5 +24,4 @@ def load_lda(data=SST_KAGGLE):
 
 
 if __name__ == '__main__':
-    lda = load_lda()
-    lda.print_topics(num_topics=30, num_words=15)
+    train_lda(num_topics=50)
