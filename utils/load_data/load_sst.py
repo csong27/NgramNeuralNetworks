@@ -1,18 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+from textblob import TextBlob
 from sklearn.cross_validation import train_test_split
 from path import Path
 import os
 import logging
 from collections import namedtuple
 import cPickle as pkl
+from utils.preprocess import STOPWORDS
+
 
 kaggle_train_path = Path('C:/Users/Song/Course/571/hw3/train.tsv')
 kaggle_test_path = Path('C:/Users/Song/Course/571/hw3/test.tsv')
 treebank_path = 'D:/data/nlpdata/stanfordSentimentTreebank/'
 sst_sent_pickle = Path('C:/Users/Song/Course/571/project/pickled_data/sst_sent.pkl')
-sst_kaggle_pickle = Path('C:/Users/Song/Course/571/project/pickled_data/sst_kaggle.pkl')
+pickle_path = 'C:/Users/Song/Course/571/project/pickled_data/'
+
 
 SentimentDocument = namedtuple('SentimentDocument', 'words tags split sentiment')
 
@@ -103,7 +106,7 @@ def read_su_sentiment_rotten_tomatoes(dirname, lowercase=True):
             if lowercase:
                 words = [word.lower() for word in words]
             (sentence_id, split_i) = info_by_sentence.get(text, (None, 0))
-            split = [None,'train','test','dev'][split_i]
+            split = [None, 'train', 'test', 'dev'][split_i]
             phrases[id] = SentimentPhrase(words, [id], split, sentiment, sentence_id)
 
     assert len([phrase for phrase in phrases if phrase.sentence_id is not None]) == len(info_by_sentence)  # all
@@ -165,24 +168,39 @@ def read_sst_sent_pickle():
     return train_x, train_y, validate_x, validate_y, test_x, test_y
 
 
-def save_sst_kaggle_pickle():
-    train_x, train_y = read_kaggle_train()
-    test_x = read_kaggle_test()
-    print len(test_x)
-    f = open('sst_kaggle.pkl', 'wb')
+def save_sst_kaggle_pickle(use_textblob=True):
+    train_x, train_y = read_kaggle_train(use_textblob=use_textblob)
+    test_x = read_kaggle_test(use_textblob=use_textblob)
+    print len([x for x in train_x if x == []])
+    print len([x for x in test_x if x == []])
+    fname = "sst_kaggle.pkl"
+    if use_textblob:
+        fname = "lemma_" + fname
+    save_path = pickle_path + fname
+    f = open(Path(save_path), 'wb')
     pkl.dump((train_x, train_y), f, -1)
     pkl.dump((test_x, []), f, -1)
     f.close()
 
 
-def read_sst_kaggle_pickle():
-    f = open(sst_kaggle_pickle, 'rb')
+def read_sst_kaggle_pickle(use_textblob=False):
+    fname = "sst_kaggle.pkl"
+    if use_textblob:
+        fname = "lemma_" + fname
+    save_path = pickle_path + fname
+    f = open(Path(save_path), 'rb')
     train_x, train_y = pkl.load(f)
     test_x, _ = pkl.load(f)
     return train_x, train_y, test_x
 
 
-def read_kaggle_train(p=kaggle_train_path):
+def textblob_preprocess(message):
+    words = TextBlob(message.lower()).words
+    # for each word, take its "base form" = lemma
+    return [word.lemma for word in words if word not in STOPWORDS]
+
+
+def read_kaggle_train(p=kaggle_train_path, use_textblob=False):
     f = open(p)
     f.readline()
     x = []
@@ -193,13 +211,16 @@ def read_kaggle_train(p=kaggle_train_path):
         review = data[2]
         if review[-1] == '\n':
             review = review[:-1]
-        review = review.lower().split(' ')
+        if use_textblob:
+            review = textblob_preprocess(review)
+        else:
+            review = review.lower().split(' ')
         x.append(review)
         y.append(label)
     return x, y
 
 
-def read_kaggle_test(p=kaggle_test_path):
+def read_kaggle_test(p=kaggle_test_path, use_textblob=False):
     f = open(p)
     f.readline()
     x = []
@@ -208,12 +229,16 @@ def read_kaggle_test(p=kaggle_test_path):
         review = data[2]
         if review[-1] == '\n':
             review = review[:-1]
-        review = review.lower().split(' ')
+        if use_textblob:
+            review = textblob_preprocess(review)
+        else:
+            review = review.lower().split(' ')
         x.append(review)
     return x
 
 
-def read_kaggle_raw(validate=True, validate_ratio=0.2):
+def read_kaggle_raw():
+    # train dataset
     f = open(kaggle_train_path)
     f.readline()
     train_x = []
@@ -227,6 +252,8 @@ def read_kaggle_raw(validate=True, validate_ratio=0.2):
         train_x.append(review)
         train_y.append(label)
     f.close()
+
+    # test dataset
     f = open(kaggle_test_path)
     f.readline()
     test_x = []
@@ -236,12 +263,8 @@ def read_kaggle_raw(validate=True, validate_ratio=0.2):
         if review[-1] == '\n':
             review = review[:-1]
         test_x.append(review)
-    if validate:
-        train_x, validate_x, train_y, validate_y = train_test_split(train_x, train_y, test_size=validate_ratio,
-                                                                    random_state=42, stratify=train_y)
-        return train_x, train_y, validate_x, validate_y, test_x
-    else:
-        return train_x, train_y, test_x
+
+    return train_x, train_y, test_x
 
 if __name__ == '__main__':
     save_sst_kaggle_pickle()

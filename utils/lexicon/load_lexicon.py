@@ -7,6 +7,18 @@ from sklearn.feature_extraction.text import TfidfTransformer
 
 pos_path = Path("D:/data/nlpdata/lexicon/positive-words.txt")
 neg_path = Path("D:/data/nlpdata/lexicon/negative-words.txt")
+subj_path = Path("D:/data/nlpdata/lexicon/subjclueslen.tff")
+inquire_path = Path("D:/data/nlpdata/lexicon/inquirerbasic.txt")
+
+
+def read_subj_lexicon(p=subj_path):
+    f = open(p)
+    words = set()
+    for line in f:
+        arr = line.split(' ')
+        word = arr[2].split('=')[1]
+        words.add(word)
+    return words
 
 
 def read_lexicon(p):
@@ -21,6 +33,20 @@ def read_lexicon(p):
     return words
 
 
+def read_inquire(p=inquire_path):
+    f = open(p)
+    f.readline()
+    words = set()
+    for line in f:
+        arr = line.split('\t')
+        word = arr[0].lower().split('#')[0]
+        pos = arr[2]
+        neg = arr[3]
+        if pos != '' or neg != '':
+            words.add(word)
+    return words
+
+
 def senti_lexicon_vectorizor(data=SST_KAGGLE, tfidf=True):
     if data == SST_KAGGLE:
         train_x, train_y, test_x = read_sst_kaggle_pickle()
@@ -30,7 +56,9 @@ def senti_lexicon_vectorizor(data=SST_KAGGLE, tfidf=True):
         raise NotImplementedError
     pos_words = read_lexicon(pos_path)
     neg_words = read_lexicon(neg_path)
-    words = pos_words.union(neg_words)
+    subj_words = read_subj_lexicon()
+    inquire_words = read_inquire()
+    words = pos_words.union(neg_words, subj_words, inquire_words)
 
     vocab = train_words.intersection(words)
 
@@ -46,7 +74,6 @@ def senti_lexicon_vectorizor(data=SST_KAGGLE, tfidf=True):
     dv = DictVectorizer()
     all_x = dv.fit_transform(input_sent)
 
-    print all_x.shape
     if tfidf:
         # tf-idf vectorization
         tv = TfidfTransformer()

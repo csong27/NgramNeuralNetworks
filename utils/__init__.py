@@ -1,5 +1,6 @@
 __author__ = 'Song'
 from path import Path
+from save_kaggle_result import save_csv
 
 yelp_2013_train = Path('D:\data\yelpdata\yelp_training_set\yelp_training_set_review.json')
 yelp_2013_test = Path('D:\data\yelpdata\yelp_test_set\yelp_test_set_review.json')

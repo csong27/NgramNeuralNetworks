@@ -190,16 +190,5 @@ def save_ngram_vectors(data=SST_KAGGLE, validate_ratio=0.2):
     f.close()
 
 
-def read_ngram_vectors(data=SST_KAGGLE):
-    save_path = "D:/data/nlpdata/pickled_data/doc2vec/"
-    save_path += data + "_ngram.pkl"
-    print "reading doc2vec from %s" % save_path
-
-    f = open(Path(save_path), "rb")
-    saved_train, saved_test = pkl.load(f)
-    f.close()
-
-    return saved_train, saved_test
-
 if __name__ == '__main__':
     save_ngram_vectors()

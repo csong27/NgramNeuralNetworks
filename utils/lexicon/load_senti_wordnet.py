@@ -8,11 +8,11 @@ from sklearn.feature_extraction.text import TfidfTransformer
 wordnet_path = Path("D:/data/nlpdata/lexicon/SentiWordNet.txt")
 
 
-def add_word(words, word, score):
+def add_word(words, word, scores):
     if "_" in word:
         return
     word = word.split("#")[0]
-    words[word] = score
+    words[word] = scores
 
 
 def read_wordnet(p=wordnet_path):
@@ -26,29 +26,24 @@ def read_wordnet(p=wordnet_path):
         neg_score = float(data[3])
         words = data[4]
         if pos_score != 0 or neg_score != 0:
-            if pos_score != 0 and neg_score != 0:
-                score = abs(pos_score - neg_score)
-            elif pos_score != 0:
-                score = pos_score
-            else:
-                score = neg_score
-            if score == 0:
-                continue
+            scores = (pos_score, neg_score)
             arr = words.split(" ")
             if len(arr) > 1:
                 for word in arr:
-                    add_word(word_dict, word, score)
+                    add_word(word_dict, word, scores)
             else:
-                add_word(word_dict, words, score)
+                add_word(word_dict, words, scores)
 
     return word_dict
 
 
 def senti_wordnet_vectorizer(data=SST_KAGGLE, tfidf=True):
+    print "loading sentiment wordnet"
     if data == SST_KAGGLE:
         train_x, train_y, test_x = read_sst_kaggle_pickle()
         train_words = train_x + test_x
         train_words = set([word for sentence in train_words for word in sentence])
+        print train_words
     else:
         raise NotImplementedError
     word_dict = read_wordnet()
@@ -67,8 +62,10 @@ def senti_wordnet_vectorizer(data=SST_KAGGLE, tfidf=True):
     for sent in all_x:
         sent_dict = defaultdict(float)
         for word in sent:
-            if word in vocab:
-                sent_dict[word] += word_dict[word]  # add word sentiment score
+            if word in vocab:   # add word sentiment score
+                sent_dict[word + "_pos"] += word_dict[word][0]
+                sent_dict[word + "_neg"] += word_dict[word][1]
+
         input_sent.append(sent_dict)
     # dict vectorization
     dv = DictVectorizer()

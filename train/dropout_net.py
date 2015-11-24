@@ -1,8 +1,9 @@
 from neural_network import *
-from doc_embedding import *
 from utils.load_data import *
-from convolutional_net import read_ngram_vectors
-from sklearn.cross_validation import train_test_split
+from sklearn.cross_validation import StratifiedShuffleSplit
+from pickled_feature import get_concatenated_document_vectors
+from utils import save_csv
+import cPickle as pkl
 from path import Path
 import numpy as np
 
@@ -23,6 +24,7 @@ def train_dropout_net(
         lr_rate=0.01,
         momentum_ratio=0.9,
         no_test_y=False,
+        save_prob=False
 ):
     rng = np.random.RandomState(23455)
     if no_test_y:
@@ -98,6 +100,12 @@ def train_dropout_net(
     predict_output = mlp.layers[-1].y_pred if dropout else mlp.logRegressionLayer.y_pred
     predict_model = theano.function([index], predict_output, on_unused_input='ignore', givens={x: test_x, y: test_y})
 
+    if save_prob:
+        prob = mlp.layers[-1].p_y_given_x if dropout else mlp.logRegressionLayer.p_y_given_x
+        train_prob_fn = theano.function([index], prob, on_unused_input='ignore', givens={x: train_x})
+        validate_prob_fn = theano.function([index], prob, on_unused_input='ignore', givens={x: validate_x})
+        test_prob_fn = theano.function([index], prob, on_unused_input='ignore', givens={x: test_x})
+
     print 'training with %s...' % update_rule
     epoch = 0
     best_val_accuracy = 0
@@ -117,34 +125,35 @@ def train_dropout_net(
                 test_accuracy = 1 - test_model(epoch)
             else:
                 best_prediction = predict_model(epoch)
+            if save_prob:   # saving the predicted score for each class
+                train_prob = train_prob_fn(epoch)
+                validate_prob = validate_prob_fn(epoch)
+                test_prob = test_prob_fn(epoch)
+
         cost_epoch = np.mean(cost_list)
         print 'epoch %i, train cost %f, validate accuracy %f' % (epoch, cost_epoch, val_accuracy * 100.)
     if not no_test_y:
         print "\nbest test accuracy is %f" % test_accuracy
         return test_accuracy
+    elif save_prob:
+        return train_prob, validate_prob, test_prob
     else:
         return best_prediction
 
 
-def get_concatenated_document_vectors(data=SST_KAGGLE):
-    train_x_1, test_x_1 = read_doc2vec_pickle(dm=True, concat=False, data=data)
-    train_x_2, test_x_2 = read_doc2vec_pickle(dm=False, concat=False, data=data)
-    train_x_3, test_x_3 = read_ngram_vectors(data=data)
-
-    train_x = np.concatenate((train_x_1, train_x_2, train_x_3), axis=1)
-    test_x = np.concatenate((test_x_1, test_x_2, test_x_3), axis=1)
-
-    return train_x, test_x
-
-
-def wrapper_kaggle(validate_ratio=0.1):
-    train_x, test_x = get_concatenated_document_vectors(data=SST_KAGGLE)
-    _, train_y, _ = read_sst_kaggle_pickle()
-    train_x, validate_x, train_y, validate_y = train_test_split(train_x, train_y, test_size=validate_ratio,
-                                                                random_state=42, stratify=train_y)
-    train_y = np.asarray(train_y)
-    validate_y = np.asarray(validate_y)
-
+def wrapper_kaggle(epochs=40, validate_ratio=0.1, save_prob=True):
+    old_train_x, test_x = get_concatenated_document_vectors(data=SST_KAGGLE)
+    _, old_train_y, _ = read_sst_kaggle_pickle()
+    old_train_y = np.asarray(old_train_y)
+    # split train validate data
+    sss_indices = StratifiedShuffleSplit(y=old_train_y, n_iter=1, test_size=validate_ratio, random_state=42)
+    for indices in sss_indices:
+        train_index, test_index = indices
+    train_x = old_train_x[train_index]
+    validate_x = old_train_x[test_index]
+    train_y = old_train_y[train_index]
+    validate_y = old_train_y[test_index]
+    # get dataset info
     dim = train_x[0].shape[0]
     n_out = len(np.unique(validate_y))
     datasets = (train_x, train_y, validate_x, validate_y, test_x)
@@ -153,10 +162,10 @@ def wrapper_kaggle(validate_ratio=0.1):
 
     print "input dimension is %d, output dimension is %d" % (dim, n_out)
 
-    best_prediction = train_dropout_net(
+    return_val = train_dropout_net(
         datasets=datasets,
         use_bias=True,
-        n_epochs=40,
+        n_epochs=epochs,
         dim=dim,
         lr_rate=0.02,
         n_out=n_out,
@@ -166,17 +175,23 @@ def wrapper_kaggle(validate_ratio=0.1):
         activations=[leaky_relu] * n_layers,
         batch_size=100,
         update_rule='adagrad',
-        no_test_y=True
+        no_test_y=True,
+        save_prob=save_prob
     )
+    if not save_prob:
+        save_csv(return_val)
+    else:
+        train_prob, validate_prob, test_prob = return_val
+        saved_train_prob = np.zeros((old_train_x.shape[0], n_out))
+        saved_train_prob[train_index] = train_prob
+        saved_train_prob[test_index] = validate_prob
+        save_path = "D:/data/nlpdata/pickled_data/" + SST_KAGGLE + "_prob.pkl"
+        print "saving probability feature to %s" % save_path
 
-    import csv
-    save_path = Path('C:/Users/Song/Course/571/hw3/kaggle_result.csv')
-    with open(save_path, 'wb') as f:
-        writer = csv.writer(f, delimiter=',')
-        writer.writerow(['PhraseId', 'Sentiment'])
-        phrase_ids = np.arange(156061, 222353)
-        for phrase_id, sentiment in zip(phrase_ids, best_prediction):
-            writer.writerow([phrase_id, sentiment])
+        f = open(Path(save_path), "wb")
+        pkl.dump((saved_train_prob, test_prob), f, -1)
+        f.close()
+
 
 if __name__ == '__main__':
     wrapper_kaggle()

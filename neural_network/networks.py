@@ -84,9 +84,9 @@ class MLPDropout(object):
 
     def predict_p(self, new_data):
         next_layer_input = new_data
-        for i,layer in enumerate(self.layers):
-            if i<len(self.layers)-1:
-                next_layer_input = self.activations[i](T.dot(next_layer_input,layer.W) + layer.b)
+        for i, layer in enumerate(self.layers):
+            if i < len(self.layers) - 1:
+                next_layer_input = self.activations[i](T.dot(next_layer_input, layer.W) + layer.b)
             else:
                 p_y_given_x = T.nnet.softmax(T.dot(next_layer_input, layer.W) + layer.b)
         return p_y_given_x
