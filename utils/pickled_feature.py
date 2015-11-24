@@ -16,7 +16,7 @@ def read_probability_pickle(data=SST_KAGGLE):
     return train_prob, test_prob
 
 
-def get_concatenated_document_vectors(data=SST_KAGGLE):
+def get_concatenated_document_vectors(data=SST_KAGGLE, topic=True, doc2vec=True):
     train_x_1, test_x_1 = read_doc2vec_pickle(dm=True, concat=False, data=data)
     train_x_2, test_x_2 = read_doc2vec_pickle(dm=False, concat=False, data=data)
     train_x_3, test_x_3 = read_ngram_vectors(data=data)

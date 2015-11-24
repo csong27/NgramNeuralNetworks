@@ -183,7 +183,7 @@ def save_sst_kaggle_pickle(use_textblob=True):
     f.close()
 
 
-def read_sst_kaggle_pickle(use_textblob=False):
+def read_sst_kaggle_pickle(use_textblob=True):
     fname = "sst_kaggle.pkl"
     if use_textblob:
         fname = "lemma_" + fname

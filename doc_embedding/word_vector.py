@@ -14,11 +14,10 @@ def chunks(l, n):
         yield l[i:i+n]
 
 
-def get_document_matrix(text, model, cutoff=300, uniform=True, scale=0.1, shrink=True):
+def get_document_matrix(text, model, cutoff=300, uniform=False, scale=0.025, shrink=True):
     matrix = None
     rand_vector = np.random.uniform(-scale, scale, model.vector_size) if uniform \
         else np.random.normal(0, scale, model.vector_size)
-    count = 0
     if shrink and len(text) > cutoff:
         shrink_size = int(round(len(text) / float(cutoff) + 0.4))
         word_chunks = chunks(text, shrink_size)
@@ -33,6 +32,7 @@ def get_document_matrix(text, model, cutoff=300, uniform=True, scale=0.1, shrink
             else:
                 matrix = np.concatenate((matrix, [avg_vector]))
     else:
+        count = 0   # count word length
         for word in text:
             word_vector = model[word] if word in model else rand_vector
             if matrix is None:
@@ -42,9 +42,12 @@ def get_document_matrix(text, model, cutoff=300, uniform=True, scale=0.1, shrink
             count += 1
             if count >= cutoff:
                 break
-
+    # return random if matrix has no word
     if matrix is None:
-        return np.zeros((cutoff, model.vector_size))
+        matrix = np.random.uniform(-scale, scale, (cutoff, model.vector_size)) if uniform\
+            else np.random.normal(0, scale, (cutoff, model.vector_size))
+        return matrix
+    # add zero padding and cutoff
     length = matrix.shape[0]
     if length < cutoff:
         padding = np.zeros((cutoff - length, model.vector_size))
@@ -213,7 +216,7 @@ def save_matrices_pickle(google=True, data='rotten', cv=True, bigram=False, kagg
         pkl.dump((train_x, train_y), f, -1)
         pkl.dump((validate_x, validate_y), f, -1)
         pkl.dump((test_x, test_y), f, -1)
-    elif kaggle:
+    elif kaggle:    # too big, need to save with np.save
         train_x, train_y, test_x = get_document_matrices(google=google, data=data, cv=False,
                                                          bigram=bigram, kaggle=kaggle, dim=100)
         f_train = open('D:/data/nlpdata/pickled_data/kaggle/train_' + dataname, 'wb')

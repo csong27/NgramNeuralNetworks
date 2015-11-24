@@ -129,7 +129,7 @@ def train_ngram_conv_net(
             else:
                 best_prediction = predict_model(epoch)
             # saving best pretrained vectors
-            if save_ngram and epoch:
+            if save_ngram:
                 saved_train = save_train(epoch)
                 saved_validate = save_validate(epoch)
                 saved_test = save_test(epoch)
@@ -157,10 +157,11 @@ def save_ngram_vectors(data=SST_KAGGLE, validate_ratio=0.2):
         raise NotImplementedError
 
     dim = train_x[0].shape[1]
+
     n_out = len(np.unique(train_y))
     saved_train, saved_validate, saved_test = train_ngram_conv_net(
         datasets=datasets,
-        ngrams=(1, 2),
+        ngrams=(2, 1),
         use_bias=True,
         n_epochs=30,
         ngram_bias=False,
@@ -169,7 +170,7 @@ def save_ngram_vectors(data=SST_KAGGLE, validate_ratio=0.2):
         n_out=n_out,
         dropout=True,
         dropout_rate=0.5,
-        n_hidden=200,
+        n_hidden=300,
         activation=leaky_relu,
         ngram_activation=leaky_relu,
         batch_size=100,

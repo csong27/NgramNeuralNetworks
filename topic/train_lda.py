@@ -24,4 +24,4 @@ def load_lda(data=SST_KAGGLE):
 
 
 if __name__ == '__main__':
-    train_lda(num_topics=50)
+    train_lda(num_topics=100)

@@ -31,6 +31,7 @@ def topic_vectorizer(data=SST_KAGGLE):
 
 def save_topic_vectors(data=SST_KAGGLE):
     train_x, test_x = topic_vectorizer(data=data)
+    print train_x[:100]
     save_path = lda_pickled_path + data + ".pkl"
     f = open(save_path, "wb")
     pkl.dump((train_x, test_x), f, -1)

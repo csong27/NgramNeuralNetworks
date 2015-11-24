@@ -27,6 +27,8 @@ def prepare_data(data=SST_KAGGLE):
         train_x = sparse.hstack((train_x_1, train_x_2, train_x_3, train_x_4))
         test_x = sparse.hstack((test_x_1, test_x_2, test_x_3, test_x_4))
         return train_x, train_y, test_x
+    else:
+        raise NotImplementedError
 
 
 def classification_pylearn2():
