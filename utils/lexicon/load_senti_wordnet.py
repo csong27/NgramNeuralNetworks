@@ -43,7 +43,6 @@ def senti_wordnet_vectorizer(data=SST_KAGGLE, tfidf=True):
         train_x, train_y, test_x = read_sst_kaggle_pickle()
         train_words = train_x + test_x
         train_words = set([word for sentence in train_words for word in sentence])
-        print train_words
     else:
         raise NotImplementedError
     word_dict = read_wordnet()

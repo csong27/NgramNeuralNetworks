@@ -1,11 +1,10 @@
-from neural_network import *
-from utils.load_data import *
-from sklearn.cross_validation import StratifiedShuffleSplit
-from pickled_feature import get_concatenated_document_vectors
-from utils import save_csv
 import cPickle as pkl
 from path import Path
-import numpy as np
+from sklearn.cross_validation import StratifiedShuffleSplit
+from neural_network import *
+from utils import save_csv
+from utils.load_data import *
+from utils.pickled_feature import get_concatenated_document_vectors
 
 
 def train_dropout_net(
