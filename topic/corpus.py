@@ -15,7 +15,7 @@ class MyCorpus(object):
     def __init__(self, documents):
         self.documents = documents
         self.dictionary = corpora.Dictionary(documents)
-        self.dictionary.filter_extremes(no_below=2, no_above=0.75)
+        self.dictionary.filter_extremes(no_below=5, no_above=0.75)
 
     def __iter__(self):
         for tokens in self.documents:

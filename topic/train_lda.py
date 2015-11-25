@@ -20,8 +20,9 @@ def train_lda(data=SST_KAGGLE, num_topics=30, save_model=True):
 def load_lda(data=SST_KAGGLE):
     fname = lda_pickled_path + data + ".pkl"
     lda = models.LdaMulticore.load(Path(fname))
+    lda.print_topics(50)
     return lda
 
 
 if __name__ == '__main__':
-    train_lda(num_topics=100)
+    load_lda()

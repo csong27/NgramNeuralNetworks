@@ -2,9 +2,9 @@ from corpus import MyCorpus
 from train_lda import load_lda
 from utils.load_data import *
 from sklearn.feature_extraction import DictVectorizer
-lda_pickled_path = "D:/data/nlpdata/pickled_data/topic/ldavec_"
-
 import cPickle as pkl
+
+lda_pickled_path = "D:/data/nlpdata/pickled_data/topic/ldavec_"
 
 
 def topic_vectorizer(data=SST_KAGGLE):
@@ -29,6 +29,21 @@ def topic_vectorizer(data=SST_KAGGLE):
     return train_x.toarray(), test_x.toarray()
 
 
+def topic_word_vectorizer(data=SST_KAGGLE):
+    lda = load_lda(data=data)
+    train_doc, _, test_doc = read_sst_kaggle_pickle(use_textblob=True)
+    docs = train_doc + test_doc
+    corpus = MyCorpus(documents=docs)
+    count = 0
+    input_sent = []
+    for doc in docs:
+        bow_vec = corpus.dictionary.doc2bow(doc)
+        topics = lda[bow_vec]
+        if len(topics) == 50:
+            count += 1
+    print count
+
+
 def save_topic_vectors(data=SST_KAGGLE):
     train_x, test_x = topic_vectorizer(data=data)
     print train_x[:100]
@@ -48,4 +63,4 @@ def read_topic_vectors(data=SST_KAGGLE):
 
 
 if __name__ == '__main__':
-    save_topic_vectors()
+    topic_word_vectorizer()
