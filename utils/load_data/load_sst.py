@@ -168,7 +168,7 @@ def read_sst_sent_pickle():
     return train_x, train_y, validate_x, validate_y, test_x, test_y
 
 
-def save_sst_kaggle_pickle(use_textblob=True):
+def save_sst_kaggle_pickle(use_textblob=False):
     train_x, train_y = read_kaggle_train(use_textblob=use_textblob)
     test_x = read_kaggle_test(use_textblob=use_textblob)
     print len([x for x in train_x if x == []])
@@ -183,7 +183,7 @@ def save_sst_kaggle_pickle(use_textblob=True):
     f.close()
 
 
-def read_sst_kaggle_pickle(use_textblob=True):
+def read_sst_kaggle_pickle(use_textblob=False):
     fname = "sst_kaggle.pkl"
     if use_textblob:
         fname = "lemma_" + fname

@@ -114,15 +114,40 @@ def get_reviews_vectors(documents, model, average=True, aggregate=False, cutoff=
     return documents
 
 
-def get_aggregated_vectors(average=True, int_label=True, dim=300):
-    model = read_glove_model(dim=dim)
-    train_x, train_y, validate_x, validate_y = read_train_data(int_label=int_label)
-    test_x, test_y = read_test_data(int_label=int_label)
+def get_aggregated_vectors(google=True, data=SST_KAGGLE, average=True, dim=300):
+    if google:
+        model = read_google_model()
+    else:
+        model = read_glove_model(dim=dim)
     print "getting aggregate word vectors for documents..."
-    train_x = get_reviews_vectors(train_x, model, average)
-    validate_x = get_reviews_vectors(validate_x, model, average)
-    test_x = get_reviews_vectors(test_x, model, average)
-    return train_x, train_y, validate_x, validate_y, test_x, test_y
+    if data == SST_KAGGLE:
+        train_x, train_y, test_x = read_sst_kaggle_pickle()
+        train_x = get_reviews_vectors(train_x, model, average=average, aggregate=True)
+        test_x = get_reviews_vectors(test_x, model, average=average, aggregate=True)
+        return train_x, train_y, test_x
+
+
+def save_aggregated_vectors(google=True, data=SST_KAGGLE, average=True, dim=300):
+    path = 'D:/data/nlpdata/pickled_data/average_'
+    path += 'google_' if google else 'glove_'
+    path += data + '.pkl'
+    if data == SST_KAGGLE:
+        train_x, train_y, test_x = get_aggregated_vectors(google=google, data=data, average=average, dim=dim)
+        f = open(path, 'wb')
+        pkl.dump((train_x, train_y), f, -1)
+        pkl.dump((test_x, []), f, -1)
+        f.close()
+
+
+def read_aggregated_vectors(google=True, data=SST_KAGGLE):
+    path = 'D:/data/nlpdata/pickled_data/average_'
+    path += 'google_' if google else 'glove_'
+    path += data + '.pkl'
+    f = open(path, 'rb')
+    train_x, train_y = pkl.load(f)
+    test_x, test_y = pkl.load(f)
+    f.close()
+    return train_x, train_y, test_x
 
 
 def get_document_matrices(google=False, dim=100, cutoff=60, uniform=True, data='rotten', cv=True, bigram=False, kaggle=False):
@@ -263,4 +288,4 @@ def read_matrices_kaggle_pickle():
     return train_x, train_y, test_x
 
 if __name__ == '__main__':
-    save_matrices_pickle(google=False, data=SST_KAGGLE, cv=False, kaggle=True)
+    save_aggregated_vectors(google=False, dim=300)

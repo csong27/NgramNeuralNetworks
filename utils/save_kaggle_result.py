@@ -3,8 +3,8 @@ import numpy as np
 from path import Path
 
 
-def save_csv(best_prediction):
-    save_path = Path('C:/Users/Song/Course/571/hw3/kaggle_result.csv')
+def save_csv(best_prediction, fname=''):
+    save_path = Path('C:/Users/Song/Course/571/hw3/kaggle_result_' + fname + '.csv')
     with open(save_path, 'wb') as f:
         writer = csv.writer(f, delimiter=',')
         writer.writerow(['PhraseId', 'Sentiment'])

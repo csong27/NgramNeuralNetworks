@@ -21,7 +21,7 @@ def to_phrase():
     return train_x, train_y, test_x
 
 
-def vectorize_text(data=SST_KAGGLE, tfidf=True):
+def vectorize_text(data=SST_KAGGLE, tfidf=False):
     if tfidf:
         bigram_vectorizer = TfidfVectorizer(ngram_range=(1, 2), token_pattern=r'\b\w+\b', stop_words='english')
     else:
@@ -38,11 +38,11 @@ def vectorize_text(data=SST_KAGGLE, tfidf=True):
 
 def train(data=SST_KAGGLE, alg='log'):
     train_x, train_y, test_x = vectorize_text(data=data)
-    # train_x_1, test_x_1 = senti_lexicon_vectorizor(data=data, tfidf=True)
-    # train_x_2, test_x_2 = senti_wordnet_vectorizer(data=data, tfidf=True)
+    train_x_1, test_x_1 = senti_lexicon_vectorizor(data=data, tfidf=True)
+    train_x_2, test_x_2 = senti_wordnet_vectorizer(data=data, tfidf=True)
 
-    # train_x = sparse.hstack((train_x_1, train_x_2, train_x))
-    # test_x = sparse.hstack((test_x_1, test_x_2, test_x))
+    train_x = sparse.hstack((train_x_1, train_x_2))
+    test_x = sparse.hstack((test_x_1, test_x_2))
 
     print "shape for training data is", train_x.shape
 

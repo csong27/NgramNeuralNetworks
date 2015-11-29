@@ -16,6 +16,16 @@ def read_probability_pickle(data=SST_KAGGLE):
     return train_prob, test_prob
 
 
+def get_average_vectors(data=SST_KAGGLE):
+    if data == SST_KAGGLE:
+        train_x, train_y, test_x = read_matrices_kaggle_pickle()
+    else:
+        raise NotImplementedError
+    train_x = np.mean(train_x, axis=1)
+    test_x = np.mean(test_x, axis=1)
+    return train_x, train_y, test_x
+
+
 def get_concatenated_document_vectors(data=SST_KAGGLE, topic=True, doc2vec=True):
     train_x_1, test_x_1 = read_doc2vec_pickle(dm=True, concat=False, data=data)
     train_x_2, test_x_2 = read_doc2vec_pickle(dm=False, concat=False, data=data)

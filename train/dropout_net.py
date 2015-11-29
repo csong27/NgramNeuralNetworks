@@ -4,8 +4,8 @@ from sklearn.cross_validation import StratifiedShuffleSplit
 from neural_network import *
 from utils import save_csv
 from utils.load_data import *
-from utils.pickled_feature import get_concatenated_document_vectors
-
+from baseline.train_base import read_all_predict_score
+from doc_embedding import read_aggregated_vectors
 
 def train_dropout_net(
         datasets,
@@ -141,9 +141,13 @@ def train_dropout_net(
 
 
 def wrapper_kaggle(epochs=40, validate_ratio=0.1, save_prob=True):
-    old_train_x, test_x = get_concatenated_document_vectors(data=SST_KAGGLE)
-    _, old_train_y, _ = read_sst_kaggle_pickle()
-    old_train_y = np.asarray(old_train_y)
+    train_x_1, test_x_1 = read_all_predict_score()
+    train_x_2, train_y, test_x_2 = read_aggregated_vectors()
+    train_x_3, train_y, test_x_3 = read_aggregated_vectors(google=False)
+
+    old_train_x = np.concatenate((train_x_1, train_x_2, train_x_3), axis=1)
+    test_x = np.concatenate((test_x_1, test_x_2, test_x_3), axis=1)
+    old_train_y = np.asarray(train_y)
     # split train validate data
     sss_indices = StratifiedShuffleSplit(y=old_train_y, n_iter=1, test_size=validate_ratio, random_state=42)
     for indices in sss_indices:
@@ -152,6 +156,11 @@ def wrapper_kaggle(epochs=40, validate_ratio=0.1, save_prob=True):
     validate_x = old_train_x[test_index]
     train_y = old_train_y[train_index]
     validate_y = old_train_y[test_index]
+
+    # add validation set for training
+    train_x = np.concatenate((train_x, validate_x))
+    train_y = np.concatenate((train_y, validate_y))
+
     # get dataset info
     dim = train_x[0].shape[0]
     n_out = len(np.unique(validate_y))
@@ -166,13 +175,13 @@ def wrapper_kaggle(epochs=40, validate_ratio=0.1, save_prob=True):
         use_bias=True,
         n_epochs=epochs,
         dim=dim,
-        lr_rate=0.02,
+        lr_rate=0.01,
         n_out=n_out,
         dropout=True,
-        dropout_rates=[0.3] * n_layers,
-        n_hidden=[500] * n_layers,
+        dropout_rates=[0.5] * n_layers,
+        n_hidden=[800] * n_layers,
         activations=[leaky_relu] * n_layers,
-        batch_size=100,
+        batch_size=50,
         update_rule='adagrad',
         no_test_y=True,
         save_prob=save_prob
@@ -193,4 +202,4 @@ def wrapper_kaggle(epochs=40, validate_ratio=0.1, save_prob=True):
 
 
 if __name__ == '__main__':
-    wrapper_kaggle()
+    wrapper_kaggle(epochs=30, save_prob=False)
