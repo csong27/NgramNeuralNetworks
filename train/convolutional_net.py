@@ -16,6 +16,7 @@ def train_ngram_conv_net(
         n_kernels=(4, 3),
         use_bias=False,
         ngram_bias=False,
+        mean_pool=False,
         shuffle_batch=True,
         batch_size=50,
         dropout=True,
@@ -54,7 +55,8 @@ def train_ngram_conv_net(
 
     # weather or not to use multiple kernels in the n gram layer
     if multi_kernel:
-        ngram_net = MultiNgramNetwork(rng=rng, input=x, dim=dim, ngrams=ngrams, n_kernels=n_kernels, activation=ngram_activation)
+        ngram_net = MultiNgramNetwork(rng=rng, input=x, dim=dim, ngrams=ngrams, n_kernels=n_kernels,
+                                      activation=ngram_activation, mean=mean_pool)
     else:
         ngram_net = NgramNetwork(rng=rng, input=x, dim=dim, ngrams=ngrams, use_bias=ngram_bias, activation=ngram_activation)
     mlp_input = ngram_net.output

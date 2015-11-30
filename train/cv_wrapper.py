@@ -27,11 +27,11 @@ def cross_validation(validation_ratio=0.1, data=ROTTEN_TOMATOES, shuffle=True):
         test_accuracy = train_ngram_conv_net(
             datasets=datasets,
             n_epochs=10,
-            ngrams=(2, ),
+            ngrams=(1, 2),
             dim=dim,
             ngram_bias=False,
             multi_kernel=True,
-            n_kernels=(4, ),
+            n_kernels=(4, 4),
             use_bias=True,
             lr_rate=0.01,
             dropout=True,
