@@ -32,13 +32,13 @@ def my_remove_stopwords(s):
     return " ".join(w for w in s.split() if w not in STOPWORDS)
 
 
-def my_strip_short(s, minsize=2):
+def my_strip_short(s, minsize=3):
     s = utils.to_unicode(s)
     return " ".join(e for e in s.split() if len(e) >= minsize)
 
 
 DEFAULT_FILTERS = [lambda x: x.lower(), strip_punctuation, strip_multiple_whitespaces,
-                   my_remove_stopwords, my_strip_short]
+                   my_remove_stopwords, my_strip_short, strip_numeric]
 
 SIMPLE_FILTERS = [lambda x: x.lower(), strip_multiple_whitespaces]
 

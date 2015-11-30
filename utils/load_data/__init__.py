@@ -6,6 +6,7 @@ from load_sst import read_sst_sent_pickle, read_sst_kaggle_pickle, read_kaggle_r
 from load_subj import read_subj_pickle
 from load_trec import read_trec_pickle
 from load_yelp import read_train_data, read_test_data
+from load_tweet import read_tweet_pickle
 
 ROTTEN_TOMATOES = 'rotten'
 CUSTOMER_REVIEW = 'cr'

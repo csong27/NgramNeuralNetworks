@@ -31,7 +31,7 @@ def get_vectors(model, docs, trained=True):
     return np.asarray(vectors)
 
 
-def train_doc2vec(data, dm=True, concat=False, negative=10, size=100, epochs=50, alpha=0.025, min_alpha=0.001, sample=1e-4):
+def train_doc2vec(data, dm=True, concat=False, negative=20, size=100, epochs=40, alpha=0.025, min_alpha=0.001):
     if data == SST_KAGGLE:
         train_x, train_y, test_x = read_sst_kaggle_pickle()
     else:
@@ -40,11 +40,11 @@ def train_doc2vec(data, dm=True, concat=False, negative=10, size=100, epochs=50,
     test_doc = get_tagged_document(test_x, 'test')
 
     if dm and concat:
-        model = Doc2Vec(dm=1, dm_concat=1, size=size, window=5, negative=negative, hs=0, min_count=1, sample=sample, workers=cores)
+        model = Doc2Vec(dm=1, dm_concat=1, size=size, window=5, negative=negative, hs=0, min_count=2, workers=cores)
     elif dm:
-        model = Doc2Vec(dm=1, dm_mean=1, size=size, window=10, negative=negative, hs=0, min_count=1, sample=sample, workers=cores)
+        model = Doc2Vec(dm=1, dm_mean=1, size=size, window=10, negative=negative, hs=0, min_count=2, workers=cores)
     else:
-        model = Doc2Vec(dm=0, size=size, negative=negative, window=10, hs=0, min_count=1, sample=sample, workers=cores)
+        model = Doc2Vec(dm=0, size=size, negative=negative, window=10, hs=0, min_count=2, workers=cores)
     all_doc = train_doc + test_doc
     model.build_vocab(all_doc)
 
@@ -100,5 +100,5 @@ def read_doc2vec_pickle(dm=True, concat=True, data=SST_KAGGLE):
 
 
 if __name__ == '__main__':
-    save_doc2vec_pickle(dm=True, concat=False, size=100)
-    save_doc2vec_pickle(dm=False, concat=False, size=100)
+    save_doc2vec_pickle(dm=True, concat=False, size=300)
+    save_doc2vec_pickle(dm=False, concat=False, size=300)

@@ -21,11 +21,11 @@ def to_phrase():
     return train_x, train_y, test_x
 
 
-def vectorize_text(data=SST_KAGGLE, tfidf=False):
+def vectorize_text(data=SST_KAGGLE, tfidf=True):
     if tfidf:
-        bigram_vectorizer = TfidfVectorizer(ngram_range=(1, 2), token_pattern=r'\b\w+\b', stop_words='english')
+        bigram_vectorizer = TfidfVectorizer(ngram_range=(1, 2), token_pattern=r'\b\w+\b', stop_words='english', min_df=2)
     else:
-        bigram_vectorizer = CountVectorizer(ngram_range=(1, 2), token_pattern=r'\b\w+\b', stop_words='english')
+        bigram_vectorizer = CountVectorizer(ngram_range=(1, 2), token_pattern=r'\b\w+\b', stop_words='english', min_df=2)
     if data == SST_KAGGLE:
         train_x, train_y, test_x = read_kaggle_raw()
     else:
@@ -36,13 +36,13 @@ def vectorize_text(data=SST_KAGGLE, tfidf=False):
     return train_x, train_y, test_x
 
 
-def train(data=SST_KAGGLE, alg='log'):
+def train(data=SST_KAGGLE, alg='nb'):
     train_x, train_y, test_x = vectorize_text(data=data)
-    train_x_1, test_x_1 = senti_lexicon_vectorizor(data=data, tfidf=True)
-    train_x_2, test_x_2 = senti_wordnet_vectorizer(data=data, tfidf=True)
-
-    train_x = sparse.hstack((train_x_1, train_x_2))
-    test_x = sparse.hstack((test_x_1, test_x_2))
+    # train_x_1, test_x_1 = senti_lexicon_vectorizor(data=data, tfidf=True)
+    # train_x_2, test_x_2 = senti_wordnet_vectorizer(data=data, tfidf=True)
+    #
+    # train_x = sparse.hstack((train_x_1, train_x_2))
+    # test_x = sparse.hstack((test_x_1, test_x_2))
 
     print "shape for training data is", train_x.shape
 
@@ -57,7 +57,6 @@ def train(data=SST_KAGGLE, alg='log'):
 
     print "training..."
     clf.fit(train_x, train_y)
-    # clf.fit(validate_x, validate_y)
     predicted = clf.predict(test_x)
     save_csv(predicted)
 

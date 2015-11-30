@@ -1,15 +1,16 @@
 from neural_network import *
-from dropout_net import get_concatenated_document_vectors
 from utils.load_data import *
+from baseline.train_base import read_all_predict_score
+from sklearn.cross_validation import train_test_split
 from path import Path
 
 
-def get_evaluate_model(tensor_variables, conv_layer, classifier, evaluate_set, predict=False, img_size=30):
+def get_evaluate_model(tensor_variables, conv_layer, classifier, evaluate_set, img_size, predict=False):
     index = T.lscalar()
     x, y = tensor_variables
     evaluate_x, evaluate_y = evaluate_set
     test_size = evaluate_x.get_value(borrow=True).shape[0]
-    test_layer_input = x.reshape((test_size, 1, img_size, img_size))
+    test_layer_input = x.reshape((test_size, 1, img_size[0], img_size[1]))
     test_layer_output = conv_layer.predict(test_layer_input, test_size, 1)
     test_y_pred = classifier.predict(test_layer_output.flatten(2))
     test_error = T.mean(T.neq(test_y_pred, y))
@@ -24,8 +25,8 @@ def get_evaluate_model(tensor_variables, conv_layer, classifier, evaluate_set, p
 def train_lecun_net(
         datasets,
         img_size,
-        filter_size=13,
-        pool_size=2,
+        filter_size,
+        pool_size=(2, 2),
         n_epochs=25,
         shuffle_batch=True,
         user_bias=False,
@@ -75,7 +76,7 @@ def train_lecun_net(
     x = T.matrix('x')   # the data is presented as rasterized images
     y = T.ivector('y')  # the labels are presented as 1D vector of
 
-    conv_layer_input = x.reshape((batch_size, 1, img_size, img_size))
+    conv_layer_input = x.reshape((batch_size, 1, img_size[0], img_size[1]))
 
     # Construct the first convolutional pooling layer:
     # filtering reduces the image size to (30-13+1 , 30-13+1) = (18, 18)
@@ -84,16 +85,18 @@ def train_lecun_net(
     conv_layer = LeNetConvPoolLayer(
         rng,
         input=conv_layer_input,
-        image_shape=(batch_size, 1, img_size, img_size),
-        filter_shape=(nkerns, 1, filter_size, filter_size),
-        poolsize=(pool_size, pool_size),
+        image_shape=(batch_size, 1, img_size[0], img_size[1]),
+        filter_shape=(nkerns, 1, filter_size[0], filter_size[1]),
+        poolsize=pool_size,
         activation=activation
     )
-    assert (img_size - filter_size + 1) % pool_size == 0
-    pool_out_size = (img_size - filter_size + 1) / pool_size
+    assert (img_size[0] - filter_size[0] + 1) % pool_size[0] == 0
+    assert (img_size[1] - filter_size[1] + 1) % pool_size[1] == 0
+
+    pool_out_size = (img_size[0] - filter_size[0] + 1) / pool_size[0] * (img_size[1] - filter_size[1] + 1) / pool_size[1]
 
     mlp_input = conv_layer.output.flatten(2)
-    n_in = nkerns * pool_out_size ** 2
+    n_in = nkerns * pool_out_size
     mlp = MLPDropout(
         rng=rng,
         input=mlp_input,
@@ -160,17 +163,22 @@ def train_lecun_net(
         return best_prediction
 
 
-def wrapper_kaggle():
-    train_x, validate_x, test_x = get_concatenated_document_vectors(data=SST_KAGGLE)
-    _, train_y, _, validate_y, _ = read_sst_kaggle_pickle()
+def wrapper_kaggle(valid_portion=0.1):
+    train_x, test_x = read_all_predict_score()
+    _, train_y, _ = read_sst_kaggle_pickle()
 
     train_y = np.asarray(train_y)
-    validate_y = np.asarray(validate_y)
 
-    dim = train_x[0].shape[0]
-    print "input dimension is %d" % dim
+    # train_x = train_x.reshape(train_x.shape[0], 18, 5)
+    # test_x = test_x.reshape(test_x.shape[0], 18, 5)
 
-    img_size = int(np.sqrt(dim))
+    train_x, validate_x, train_y, validate_y = train_test_split(train_x, train_y, test_size=valid_portion,
+                                                                stratify=train_y)
+
+    dim = train_x[0].shape
+    print "input dimension is", dim
+
+    img_size = (18, 5)
 
     n_out = len(np.unique(validate_y))
     datasets = (train_x, train_y, validate_x, validate_y, test_x)
@@ -178,13 +186,14 @@ def wrapper_kaggle():
     best_prediction = train_lecun_net(
         img_size=img_size,
         datasets=datasets,
-        filter_size=9,
-        n_epochs=30,
-        lr_rate=0.025,
+        filter_size=(7, 2),
+        pool_size=(2, 1),
+        n_epochs=10,
+        lr_rate=0.05,
         n_out=n_out,
         dropout_rate=0.5,
-        n_hidden=300,
-        nkerns=16,
+        n_hidden=500,
+        nkerns=10,
         activation=leaky_relu,
         batch_size=100,
         update_rule='adagrad',

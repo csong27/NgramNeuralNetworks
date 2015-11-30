@@ -145,11 +145,11 @@ def wrapper_kaggle(epochs=40, validate_ratio=0.1, save_prob=True):
     train_x_2, train_y, test_x_2 = read_aggregated_vectors()
     train_x_3, train_y, test_x_3 = read_aggregated_vectors(google=False)
 
-    old_train_x = np.concatenate((train_x_1, train_x_2, train_x_3), axis=1)
-    test_x = np.concatenate((test_x_1, test_x_2, test_x_3), axis=1)
+    old_train_x = train_x_1  # np.concatenate((train_x_1, train_x_2, train_x_3), axis=1)
+    test_x = test_x_1  # np.concatenate((test_x_1, test_x_2, test_x_3), axis=1)
     old_train_y = np.asarray(train_y)
     # split train validate data
-    sss_indices = StratifiedShuffleSplit(y=old_train_y, n_iter=1, test_size=validate_ratio, random_state=42)
+    sss_indices = StratifiedShuffleSplit(y=old_train_y, n_iter=1, test_size=validate_ratio)
     for indices in sss_indices:
         train_index, test_index = indices
     train_x = old_train_x[train_index]
@@ -158,8 +158,8 @@ def wrapper_kaggle(epochs=40, validate_ratio=0.1, save_prob=True):
     validate_y = old_train_y[test_index]
 
     # add validation set for training
-    train_x = np.concatenate((train_x, validate_x))
-    train_y = np.concatenate((train_y, validate_y))
+    # train_x = np.concatenate((train_x, validate_x))
+    # train_y = np.concatenate((train_y, validate_y))
 
     # get dataset info
     dim = train_x[0].shape[0]
@@ -175,12 +175,12 @@ def wrapper_kaggle(epochs=40, validate_ratio=0.1, save_prob=True):
         use_bias=True,
         n_epochs=epochs,
         dim=dim,
-        lr_rate=0.01,
+        lr_rate=0.02,
         n_out=n_out,
         dropout=True,
-        dropout_rates=[0.5] * n_layers,
-        n_hidden=[800] * n_layers,
-        activations=[leaky_relu] * n_layers,
+        dropout_rates=[0.7],
+        n_hidden=[100],
+        activations=[tanh] * n_layers,
         batch_size=50,
         update_rule='adagrad',
         no_test_y=True,
@@ -202,4 +202,4 @@ def wrapper_kaggle(epochs=40, validate_ratio=0.1, save_prob=True):
 
 
 if __name__ == '__main__':
-    wrapper_kaggle(epochs=30, save_prob=False)
+    wrapper_kaggle(epochs=25, save_prob=False)
