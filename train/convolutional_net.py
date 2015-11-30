@@ -12,6 +12,8 @@ def train_ngram_conv_net(
         dim=50,
         ngram_activation=tanh,
         n_epochs=25,
+        multi_kernel=True,
+        n_kernels=(4, 3),
         use_bias=False,
         ngram_bias=False,
         shuffle_batch=True,
@@ -50,8 +52,11 @@ def train_ngram_conv_net(
     x = T.tensor3('x')
     y = T.ivector('y')
 
-    ngram_net = NgramNetwork(rng=rng, input=x, dim=dim, ngrams=ngrams, activation=ngram_activation, use_bias=ngram_bias)
-
+    # weather or not to use multiple kernels in the n gram layer
+    if multi_kernel:
+        ngram_net = MultiNgramNetwork(rng=rng, input=x, dim=dim, ngrams=ngrams, n_kernels=n_kernels, activation=ngram_activation)
+    else:
+        ngram_net = NgramNetwork(rng=rng, input=x, dim=dim, ngrams=ngrams, use_bias=ngram_bias, activation=ngram_activation)
     mlp_input = ngram_net.output
 
     if dropout:

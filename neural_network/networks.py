@@ -1,5 +1,5 @@
 from regular_layer import _dropout_from_layer, DropoutHiddenLayer, HiddenLayer, LogisticRegression
-from ngram_layer import UnigramLayer, BigramLayer, TrigramLayer
+from ngram_layer import UnigramLayer, BigramLayer, TrigramLayer, MuiltiUnigramLayer, MultiBigramLayer, MultiTrigramLayer
 from non_linear import *
 import theano.tensor as T
 
@@ -117,6 +117,7 @@ class MLP(object):
         self.params = self.hiddenLayer.params + self.logRegressionLayer.params
 
 
+
 class NgramNetwork(object):
     def __init__(self, rng, input, dim, ngrams=(3, 2, 1), use_bias=False, activation=tanh):
         self.layers = []
@@ -143,6 +144,47 @@ class NgramNetwork(object):
             last_layer = BigramLayer(rng=rng, input=x, n_in=dim, n_out=dim, activation=activation, use_bias=use_bias)
         elif ngram == 3:
             last_layer = TrigramLayer(rng=rng, input=x, n_in=dim, n_out=dim, activation=activation, use_bias=use_bias)
+        else:
+            raise NotImplementedError('This %d gram layer is not implemented' % ngram)
+
+        self.layers.append(last_layer)
+        self.output = self.layers[-1].output
+        self.params = [param for layer in self.layers for param in layer.params]
+
+
+class MultiNgramNetwork(object):
+    def __init__(self, rng, input, dim, ngrams=(3, 2, 1), n_kernels=(4, 4, 4), mean=False, activation=tanh):
+        assert len(ngrams) == len(n_kernels)    # need to have same number of layers
+        self.layers = []
+        prev_out = input
+        for i, ngram in enumerate(ngrams[:-1]):
+            x = prev_out
+            if ngram == 1:
+                ngram_layer = MuiltiUnigramLayer(rng=rng, input=x, n_in=dim, n_out=dim, activation=activation,
+                                                 mean=mean, sum_out=False, n_kernels=n_kernels[i])
+            elif ngram == 2:
+                ngram_layer = MultiBigramLayer(rng=rng, input=x, n_in=dim, n_out=dim, activation=activation,
+                                               mean=mean, sum_out=False, n_kernels=n_kernels[i])
+            elif ngram == 3:
+                ngram_layer = MultiTrigramLayer(rng=rng, input=x, n_in=dim, n_out=dim, activation=activation,
+                                                mean=mean, sum_out=False, n_kernels=n_kernels[i])
+            else:
+                raise NotImplementedError('This %d gram layer is not implemented' % ngram)
+            self.layers.append(ngram_layer)
+            prev_out = ngram_layer.output
+
+        ngram = ngrams[-1]
+
+        x = self.layers[-1].output if len(self.layers) >= 1 else input
+        if ngram == 1:
+            last_layer = MuiltiUnigramLayer(rng=rng, input=x, n_in=dim, n_out=dim, activation=activation,
+                                            mean=mean, n_kernels=n_kernels[-1])
+        elif ngram == 2:
+            last_layer = MultiBigramLayer(rng=rng, input=x, n_in=dim, n_out=dim, activation=activation,
+                                          mean=mean, n_kernels=n_kernels[-1])
+        elif ngram == 3:
+            last_layer = MultiTrigramLayer(rng=rng, input=x, n_in=dim, n_out=dim, activation=activation,
+                                           mean=mean, n_kernels=n_kernels[-1])
         else:
             raise NotImplementedError('This %d gram layer is not implemented' % ngram)
 

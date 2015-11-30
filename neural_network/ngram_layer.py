@@ -98,14 +98,13 @@ class TrigramLayer(object):
 
 
 class MuiltiUnigramLayer(object):
-    def __init__(self, rng, input, n_in, n_out, activation=relu, n_kernels=4, use_bias=False, sum_out=True):
+    def __init__(self, rng, input, n_in, n_out, activation=relu, n_kernels=4, sum_out=True, mean=True):
         """
         Allocate a UnigramLayer with shared variable internal parameters.
         """
 
         self.input = input
         self.activation = activation
-        self.use_bias = use_bias
         # initialize weights with random weights
         if "relu" in activation.func_name:
             W_values = numpy.asarray(0.01 * rng.standard_normal(size=(n_kernels, n_in, n_out)), dtype=theano.config.floatX)
@@ -115,29 +114,24 @@ class MuiltiUnigramLayer(object):
 
         self.W = theano.shared(W_values, borrow=True, name="W_cov")
 
-        b_values = numpy.zeros((n_out,), dtype=theano.config.floatX)
-        self.b = theano.shared(value=b_values, name='b_cov')
-
         cov_out = T.dot(input, self.W)
-        mean_pool = T.mean(cov_out, axis=2)
+        activation_out = activation(cov_out)
 
-        lin_out = mean_pool + self.b if use_bias else mean_pool
-        activation_out = activation(lin_out)
-        unigram_sum = T.sum(activation_out, axis=1)
+        pool_out = T.mean(activation_out, axis=2) if mean else T.max(activation_out, axis=2)
+        unigram_sum = T.sum(pool_out, axis=1)
 
-        self.output = unigram_sum if sum_out else activation_out
-        self.params = [self.W, self.b] if use_bias else [self.W]
+        self.output = unigram_sum if sum_out else pool_out
+        self.params = [self.W]
 
 
 class MultiBigramLayer(object):
-    def __init__(self, rng, input, n_in, n_out, activation=tanh, n_kernels=4, use_bias=False, sum_out=True):
+    def __init__(self, rng, input, n_in, n_out, activation=tanh, n_kernels=4, mean=True, sum_out=True):
         """
         Allocate a BigramLayer with shared variable internal parameters.
         """
 
         self.input = input
         self.activation = activation
-        self.use_bias = use_bias
         if "relu" in activation.func_name:
             W_values = numpy.asarray(0.01 * rng.standard_normal(size=(n_kernels, n_in, n_out)), dtype=theano.config.floatX)
         else:
@@ -147,32 +141,27 @@ class MultiBigramLayer(object):
         self.Tr = theano.shared(W_values, borrow=True, name="Tr")
         self.Tl = theano.shared(W_values, borrow=True, name="Tl")
 
-        b_values = numpy.zeros((n_out,), dtype=theano.config.floatX)
-        self.b = theano.shared(value=b_values, name='b_cov')
-
         left = T.dot(input, self.Tl)[:, :-1]
         right = T.dot(input, self.Tr)[:, 1:]
 
         cov_out = left + right
-        mean_pool = T.mean(cov_out, axis=2)
+        activation_out = activation(cov_out)
 
-        lin_out = mean_pool + self.b if use_bias else mean_pool
-        activation_out = activation(lin_out)
-        bigram_sum = T.sum(activation_out, axis=1)
+        pool_out = T.mean(activation_out, axis=2) if mean else T.max(activation_out, axis=2)
+        bigram_sum = T.sum(pool_out, axis=1)
 
-        self.output = bigram_sum if sum_out else activation_out
-        self.params = [self.Tr, self.Tl, self.b] if use_bias else [self.Tr, self.Tl]
+        self.output = bigram_sum if sum_out else pool_out
+        self.params = [self.Tr, self.Tl]
 
 
 class MultiTrigramLayer(object):
-    def __init__(self, rng, input, n_in, n_out, activation=tanh, n_kernels=4, use_bias=False, sum_out=True):
+    def __init__(self, rng, input, n_in, n_out, activation=tanh, n_kernels=4, mean=True, sum_out=True):
         """
         Allocate a BigramLayer with shared variable internal parameters.
         """
 
         self.input = input
         self.activation = activation
-        self.use_bias = use_bias
         if "relu" in activation.func_name:
             W_values = numpy.asarray(0.01 * rng.standard_normal(size=(n_kernels, n_in, n_out)), dtype=theano.config.floatX)
         else:
@@ -183,19 +172,15 @@ class MultiTrigramLayer(object):
         self.T2 = theano.shared(W_values, borrow=True, name="T2")
         self.T3 = theano.shared(W_values, borrow=True, name="T3")
 
-        b_values = numpy.zeros((n_out,), dtype=theano.config.floatX)
-        self.b = theano.shared(value=b_values, name='b_cov')
-
         left = T.dot(input, self.T1)[:, :-2]
         center = T.dot(input, self.T2)[:, 1:-1]
         right = T.dot(input, self.T3)[:, 2:]
 
         cov_out = left + center + right
-        mean_pool = T.mean(cov_out, axis=2)
+        activation_out = activation(cov_out)
 
-        lin_out = mean_pool + self.b if use_bias else mean_pool
-        activation_out = activation(lin_out)
-        trigram_sum = T.sum(activation_out, axis=1)
+        pool_out = T.mean(activation_out, axis=2) if mean else T.max(activation_out, axis=2)
+        trigram_sum = T.sum(pool_out, axis=1)
 
-        self.output = trigram_sum if sum_out else activation_out
-        self.params = [self.T1, self.T2, self.T3, self.b] if use_bias else [self.T1, self.T2, self.T3]
+        self.output = trigram_sum if sum_out else pool_out
+        self.params = [self.T1, self.T2, self.T3]
