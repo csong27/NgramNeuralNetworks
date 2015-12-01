@@ -80,7 +80,7 @@ def save_doc2vec_pickle(dm=True, concat=True, size=200, data=SST_KAGGLE):
     f.close()
 
 
-def read_doc2vec_pickle(dm=True, concat=True, data=SST_KAGGLE):
+def read_doc2vec_pickle(dm=True, concat=False, data=SST_KAGGLE):
     save_path = "D:/data/nlpdata/pickled_data/doc2vec/"
     save_path += data
     if dm and concat:

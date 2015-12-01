@@ -17,11 +17,8 @@ DATA = ['bow', 'average', 'average_glove']
 
 
 def doc2vec_kaggle_dataset():
-    train_x_1, test_x_1 = read_doc2vec_pickle(dm=True, concat=False)
-    train_x_2, test_x_2 = read_doc2vec_pickle(dm=False, concat=False)
+    train_x, test_x = read_doc2vec_pickle(dm=True, concat=False)
     _, train_y, _ = read_sst_kaggle_pickle()
-    train_x = np.concatenate((train_x_1, train_x_2), axis=1)
-    test_x = np.concatenate((test_x_1, test_x_2), axis=1)
     return train_x, train_y, test_x
 
 
@@ -125,43 +122,20 @@ def read_all_predict_score(axis=1):
 
 
 def multi_learner(n_estimators=200, alg='et'):
-    train_x_2, old_train_y, test_x_2 = read_aggregated_vectors()
-    old_train_y = np.asarray(old_train_y)
-    train_raw, _, _ = read_kaggle_raw()
-    train_raw = np.asarray(train_raw)
-    old_train_x, test_x = read_all_predict_score()
-    sss_indices = StratifiedShuffleSplit(y=old_train_y, n_iter=1, test_size=0.2, random_state=42)
-    for indices in sss_indices:
-        train_index, test_index = indices
-    train_x = old_train_x[train_index]
-    validate_x = old_train_x[test_index]
-    validate_raw = train_raw[test_index]
-    train_y = old_train_y[train_index]
-    validate_y = old_train_y[test_index]
+    train_x_2, train_y, test_x_2 = sentiment_kaggle_dataset()
+    train_x, test_x = read_all_predict_score()
+    train_x = sparse.hstack([train_x, train_x_2])
+    test_x = sparse.hstack([test_x, test_x_2])
     print "training with", alg, n_estimators
     if alg == 'rf':
         clf = RandomForestClassifier(n_estimators=n_estimators, oob_score=True, verbose=1)
     elif alg == 'et':
-        clf = ExtraTreesClassifier(n_estimators=n_estimators, bootstrap=True, oob_score=True, verbose=1)
+        clf = ExtraTreesClassifier(n_estimators=n_estimators, verbose=1)
     else:
         raise NotImplementedError
     clf.fit(train_x, train_y)
-    predicted = clf.predict(validate_x)
-
-    from collections import Counter
-
-    # print validate raw sentence
-    count = 0
-    mistake_list = []
-    for i in xrange(len(validate_y)):
-        if validate_y[i] != predicted[i]:
-            count += 1
-            mistake_list.append(str((validate_y[i], predicted[i])))
-            print validate_y[i], predicted[i], validate_raw[i]
-
-    print count
-    print Counter(mistake_list).most_common(10)
+    predicted = clf.predict(test_x)
+    save_csv(predicted, "test")
 
 if __name__ == '__main__':
-    multi_learner(alg='et', n_estimators=200)
-
+    multi_learner(n_estimators=10)

@@ -36,8 +36,9 @@ def vectorize_text(data=SST_KAGGLE, tfidf=True):
     return train_x, train_y, test_x
 
 
-def train(data=SST_KAGGLE, alg='nb'):
-    train_x, train_y, test_x = vectorize_text(data=data)
+def train(data=SST_KAGGLE, alg='log'):
+    _, train_y, _ = vectorize_text(data=data)
+    train_x, test_x = read_doc2vec_pickle(dm=False)
     # train_x_1, test_x_1 = senti_lexicon_vectorizor(data=data, tfidf=True)
     # train_x_2, test_x_2 = senti_wordnet_vectorizer(data=data, tfidf=True)
     #
