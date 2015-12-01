@@ -13,6 +13,7 @@ def train_ngram_conv_net(
         ngram_activation=tanh,
         n_epochs=25,
         multi_kernel=True,
+        concat_out=False,
         n_kernels=(4, 3),
         use_bias=False,
         ngram_bias=False,
@@ -55,14 +56,16 @@ def train_ngram_conv_net(
 
     # weather or not to use multiple kernels in the n gram layer
     if multi_kernel:
-        ngram_net = MultiNgramNetwork(rng=rng, input=x, dim=dim, ngrams=ngrams, n_kernels=n_kernels,
-                                      activation=ngram_activation, mean=mean_pool)
+        ngram_net = MultiKernelNgramNetwork(rng=rng, input=x, dim=dim, ngrams=ngrams, n_kernels=n_kernels,
+                                            activation=ngram_activation, mean=mean_pool, concat_out=concat_out)
     else:
         ngram_net = NgramNetwork(rng=rng, input=x, dim=dim, ngrams=ngrams, use_bias=ngram_bias, activation=ngram_activation)
+
     mlp_input = ngram_net.output
+    mlp_n_in = dim * n_kernels[-1] if concat_out else dim
 
     if dropout:
-        layer_sizes = [dim, n_hidden, n_out]
+        layer_sizes = [mlp_n_in, n_hidden, n_out]
         mlp = MLPDropout(
             rng=rng,
             input=mlp_input,
@@ -76,7 +79,7 @@ def train_ngram_conv_net(
         mlp = MLP(
             rng=rng,
             input=mlp_input,
-            n_in=dim,
+            n_in=mlp_n_in,
             n_hidden=n_hidden,
             n_out=n_out,
             activation=activation
@@ -108,13 +111,15 @@ def train_ngram_conv_net(
     test_model = theano.function([index], mlp.errors(y), on_unused_input='ignore', givens={x: test_x, y: test_y})
 
     # functions for making prediction
-    predict_output = mlp.layers[-1].y_pred if dropout else mlp.logRegressionLayer.y_pred
-    predict_model = theano.function([index], predict_output, on_unused_input='ignore', givens={x: test_x, y: test_y})
+    if no_test_y:
+        predict_output = mlp.layers[-1].y_pred if dropout else mlp.logRegressionLayer.y_pred
+        predict_model = theano.function([index], predict_output, on_unused_input='ignore', givens={x: test_x, y: test_y})
 
     # functions for getting document vectors
-    save_train = theano.function([index], ngram_net.output, on_unused_input='ignore', givens={x: train_x, y: train_y})
-    save_validate = theano.function([index], ngram_net.output, on_unused_input='ignore', givens={x: validate_x, y: validate_y})
-    save_test = theano.function([index], ngram_net.output, on_unused_input='ignore', givens={x: test_x, y: test_y})
+    if save_ngram:
+        save_train = theano.function([index], ngram_net.output, on_unused_input='ignore', givens={x: train_x, y: train_y})
+        save_validate = theano.function([index], ngram_net.output, on_unused_input='ignore', givens={x: validate_x, y: validate_y})
+        save_test = theano.function([index], ngram_net.output, on_unused_input='ignore', givens={x: test_x, y: test_y})
 
     print 'training with %s...' % update_rule
     epoch = 0
@@ -140,7 +145,6 @@ def train_ngram_conv_net(
                 saved_train = save_train(epoch)
                 saved_validate = save_validate(epoch)
                 saved_test = save_test(epoch)
-
         cost_epoch = np.mean(cost_list)
         print 'epoch %i, train cost %f, validate accuracy %f' % (epoch, cost_epoch, val_accuracy * 100.)
     if save_ngram:

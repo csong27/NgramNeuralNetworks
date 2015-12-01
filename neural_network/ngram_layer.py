@@ -98,7 +98,7 @@ class TrigramLayer(object):
 
 
 class MuiltiUnigramLayer(object):
-    def __init__(self, rng, input, n_in, n_out, activation=relu, n_kernels=4, sum_out=True, mean=True):
+    def __init__(self, rng, input, n_in, n_out, activation=relu, n_kernels=4, sum_out=True, mean=True, concat_out=False):
         """
         Allocate a UnigramLayer with shared variable internal parameters.
         """
@@ -117,15 +117,18 @@ class MuiltiUnigramLayer(object):
         cov_out = T.dot(input, self.W)
         activation_out = activation(cov_out)
 
-        pool_out = T.mean(activation_out, axis=2) if mean else T.max(activation_out, axis=2)
-        unigram_sum = T.sum(pool_out, axis=1)
-
-        self.output = unigram_sum if sum_out else pool_out
+        if concat_out:
+            uigram_sum = T.sum(activation_out, axis=1)
+            self.output = uigram_sum.flatten(2)
+        else:
+            pool_out = T.mean(activation_out, axis=2) if mean else T.max(activation_out, axis=2)
+            uigram_sum = T.sum(pool_out, axis=1)
+            self.output = uigram_sum if sum_out else pool_out
         self.params = [self.W]
 
 
 class MultiBigramLayer(object):
-    def __init__(self, rng, input, n_in, n_out, activation=tanh, n_kernels=4, mean=True, sum_out=True):
+    def __init__(self, rng, input, n_in, n_out, activation=tanh, n_kernels=4, mean=True, sum_out=True, concat_out=False):
         """
         Allocate a BigramLayer with shared variable internal parameters.
         """
@@ -147,15 +150,20 @@ class MultiBigramLayer(object):
         cov_out = left + right
         activation_out = activation(cov_out)
 
-        pool_out = T.mean(activation_out, axis=2) if mean else T.max(activation_out, axis=2)
-        bigram_sum = T.sum(pool_out, axis=1)
+        # concatenate the output of each kernel
+        if concat_out:
+            bigram_sum = T.sum(activation_out, axis=1)
+            self.output = bigram_sum.flatten(2)
+        else:
+            pool_out = T.mean(activation_out, axis=2) if mean else T.max(activation_out, axis=2)
+            bigram_sum = T.sum(pool_out, axis=1)
+            self.output = bigram_sum if sum_out else pool_out
 
-        self.output = bigram_sum if sum_out else pool_out
         self.params = [self.Tr, self.Tl]
 
 
 class MultiTrigramLayer(object):
-    def __init__(self, rng, input, n_in, n_out, activation=tanh, n_kernels=4, mean=True, sum_out=True):
+    def __init__(self, rng, input, n_in, n_out, activation=tanh, n_kernels=4, mean=True, sum_out=True, concat_out=False):
         """
         Allocate a BigramLayer with shared variable internal parameters.
         """
@@ -179,8 +187,13 @@ class MultiTrigramLayer(object):
         cov_out = left + center + right
         activation_out = activation(cov_out)
 
-        pool_out = T.mean(activation_out, axis=2) if mean else T.max(activation_out, axis=2)
-        trigram_sum = T.sum(pool_out, axis=1)
+        # concatenate the output of each kernel
+        if concat_out:
+            trigram_sum = T.sum(activation_out, axis=1)
+            self.output = trigram_sum.flatten(2)
+        else:
+            pool_out = T.mean(activation_out, axis=2) if mean else T.max(activation_out, axis=2)
+            trigram_sum = T.sum(pool_out, axis=1)
+            self.output = trigram_sum if sum_out else pool_out
 
-        self.output = trigram_sum if sum_out else pool_out
         self.params = [self.T1, self.T2, self.T3]

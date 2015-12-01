@@ -152,8 +152,8 @@ class NgramNetwork(object):
         self.params = [param for layer in self.layers for param in layer.params]
 
 
-class MultiNgramNetwork(object):
-    def __init__(self, rng, input, dim, ngrams=(3, 2, 1), n_kernels=(4, 4, 4), mean=False, activation=tanh):
+class MultiKernelNgramNetwork(object):
+    def __init__(self, rng, input, dim, ngrams=(3, 2, 1), n_kernels=(4, 4, 4), mean=False, activation=tanh, concat_out=False):
         assert len(ngrams) == len(n_kernels)    # need to have same number of layers
         self.layers = []
         prev_out = input
@@ -178,13 +178,13 @@ class MultiNgramNetwork(object):
         x = self.layers[-1].output if len(self.layers) >= 1 else input
         if ngram == 1:
             last_layer = MuiltiUnigramLayer(rng=rng, input=x, n_in=dim, n_out=dim, activation=activation,
-                                            mean=mean, n_kernels=n_kernels[-1])
+                                            mean=mean, n_kernels=n_kernels[-1], concat_out=concat_out)
         elif ngram == 2:
             last_layer = MultiBigramLayer(rng=rng, input=x, n_in=dim, n_out=dim, activation=activation,
-                                          mean=mean, n_kernels=n_kernels[-1])
+                                          mean=mean, n_kernels=n_kernels[-1], concat_out=concat_out)
         elif ngram == 3:
             last_layer = MultiTrigramLayer(rng=rng, input=x, n_in=dim, n_out=dim, activation=activation,
-                                           mean=mean, n_kernels=n_kernels[-1])
+                                           mean=mean, n_kernels=n_kernels[-1], concat_out=concat_out)
         else:
             raise NotImplementedError('This %d gram layer is not implemented' % ngram)
 
