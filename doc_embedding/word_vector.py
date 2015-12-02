@@ -242,4 +242,4 @@ def read_matrices_kaggle_pickle():
     return train_x, train_y, test_x
 
 if __name__ == '__main__':
-    save_matrices_pickle(data=SST_SENT_POL, cv=False, google=True, dim=300)
+    save_matrices_pickle(data=SST_SENT_POL, cv=False, google=False, dim=300)
