@@ -1,8 +1,17 @@
 from neural_network.non_linear import *
-from utils.load_data import *
 from train.ngram_net import train_ngram_conv_net
 from doc_embedding import read_matrices_pickle
 import numpy as np
+
+ROTTEN_TOMATOES = 'rotten'
+CUSTOMER_REVIEW = 'cr'
+MPQA = 'mpqa'
+SST_SENT = 'sst_sent'
+SST_SENT_POL = 'sst_sent_polarity'
+SST_KAGGLE = 'sst_kaggle'
+TREC = 'trec'
+SUBJ = 'subj'
+IMDB = 'imdb'
 
 
 def ngram_wrapper(
@@ -19,7 +28,7 @@ def ngram_wrapper(
         dropout_rate=0.3,
         lr_rate=0.01
 ):
-    # getting the dataset
+    # getting the datasets
     train_x, train_y, validate_x, validate_y, test_x, test_y = read_matrices_pickle(google=False, data=data, cv=False)
     dim = train_x[0].shape[1]
     n_out = len(np.unique(test_y))
@@ -55,7 +64,7 @@ def ngram_wrapper(
 # Write a function like this called 'main'
 def main(job_id, params):
     print 'Anything printed here will end up in the output directory for job #%d' % job_id
-    print params
+    # print params
     return ngram_wrapper(
         lr_rate=params['lr_rate'][0],
         n_epochs=params['n_epochs'][0],
