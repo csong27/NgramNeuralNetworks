@@ -1,12 +1,19 @@
 from path import Path
 from gensim.models import Word2Vec
 
-google_vector = Path('D:/data/nlpdata/GoogleNews-vectors-negative300.bin')
-glove_vector_50 = Path('D:/data/nlpdata/glove.6B.50d.txt')
-glove_vector_100 = Path('D:/data/nlpdata/glove.6B.100d.txt')
-glove_vector_200 = Path('D:/data/nlpdata/glove.6B.200d.txt')
-glove_vector_300 = Path('D:/data/nlpdata/glove.6B.300d.txt')
-glove_vector_huge = Path('D:/data/nlpdata/glove.840B.300d.txt')
+import platform
+
+if platform.system() == 'Windows':
+    data_path = 'D:/data/nlpdata/'
+else:
+    data_path = '/home/scz8928999/vector/'
+
+google_vector = Path(data_path + 'GoogleNews-vectors-negative300.bin')
+glove_vector_50 = Path(data_path + 'glove.6B.50d.txt')
+glove_vector_100 = Path(data_path + 'glove.6B.100d.txt')
+glove_vector_200 = Path(data_path + 'glove.6B.200d.txt')
+glove_vector_300 = Path(data_path + 'glove.6B.300d.txt')
+glove_vector_huge = Path(data_path + 'glove.840B.300d.txt')
 
 
 def read_google_model():

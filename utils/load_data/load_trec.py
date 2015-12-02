@@ -5,9 +5,15 @@ import cPickle as pkl
 
 LABEL = {'DESC': 0, 'HUM': 1, 'ENTY': 2, 'ABBR': 3, 'NUM': 4, 'LOC': 5}
 
-trec_pickle = Path('C:/Users/Song/Course/571/project/pickled_data/trec.pkl')
-train_path = Path('D:/data/nlpdata/trec/train_5500.label')
-test_path = Path('D:/data/nlpdata/trec/TREC_10.label')
+import platform
+if platform.system() == 'Windows':
+    trec_pickle = Path('C:/Users/Song/Course/571/project/pickled_data/trec.pkl')
+    train_path = Path('D:/data/nlpdata/trec/train_5500.label')
+    test_path = Path('D:/data/nlpdata/trec/TREC_10.label')
+else:
+    trec_pickle = Path('/home/scz8928999/data/pickled/trec.pkl')
+    train_path = Path('/home/scz8928999/data/trec/train_5500.label')
+    test_path = Path('/home/scz8928999/data/trec/trec/TREC_10.label')
 
 
 def read_data(p):

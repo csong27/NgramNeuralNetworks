@@ -2,9 +2,16 @@ from path import Path
 from utils.preprocess import SIMPLE_FILTERS, preprocess_review
 import cPickle as pkl
 
-subj_pickle = Path('C:/Users/Song/Course/571/project/pickled_data/subj.pkl')
-subj = Path('D:/data/nlpdata/subj/subjective.pos')
-obj = Path('D:/data/nlpdata/subj/objective.neg')
+import platform
+
+if platform.system() == 'Windows':
+    subj_pickle = Path('C:/Users/Song/Course/571/project/pickled_data/subj.pkl')
+    subj = Path('D:/data/nlpdata/subj/subjective.pos')
+    obj = Path('D:/data/nlpdata/subj/objective.neg')
+else:
+    subj_pickle = Path('/home/scz8928999/data/pickled/subj.pkl')
+    subj = Path('/home/scz8928999/data/subj/subjective.pos')
+    obj = Path('/home/scz8928999/data/subj/objective.neg')
 
 
 def read_data(p):

@@ -13,8 +13,15 @@ from utils.preprocess import STOPWORDS
 kaggle_train_path = Path('C:/Users/Song/Course/571/hw3/train.tsv')
 kaggle_test_path = Path('C:/Users/Song/Course/571/hw3/test.tsv')
 treebank_path = 'D:/data/nlpdata/stanfordSentimentTreebank/'
-sst_sent_pickle = Path('C:/Users/Song/Course/571/project/pickled_data/sst_sent.pkl')
-pickle_path = 'C:/Users/Song/Course/571/project/pickled_data/'
+
+import platform
+
+if platform.system() == 'Windows':
+    sst_sent_pickle = Path('C:/Users/Song/Course/571/project/pickled_data/sst_sent.pkl')
+    pickle_path = 'C:/Users/Song/Course/571/project/pickled_data/'
+else:
+    sst_sent_pickle = Path('/home/scz8928999/data/pickled/sst_sent.pkl')
+    pickle_path = '/home/scz8928999/data/pickled/'
 
 
 SentimentDocument = namedtuple('SentimentDocument', 'words tags split sentiment')

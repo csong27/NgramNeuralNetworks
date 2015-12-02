@@ -1,9 +1,14 @@
 from path import Path
 import cPickle as pkl
-
-mpqa_pickle = Path('C:/Users/Song/Course/571/project/pickled_data/mpqa.pkl')
-pos = Path('D:/data/nlpdata/mpqa/mpqa.pos')
-neg = Path('D:/data/nlpdata/mpqa/mpqa.neg')
+import platform
+if platform.system() == 'Windows':
+    mpqa_pickle = Path('C:/Users/Song/Course/571/project/pickled_data/mpqa.pkl')
+    pos = Path('D:/data/nlpdata/mpqa/mpqa.pos')
+    neg = Path('D:/data/nlpdata/mpqa/mpqa.neg')
+else:
+    mpqa_pickle = Path('/home/scz8928999/data/pickled/mpqa.pkl')
+    pos = Path('/home/scz8928999/data/mpqa/mpqa.pos')
+    neg = Path('/home/scz8928999/data/mpqa/mpqa.neg')
 
 
 def read_data(p):

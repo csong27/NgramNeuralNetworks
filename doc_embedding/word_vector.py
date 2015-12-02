@@ -1,11 +1,14 @@
 import cPickle as pkl
 import numpy as np
-from nltk.collocations import ngrams
 from utils.load_data import *
 from utils.load_vector_model import read_glove_model, read_google_model
 from path import Path
 
-max_count = 0
+import platform
+if platform.system() == 'Windows':
+    data_path = 'D:/data/nlpdata/pickled_data/'
+else:
+    data_path = '/home/scz8928999/data/pickled/matrices/'
 
 
 def chunks(l, n):
@@ -57,37 +60,6 @@ def get_document_matrix(text, model, cutoff=300, uniform=False, scale=0.025, shr
     return matrix
 
 
-def get_document_bigram_matrix(text, model, cutoff=50, uniform=True, scale=0.1):
-    matrix = None
-    rand_vector = np.random.uniform(-scale, scale, model.vector_size) if uniform \
-        else np.random.normal(0, scale, model.vector_size)
-    count = 0
-    if len(text) == 1:
-        text += ['!@#$']
-    bigrams = ngrams(text, 2)
-    for bigram in bigrams:
-        word1, word2 = bigram
-        word_vector_1 = model[word1] if word1 in model else rand_vector
-        word_vector_2 = model[word2] if word2 in model else rand_vector
-        bigram_vector = np.concatenate((word_vector_1, word_vector_2))
-        if matrix is None:
-            matrix = np.asarray([bigram_vector])
-        else:
-            matrix = np.concatenate((matrix, [bigram_vector]))
-        count += 1
-        if count >= cutoff:
-            break
-    if matrix is None:
-        return np.zeros((cutoff, model.vector_size * 2))
-    length = matrix.shape[0]
-    if length < cutoff:
-        padding = np.zeros((cutoff - length, model.vector_size * 2))
-        matrix = np.concatenate((matrix, padding))
-    elif length > cutoff:
-        matrix = matrix[:cutoff]
-    return matrix
-
-
 def get_review_vector(text, model, average=True):
     count = 0
     vector = np.zeros(model.vector_size)
@@ -103,12 +75,10 @@ def get_review_vector(text, model, average=True):
     return vector
 
 
-def get_reviews_vectors(documents, model, average=True, aggregate=False, cutoff=300, uniform=True, bigram=False):
+def get_reviews_vectors(documents, model, average=True, aggregate=False, cutoff=300, uniform=True):
     for i in xrange(len(documents)):
         if aggregate:
             documents[i] = get_review_vector(documents[i], model, average)
-        elif bigram:
-            documents[i] = get_document_bigram_matrix(documents[i], model, cutoff=cutoff, uniform=uniform)
         else:
             documents[i] = get_document_matrix(documents[i], model, cutoff=cutoff, uniform=uniform)
     return documents
@@ -150,7 +120,7 @@ def read_aggregated_vectors(google=True, data=SST_KAGGLE):
     return train_x, train_y, test_x
 
 
-def get_document_matrices(google=False, dim=100, cutoff=60, uniform=True, data='rotten', cv=True, bigram=False, kaggle=False):
+def get_document_matrices(google=False, dim=100, cutoff=60, uniform=True, data='rotten', cv=True, kaggle=False):
     print "getting concatenated word vectors for documents..."
     model = read_google_model() if google else read_glove_model(dim=dim)
     if cv:
@@ -166,7 +136,7 @@ def get_document_matrices(google=False, dim=100, cutoff=60, uniform=True, data='
             cutoff = 20
         else:
             raise NotImplementedError('Not such data set %s', data)
-        x = get_reviews_vectors(x, model, aggregate=False, cutoff=cutoff, uniform=uniform, bigram=bigram)
+        x = get_reviews_vectors(x, model, aggregate=False, cutoff=cutoff, uniform=uniform)
         x = np.asarray(x)
         y = np.asarray(y)
         return x, y
@@ -181,9 +151,9 @@ def get_document_matrices(google=False, dim=100, cutoff=60, uniform=True, data='
             cutoff = 50
         else:
             raise NotImplementedError('Not such data set %s', data)
-        train_x = get_reviews_vectors(train_x, model, aggregate=False, cutoff=cutoff, uniform=uniform, bigram=bigram)
-        validate_x = get_reviews_vectors(validate_x, model, aggregate=False, cutoff=cutoff, uniform=uniform, bigram=bigram)
-        test_x = get_reviews_vectors(test_x, model, aggregate=False, cutoff=cutoff, uniform=uniform, bigram=bigram)
+        train_x = get_reviews_vectors(train_x, model, aggregate=False, cutoff=cutoff, uniform=uniform)
+        validate_x = get_reviews_vectors(validate_x, model, aggregate=False, cutoff=cutoff, uniform=uniform)
+        test_x = get_reviews_vectors(test_x, model, aggregate=False, cutoff=cutoff, uniform=uniform)
 
         train_x = np.asarray(train_x)
         train_y = np.asarray(train_y)
@@ -196,54 +166,34 @@ def get_document_matrices(google=False, dim=100, cutoff=60, uniform=True, data='
     elif kaggle:
         cutoff = 40
         train_x, train_y, test_x = read_sst_kaggle_pickle()
-        train_x = get_reviews_vectors(train_x, model, aggregate=False, cutoff=cutoff, uniform=uniform, bigram=bigram)
-        test_x = get_reviews_vectors(test_x, model, aggregate=False, cutoff=cutoff, uniform=uniform, bigram=bigram)
+        train_x = get_reviews_vectors(train_x, model, aggregate=False, cutoff=cutoff, uniform=uniform)
+        test_x = get_reviews_vectors(test_x, model, aggregate=False, cutoff=cutoff, uniform=uniform)
         train_x = np.asarray(train_x)
         train_y = np.asarray(train_y)
         test_x = np.asarray(test_x)
         return train_x, train_y, test_x
     else:
         return Exception('Something went wrong')
+    
 
-
-def get_document_matrices_yelp(google=False, int_label=True, dim=50, cutoff=300, uniform=True, for_theano=True):
-    model = read_google_model() if google else read_glove_model(dim=dim)
-    train_x, train_y, validate_x, validate_y = read_train_data(int_label=int_label)
-    test_x, test_y = read_test_data(int_label=int_label)
-    print "getting concatenated word vectors for documents..."
-    train_x = get_reviews_vectors(train_x, model, aggregate=False, cutoff=cutoff, uniform=uniform)
-    validate_x = get_reviews_vectors(validate_x, model, aggregate=False, cutoff=cutoff, uniform=uniform)
-    test_x = get_reviews_vectors(test_x, model, aggregate=False, cutoff=cutoff, uniform=uniform)
-
-    if for_theano:
-        train_y = np.asarray(train_y) - 1
-        validate_y = np.asarray(validate_y) - 1
-        test_y = np.asarray(test_y) - 1
-
-    return train_x, train_y, validate_x, validate_y, test_x, test_y
-
-
-def save_matrices_pickle(google=True, data='rotten', cv=True, bigram=False, kaggle=False):
-    path = 'D:/data/nlpdata/pickled_data/'
+def save_matrices_pickle(google=True, data='rotten', cv=True, kaggle=False, dim=50):
+    path = data_path + str(dim)
     dataname = data + '_google.pkl' if google else data + '_glove.pkl'
-    if bigram:
-        dataname = 'bigram_' + dataname
     filename = Path(path + dataname)
     print 'saving data to %s...' % filename
     f = open(filename, 'wb')
     if cv:
-        x, y = get_document_matrices(google=google, dim=300, data=data, bigram=bigram)
+        x, y = get_document_matrices(google=google, dim=dim, data=data)
         print len(x)
         pkl.dump((x, y), f, -1)
     elif not kaggle:
         train_x, train_y, validate_x, validate_y, test_x, test_y = get_document_matrices(google=google, data=data,
-                                                                                         cv=False, bigram=bigram)
+                                                                                         cv=False, dim=dim)
         pkl.dump((train_x, train_y), f, -1)
         pkl.dump((validate_x, validate_y), f, -1)
         pkl.dump((test_x, test_y), f, -1)
     elif kaggle:    # too big, need to save with np.save
-        train_x, train_y, test_x = get_document_matrices(google=google, data=data, cv=False,
-                                                         bigram=bigram, kaggle=kaggle, dim=100)
+        train_x, train_y, test_x = get_document_matrices(google=google, data=data, cv=False, kaggle=kaggle, dim=dim)
         f_train = open('D:/data/nlpdata/pickled_data/kaggle/train_' + dataname, 'wb')
         f_test = open('D:/data/nlpdata/pickled_data/kaggle/test_' + dataname, 'wb')
         np.save(f_train, train_x)
@@ -253,11 +203,11 @@ def save_matrices_pickle(google=True, data='rotten', cv=True, bigram=False, kagg
     f.close()
 
 
-def read_matrices_pickle(data='rotten', google=True, cv=True, bigram=False):
-    path = 'D:/data/nlpdata/pickled_data/'
+def read_matrices_pickle(data='rotten', google=True, cv=True, dim=50):
+    path = data_path
+    if dim != 300:
+        path += str(dim)
     filename = data + '_google.pkl' if google else data + '_glove.pkl'
-    if bigram:
-        filename = 'bigram_' + filename
     filename = Path(path + filename)
     print 'loading data from %s...' % filename
     f = open(filename, 'rb')
@@ -288,4 +238,4 @@ def read_matrices_kaggle_pickle():
     return train_x, train_y, test_x
 
 if __name__ == '__main__':
-    save_aggregated_vectors(google=False, dim=300)
+    save_matrices_pickle(google=False, dim=50)

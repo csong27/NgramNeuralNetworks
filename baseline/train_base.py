@@ -122,7 +122,7 @@ def read_all_predict_score(axis=1):
 
 
 def multi_learner(n_estimators=200, alg='et'):
-    train_x_2, train_y, test_x_2 = sentiment_kaggle_dataset()
+    train_x_2, train_y, test_x_2 = bow_kaggle_dataset()
     train_x, test_x = read_all_predict_score()
     train_x = sparse.hstack([train_x, train_x_2])
     test_x = sparse.hstack([test_x, test_x_2])
@@ -131,6 +131,8 @@ def multi_learner(n_estimators=200, alg='et'):
         clf = RandomForestClassifier(n_estimators=n_estimators, oob_score=True, verbose=1)
     elif alg == 'et':
         clf = ExtraTreesClassifier(n_estimators=n_estimators, verbose=1)
+    elif alg == 'log':
+        clf = LogisticRegression(verbose=1, n_jobs=2)
     else:
         raise NotImplementedError
     clf.fit(train_x, train_y)
@@ -138,4 +140,4 @@ def multi_learner(n_estimators=200, alg='et'):
     save_csv(predicted, "test")
 
 if __name__ == '__main__':
-    multi_learner(n_estimators=10)
+    multi_learner(alg='log')

@@ -7,7 +7,7 @@ import numpy as np
 
 
 def cross_validation(validation_ratio=0.1, data=ROTTEN_TOMATOES, shuffle=True):
-    x, y = read_matrices_pickle(google=False, data=data)
+    x, y = read_matrices_pickle(google=True, data=data, dim=300)
     dim = x[0].shape[1]
     n_out = len(np.unique(y))
     skf = StratifiedKFold(y, n_folds=10)
@@ -31,12 +31,13 @@ def cross_validation(validation_ratio=0.1, data=ROTTEN_TOMATOES, shuffle=True):
             dim=dim,
             ngram_bias=False,
             multi_kernel=True,
+            concat_out=False,
             n_kernels=(4, 4),
             use_bias=True,
             lr_rate=0.02,
             dropout=True,
             dropout_rate=0.5,
-            n_hidden=300,
+            n_hidden=400,
             n_out=n_out,
             ngram_activation=tanh,
             activation=leaky_relu,

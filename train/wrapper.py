@@ -31,27 +31,6 @@ def wrapper(data=TREC):
     )
 
 
-def wrapper_yelp():
-    dim = 50
-    cutoff = 50
-    datasets = get_document_matrices_yelp(dim=dim, cutoff=cutoff)
-    train_ngram_conv_net(
-        datasets=datasets,
-        ngrams=(2, 1),
-        use_bias=False,
-        ngram_bias=False,
-        dim=dim,
-        lr_rate=0.001,
-        dropout=True,
-        dropout_rate=0.5,
-        n_hidden=200,
-        activation=relu,
-        ngram_activation=leaky_relu,
-        batch_size=50,
-        update_rule='adagrad'
-    )
-
-
 def wrapper_kaggle(validate_ratio=0.2):
     train_x, train_y, test_x = read_matrices_kaggle_pickle()
     train_x, validate_x, train_y, validate_y = train_test_split(train_x, train_y, test_size=validate_ratio,
