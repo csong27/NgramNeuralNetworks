@@ -17,3 +17,35 @@ SST_KAGGLE = 'sst_kaggle'
 TREC = 'trec'
 SUBJ = 'subj'
 IMDB = 'imdb'
+
+all_datasets = [IMDB, ROTTEN_TOMATOES, CUSTOMER_REVIEW, MPQA, SST_SENT, TREC, SUBJ]
+
+
+def load_raw_datasets(datasets):
+    if datasets == ROTTEN_TOMATOES:
+        return read_rotten_pickle()
+    elif datasets == CUSTOMER_REVIEW:
+        return read_cr_pickle()
+    elif datasets == MPQA:
+        return read_mpqa_pickle()
+    elif datasets == SST_SENT:
+        return read_sst_sent_pickle()
+    elif datasets == TREC:
+        return read_trec_pickle()
+    elif datasets == SUBJ:
+        return read_subj_pickle()
+    elif datasets == IMDB:
+        return read_imdb_pickle()
+
+
+def count_length():
+    import numpy
+    for datasets in all_datasets:
+        raw_data = load_raw_datasets(datasets)
+        raw_train_sent = raw_data[0]
+        sent_length = [len(x) for x in raw_train_sent]
+        print datasets, "avg sentence length is", numpy.mean(sent_length)
+
+
+if __name__ == '__main__':
+    count_length()

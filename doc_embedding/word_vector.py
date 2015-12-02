@@ -120,7 +120,7 @@ def read_aggregated_vectors(google=True, data=SST_KAGGLE):
     return train_x, train_y, test_x
 
 
-def get_document_matrices(google=False, dim=100, cutoff=60, uniform=True, data='rotten', cv=True, kaggle=False):
+def get_document_matrices(google=False, dim=100, cutoff=50, uniform=True, data='rotten', cv=True, kaggle=False):
     print "getting concatenated word vectors for documents..."
     model = read_google_model() if google else read_glove_model(dim=dim)
     if cv:
@@ -130,6 +130,7 @@ def get_document_matrices(google=False, dim=100, cutoff=60, uniform=True, data='
         elif data == SUBJ:
             x, y = read_subj_pickle()
         elif data == CUSTOMER_REVIEW:
+            cutoff = 40
             x, y = read_cr_pickle()
         elif data == MPQA:
             x, y = read_mpqa_pickle()
@@ -145,12 +146,14 @@ def get_document_matrices(google=False, dim=100, cutoff=60, uniform=True, data='
             train_x, train_y, validate_x, validate_y, test_x, test_y = read_imdb_pickle()
             cutoff = 75
         elif data == SST_SENT:
+            cutoff = 45
             train_x, train_y, validate_x, validate_y, test_x, test_y = read_sst_sent_pickle()
         elif data == SST_SENT_POL:
+            cutoff = 45
             train_x, train_y, validate_x, validate_y, test_x, test_y = read_sst_sent_pickle(polarity=True)
         elif data == TREC:
             train_x, train_y, validate_x, validate_y, test_x, test_y = read_trec_pickle()
-            cutoff = 50
+            cutoff = 30
         else:
             raise NotImplementedError('Not such train/dev/test data set %s', data)
         train_x = get_reviews_vectors(train_x, model, aggregate=False, cutoff=cutoff, uniform=uniform)
@@ -239,4 +242,4 @@ def read_matrices_kaggle_pickle():
     return train_x, train_y, test_x
 
 if __name__ == '__main__':
-    save_matrices_pickle(data=SST_SENT_POL, cv=False, google=False, dim=300)
+    save_matrices_pickle(data=SST_SENT_POL, cv=False, google=True, dim=300)
