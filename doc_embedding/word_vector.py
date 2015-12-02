@@ -204,7 +204,7 @@ def save_matrices_pickle(google=True, data='rotten', cv=True, kaggle=False, dim=
     f.close()
 
 
-def read_matrices_pickle(data='rotten', google=True, cv=True, dim=50):
+def read_matrices_pickle(data='rotten', google=True, cv=True, dim=300):
     path = data_path
     if dim != 300:
         path += str(dim)

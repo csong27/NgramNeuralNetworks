@@ -1,4 +1,4 @@
-from convolutional_net import train_ngram_conv_net
+from ngram_net import train_ngram_conv_net
 from sklearn.cross_validation import train_test_split
 from path import Path
 from neural_network.non_linear import *
@@ -7,28 +7,33 @@ from utils.load_data import *
 import numpy as np
 
 
-def wrapper(data=TREC):
+def wrapper(data=SST_SENT_POL):
     train_x, train_y, validate_x, validate_y, test_x, test_y = read_matrices_pickle(google=False, data=data, cv=False)
     dim = train_x[0].shape[1]
     n_out = len(np.unique(test_y))
     shuffle_indices = np.random.permutation(train_x.shape[0])
     datasets = (train_x[shuffle_indices], train_y[shuffle_indices], validate_x, validate_y, test_x, test_y)
-    train_ngram_conv_net(
+    test_accuracy = train_ngram_conv_net(
         datasets=datasets,
+        n_epochs=10,
         ngrams=(2, 1),
-        use_bias=True,
-        ngram_bias=False,
         dim=dim,
-        lr_rate=0.01,
-        dropout=True,
+        ngram_bias=False,
+        multi_kernel=True,
+        concat_out=False,
+        n_kernels=(4, 4),
+        use_bias=True,
+        lr_rate=0.02,
+        dropout=False,
         dropout_rate=0.5,
-        n_hidden=200,
+        n_hidden=400,
         n_out=n_out,
-        activation=tanh,
         ngram_activation=leaky_relu,
-        batch_size=100,
+        activation=leaky_relu,
+        batch_size=50,
         update_rule='adagrad'
     )
+    return test_accuracy
 
 
 def wrapper_kaggle(validate_ratio=0.2):
@@ -68,4 +73,4 @@ def wrapper_kaggle(validate_ratio=0.2):
             writer.writerow([phrase_id, sentiment])
 
 if __name__ == '__main__':
-    wrapper_kaggle()
+    wrapper()

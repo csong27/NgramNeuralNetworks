@@ -30,6 +30,7 @@ def train_ngram_conv_net(
         momentum_ratio=0.9,
         no_test_y=False,
         save_ngram=False,
+        validation_only=False
 ):
     rng = np.random.RandomState(23455)
     if no_test_y:
@@ -147,6 +148,8 @@ def train_ngram_conv_net(
                 saved_test = save_test(epoch)
         cost_epoch = np.mean(cost_list)
         print 'epoch %i, train cost %f, validate accuracy %f' % (epoch, cost_epoch, val_accuracy * 100.)
+    if validation_only:
+        return best_val_accuracy
     if save_ngram:
         return saved_train, saved_validate, saved_test
     if not no_test_y:
