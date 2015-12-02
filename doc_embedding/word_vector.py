@@ -124,33 +124,35 @@ def get_document_matrices(google=False, dim=100, cutoff=60, uniform=True, data='
     print "getting concatenated word vectors for documents..."
     model = read_google_model() if google else read_glove_model(dim=dim)
     if cv:
-        if data == 'rotten':
+        if data == ROTTEN_TOMATOES:
             x, y = read_rotten_pickle()
             cutoff = 56
-        elif data == 'subj':
+        elif data == SUBJ:
             x, y = read_subj_pickle()
-        elif data == 'cr':
+        elif data == CUSTOMER_REVIEW:
             x, y = read_cr_pickle()
-        elif data == 'mpqa':
+        elif data == MPQA:
             x, y = read_mpqa_pickle()
             cutoff = 20
         else:
-            raise NotImplementedError('Not such data set %s', data)
+            raise NotImplementedError('Not such cross validation data set %s', data)
         x = get_reviews_vectors(x, model, aggregate=False, cutoff=cutoff, uniform=uniform)
         x = np.asarray(x)
         y = np.asarray(y)
         return x, y
     elif not kaggle:
-        if data == 'imdb':
+        if data == IMDB:
             train_x, train_y, validate_x, validate_y, test_x, test_y = read_imdb_pickle()
             cutoff = 75
-        elif data == 'sst_sent':
+        elif data == SST_SENT:
             train_x, train_y, validate_x, validate_y, test_x, test_y = read_sst_sent_pickle()
-        elif data == 'trec':
+        elif data == SST_SENT_POL:
+            train_x, train_y, validate_x, validate_y, test_x, test_y = read_sst_sent_pickle(polarity=True)
+        elif data == TREC:
             train_x, train_y, validate_x, validate_y, test_x, test_y = read_trec_pickle()
             cutoff = 50
         else:
-            raise NotImplementedError('Not such data set %s', data)
+            raise NotImplementedError('Not such train/dev/test data set %s', data)
         train_x = get_reviews_vectors(train_x, model, aggregate=False, cutoff=cutoff, uniform=uniform)
         validate_x = get_reviews_vectors(validate_x, model, aggregate=False, cutoff=cutoff, uniform=uniform)
         test_x = get_reviews_vectors(test_x, model, aggregate=False, cutoff=cutoff, uniform=uniform)
@@ -177,14 +179,13 @@ def get_document_matrices(google=False, dim=100, cutoff=60, uniform=True, data='
     
 
 def save_matrices_pickle(google=True, data='rotten', cv=True, kaggle=False, dim=50):
-    path = data_path + str(dim)
+    path = data_path + str(dim) if dim != 300 else data_path
     dataname = data + '_google.pkl' if google else data + '_glove.pkl'
     filename = Path(path + dataname)
     print 'saving data to %s...' % filename
     f = open(filename, 'wb')
     if cv:
         x, y = get_document_matrices(google=google, dim=dim, data=data)
-        print len(x)
         pkl.dump((x, y), f, -1)
     elif not kaggle:
         train_x, train_y, validate_x, validate_y, test_x, test_y = get_document_matrices(google=google, data=data,
@@ -238,4 +239,4 @@ def read_matrices_kaggle_pickle():
     return train_x, train_y, test_x
 
 if __name__ == '__main__':
-    save_matrices_pickle(google=False, dim=50)
+    save_matrices_pickle(data=SST_SENT_POL, cv=False, google=False, dim=300)

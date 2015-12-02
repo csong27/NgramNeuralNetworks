@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from textblob import TextBlob
-from sklearn.cross_validation import train_test_split
 from path import Path
 import os
 import logging
@@ -18,9 +17,11 @@ import platform
 
 if platform.system() == 'Windows':
     sst_sent_pickle = Path('C:/Users/Song/Course/571/project/pickled_data/sst_sent.pkl')
+    sst_sent_pickle_polarity = Path('C:/Users/Song/Course/571/project/pickled_data/sst_sent_polarity.pkl')
     pickle_path = 'C:/Users/Song/Course/571/project/pickled_data/'
 else:
     sst_sent_pickle = Path('/home/scz8928999/data/pickled/sst_sent.pkl')
+    sst_sent_pickle_polarity = Path('/home/scz8928999/data/pickled/sst_sent_polarity.pkl')
     pickle_path = '/home/scz8928999/data/pickled/'
 
 
@@ -140,6 +141,33 @@ def get_int_label(score):
         return 4
 
 
+def get_polarity_dataset(x, y):
+    new_x = []
+    new_y = []
+    for i, label in enumerate(y):
+        if label == 2:
+            continue
+        new_x.append(x[i])
+        if label < 2:
+            new_y.append(0)
+        else:
+            new_y.append(1)
+    return new_x, new_y
+
+
+def save_sentence_pickle_polarity():
+    train_x, train_y, validate_x, validate_y, test_x, test_y = read_sst_sent_pickle()
+    train_x, train_y = get_polarity_dataset(train_x, train_y)
+    validate_x, validate_y = get_polarity_dataset(validate_x, validate_y)
+    test_x, test_y = get_polarity_dataset(test_x, test_y)
+
+    f = open('sst_sent_polarity.pkl', 'wb')
+    pkl.dump((train_x, train_y), f, -1)
+    pkl.dump((validate_x, validate_y), f, -1)
+    pkl.dump((test_x, test_y), f, -1)
+    f.close()
+
+
 def save_sentence_pickle():
     phrases = read_su_sentiment_rotten_tomatoes(dirname=treebank_path)
     train_x = []
@@ -167,8 +195,9 @@ def save_sentence_pickle():
     f.close()
 
 
-def read_sst_sent_pickle():
-    f = open(sst_sent_pickle, 'rb')
+def read_sst_sent_pickle(polarity=False):
+    dataset = sst_sent_pickle if not polarity else sst_sent_pickle_polarity
+    f = open(dataset, 'rb')
     train_x, train_y = pkl.load(f)
     validate_x, validate_y = pkl.load(f)
     test_x, test_y = pkl.load(f)
@@ -272,6 +301,3 @@ def read_kaggle_raw():
         test_x.append(review)
 
     return train_x, train_y, test_x
-
-if __name__ == '__main__':
-    save_sst_kaggle_pickle()
