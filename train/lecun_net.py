@@ -1,5 +1,5 @@
 from neural_network import *
-from utils.load_data import *
+from io_utils.load_data import *
 from baseline.train_base import read_all_predict_score
 from sklearn.cross_validation import train_test_split
 from path import Path

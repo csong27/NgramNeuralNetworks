@@ -1,6 +1,6 @@
 from corpus import MyCorpus
 from train_lda import load_lda
-from utils.load_data import *
+from io_utils.load_data import *
 from sklearn.feature_extraction import DictVectorizer
 import cPickle as pkl
 

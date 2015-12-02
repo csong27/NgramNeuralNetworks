@@ -1,6 +1,6 @@
 from doc_embedding import *
 from topic import read_topic_vectors
-from utils.load_data import *
+from io_utils.load_data import *
 from path import Path
 import cPickle as pkl
 import numpy as np

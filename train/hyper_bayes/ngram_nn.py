@@ -1,17 +1,8 @@
 from neural_network.non_linear import *
 from train.ngram_net import train_ngram_conv_net
 from doc_embedding import read_matrices_pickle
+from io_utils.load_data import *
 import numpy as np
-
-ROTTEN_TOMATOES = 'rotten'
-CUSTOMER_REVIEW = 'cr'
-MPQA = 'mpqa'
-SST_SENT = 'sst_sent'
-SST_SENT_POL = 'sst_sent_polarity'
-SST_KAGGLE = 'sst_kaggle'
-TREC = 'trec'
-SUBJ = 'subj'
-IMDB = 'imdb'
 
 
 def ngram_wrapper(

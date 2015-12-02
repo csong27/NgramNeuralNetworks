@@ -1,5 +1,5 @@
 from path import Path
-from utils.preprocess import SIMPLE_FILTERS, preprocess_review
+from io_utils.preprocess import SIMPLE_FILTERS, preprocess_review
 import cPickle as pkl
 import platform
 if platform.system() == 'Windows':

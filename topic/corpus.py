@@ -1,4 +1,4 @@
-from utils.load_data import *
+from io_utils.load_data import *
 from gensim import corpora
 
 

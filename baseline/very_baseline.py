@@ -6,7 +6,7 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline
 from path import Path
-from utils.load_data import *
+from io_utils.load_data import *
 
 
 def get_data(data=SST_KAGGLE):

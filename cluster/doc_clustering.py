@@ -1,6 +1,6 @@
-from utils.pickled_feature import read_ngram_vectors
+from io_utils.pickled_feature import read_ngram_vectors
 from doc_embedding.paragraph_vector import read_doc2vec_pickle
-from utils.load_data import *
+from io_utils.load_data import *
 from sklearn.cluster import KMeans
 import numpy as np
 

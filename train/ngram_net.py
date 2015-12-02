@@ -1,5 +1,5 @@
 from neural_network import *
-from utils.load_data import *
+from io_utils.load_data import *
 from doc_embedding import read_matrices_kaggle_pickle
 from path import Path
 from sklearn.cross_validation import StratifiedShuffleSplit

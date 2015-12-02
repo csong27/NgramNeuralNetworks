@@ -6,7 +6,7 @@ import os
 import logging
 from collections import namedtuple
 import cPickle as pkl
-from utils.preprocess import STOPWORDS
+from io_utils.preprocess import STOPWORDS
 
 
 kaggle_train_path = Path('C:/Users/Song/Course/571/hw3/train.tsv')

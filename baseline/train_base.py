@@ -3,9 +3,9 @@ from sklearn.linear_model import LogisticRegression, Perceptron, SGDClassifier, 
 from sklearn.cross_validation import StratifiedShuffleSplit
 from sklearn.metrics import classification_report
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
-from utils.save_kaggle_result import save_csv
-from utils.lexicon import senti_lexicon_vectorizor, senti_wordnet_vectorizer
-from utils.load_data import SST_KAGGLE, read_sst_kaggle_pickle, read_kaggle_raw
+from io_utils.save_kaggle_result import save_csv
+from io_utils.lexicon import senti_lexicon_vectorizor, senti_wordnet_vectorizer
+from io_utils.load_data import SST_KAGGLE, read_sst_kaggle_pickle, read_kaggle_raw
 from bag_of_bigram import vectorize_text
 from scipy import sparse
 from doc_embedding import read_aggregated_vectors

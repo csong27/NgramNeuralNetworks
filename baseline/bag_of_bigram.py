@@ -1,7 +1,7 @@
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
-from utils.save_kaggle_result import save_csv
-from utils.load_data import *
-from utils.lexicon import senti_lexicon_vectorizor, senti_wordnet_vectorizer
+from io_utils.save_kaggle_result import save_csv
+from io_utils.load_data import *
+from io_utils.lexicon import senti_lexicon_vectorizor, senti_wordnet_vectorizer
 import numpy as np
 from scipy import sparse
 from sklearn.linear_model import LogisticRegression

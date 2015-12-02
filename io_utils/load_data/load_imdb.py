@@ -1,4 +1,4 @@
-from utils.preprocess import preprocess_review
+from io_utils.preprocess import preprocess_review
 from sklearn.cross_validation import train_test_split
 from path import Path
 import cPickle as pkl

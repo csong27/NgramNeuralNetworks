@@ -1,5 +1,5 @@
-from utils.load_data import *
-from utils.save_kaggle_result import save_csv
+from io_utils.load_data import *
+from io_utils.save_kaggle_result import save_csv
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
 from doc_embedding import read_aggregated_vectors

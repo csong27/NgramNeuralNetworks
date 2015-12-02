@@ -1,7 +1,7 @@
 from doc_embedding import *
 from sklearn.cross_validation import StratifiedKFold, train_test_split
 from ngram_net import train_ngram_conv_net
-from utils.load_data import *
+from io_utils.load_data import *
 from neural_network.non_linear import *
 import numpy as np
 

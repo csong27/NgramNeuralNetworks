@@ -1,6 +1,6 @@
 from gensim.models import Doc2Vec
 from gensim.models.doc2vec import TaggedDocument
-from utils.load_data import *
+from io_utils.load_data import *
 from path import Path
 import cPickle as pkl
 import numpy as np

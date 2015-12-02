@@ -1,4 +1,4 @@
-from utils.preprocess import preprocess_review
+from io_utils.preprocess import preprocess_review
 import cPickle as pkl
 
 save_path = 'D:/data/nlpdata/pickled_data/tweet.pkl'

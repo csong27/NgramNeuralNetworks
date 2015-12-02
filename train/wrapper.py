@@ -3,7 +3,7 @@ from sklearn.cross_validation import train_test_split
 from path import Path
 from neural_network.non_linear import *
 from doc_embedding import *
-from utils.load_data import *
+from io_utils.load_data import *
 import numpy as np
 
 

@@ -1,6 +1,6 @@
 import logging
 from corpus import get_documents, MyCorpus
-from utils.load_data import *
+from io_utils.load_data import *
 from path import Path
 from gensim import models
 

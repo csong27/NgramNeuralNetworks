@@ -1,7 +1,7 @@
 import cPickle as pkl
 import numpy as np
-from utils.load_data import *
-from utils.load_vector_model import read_glove_model, read_google_model
+from io_utils.load_data import *
+from io_utils.load_vector_model import read_glove_model, read_google_model
 from path import Path
 
 import platform

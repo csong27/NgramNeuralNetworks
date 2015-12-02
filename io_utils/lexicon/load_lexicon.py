@@ -1,5 +1,5 @@
 from path import Path
-from utils.load_data import *
+from io_utils.load_data import *
 from collections import defaultdict
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer

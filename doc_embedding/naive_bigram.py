@@ -1,8 +1,8 @@
 import numpy as np
 from nltk.collocations import ngrams
 
-from utils.load_data.load_yelp import read_train_data, read_test_data
-from utils.load_vector_model import read_glove_model
+from io_utils.load_data.load_yelp import read_train_data, read_test_data
+from io_utils.load_vector_model import read_glove_model
 
 
 def get_bigram_review_vector(text, model, average=True, kernel=(1, 1)):
