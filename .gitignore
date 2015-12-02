@@ -2,3 +2,4 @@
 .idea
 *.pyc
 pickled_data
+train/hyper_bayes/output
