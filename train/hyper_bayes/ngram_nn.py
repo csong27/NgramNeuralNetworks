@@ -20,11 +20,16 @@ def ngram_wrapper(
         lr_rate=0.01
 ):
     # getting the datasets
-    train_x, train_y, validate_x, validate_y, test_x, test_y = read_matrices_pickle(google=False, data=data, cv=False)
+    train_x, train_y, validate_x, validate_y, test_x, test_y = read_matrices_pickle(google=True, data=data, cv=False)
     dim = train_x[0].shape[1]
     n_out = len(np.unique(test_y))
     shuffle_indices = np.random.permutation(train_x.shape[0])
     datasets = (train_x[shuffle_indices], train_y[shuffle_indices], validate_x, validate_y, test_x, test_y)
+    # network configuration
+    n_epochs *= 2
+    batch_size *= 10
+    n_hidden *= 10
+    dropout_rate /= 10.0
     # ngram layers configurations
     n_kernels = tuple(n_kernels[:ngram_layers])
     ngrams = tuple(ngrams[:ngram_layers])
