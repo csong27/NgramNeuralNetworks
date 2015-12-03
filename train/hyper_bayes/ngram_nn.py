@@ -17,7 +17,8 @@ def ngram_wrapper(
         n_hidden=100,
         ngram_layers=2,
         dropout_rate=0.3,
-        lr_rate=0.01
+        lr_rate=0.01,
+        mean_pool=False
 ):
     # getting the datasets
     train_x, train_y, validate_x, validate_y, test_x, test_y = read_matrices_pickle(google=True, data=data, cv=False)
@@ -47,6 +48,7 @@ def ngram_wrapper(
         n_kernels=n_kernels,
         use_bias=use_bias,
         lr_rate=lr_rate,
+        mean_pool=mean_pool,
         dropout=dropout,
         dropout_rate=dropout_rate,
         n_hidden=n_hidden,
@@ -74,5 +76,6 @@ def main(job_id, params):
         ngrams=params['ngrams'],  # passed as a list of three numbers
         dropout=params['dropout'][0],
         dropout_rate=params['dropout_rate'][0],
-        n_hidden=params['n_hidden'][0]
+        n_hidden=params['n_hidden'][0],
+        mean_pool=params['mean_pool'][0]
     )
