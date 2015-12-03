@@ -21,11 +21,14 @@ def ngram_wrapper(
 ):
     # getting the datasets
     train_x, train_y, validate_x, validate_y, test_x, test_y = read_matrices_pickle(google=True, data=data, cv=False)
-    dim = train_x[0].shape[1]
+    input_shape = train_x[0].shape
+    print "input data shape", input_shape
+
     n_out = len(np.unique(test_y))
     shuffle_indices = np.random.permutation(train_x.shape[0])
     datasets = (train_x[shuffle_indices], train_y[shuffle_indices], validate_x, validate_y, test_x, test_y)
     # network configuration
+    lr_rate /= 200.0
     n_epochs *= 2
     batch_size *= 10
     n_hidden *= 10
@@ -37,7 +40,7 @@ def ngram_wrapper(
         datasets=datasets,
         n_epochs=n_epochs,
         ngrams=ngrams,
-        dim=dim,
+        input_shape=input_shape,
         ngram_bias=False,
         multi_kernel=multi_kernel,
         concat_out=False,
@@ -66,7 +69,6 @@ def main(job_id, params):
         n_epochs=params['n_epochs'][0],
         batch_size=params['batch_size'][0],
         ngram_layers=params['ngram_layers'][0],
-        multi_kernel=params['multi_kernel'][0],
         use_bias=params['use_bias'][0],
         n_kernels=params['n_kernels'],  # passed as a list of three numbers
         ngrams=params['ngrams'],  # passed as a list of three numbers

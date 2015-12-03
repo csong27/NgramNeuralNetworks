@@ -1,23 +1,34 @@
 import numpy
 import theano
 from non_linear import *
+from initialization import get_W_values
+
+
+def get_input_info(input_shape, sum_out, ngram):
+    assert len(input_shape) == 2
+    assert ngram <= 3
+    fan_in = input_shape[0] * input_shape[1]
+    n_in = n_out = input_shape[1]
+    if sum_out:
+        fan_out = input_shape[1]
+    else:
+        fan_out = (input_shape[0] - ngram + 1) * input_shape[1]
+    return n_in, n_out, fan_in, fan_out
 
 
 class UnigramLayer(object):
-    def __init__(self, rng, input, n_in, n_out, activation=relu, use_bias=False, sum_out=True):
+    def __init__(self, rng, input, input_shape, activation=relu, use_bias=False, sum_out=True):
         """
         Allocate a UnigramLayer with shared variable internal parameters.
         """
-
         self.input = input
         self.activation = activation
         self.use_bias = use_bias
+
         # initialize weights with random weights
-        if "relu" in activation.func_name:
-            W_values = numpy.asarray(0.01 * rng.standard_normal(size=(n_in, n_out)), dtype=theano.config.floatX)
-        else:
-            W_values = numpy.asarray(rng.uniform(low=-numpy.sqrt(6. / (n_in + n_out)), high=numpy.sqrt(6. / (n_in + n_out)),
-                                                 size=(n_in, n_out)), dtype=theano.config.floatX)
+        n_in, n_out, fan_in, fan_out = get_input_info(input_shape, sum_out=sum_out, ngram=1)
+        W_values = get_W_values(rng=rng, activation=activation, fan_in=fan_in, fan_out=fan_out, n_in=n_in, n_out=n_out,
+                                n_kernels=0)
 
         self.W = theano.shared(W_values, borrow=True, name="W_cov")
 
@@ -33,7 +44,7 @@ class UnigramLayer(object):
 
 
 class BigramLayer(object):
-    def __init__(self, rng, input, n_in, n_out, activation=tanh, use_bias=False, sum_out=True):
+    def __init__(self, rng, input, input_shape, activation=tanh, use_bias=False, sum_out=True):
         """
         Allocate a BigramLayer with shared variable internal parameters.
         """
@@ -41,11 +52,11 @@ class BigramLayer(object):
         self.input = input
         self.activation = activation
         self.use_bias = use_bias
-        if "relu" in activation.func_name:
-            W_values = numpy.asarray(0.01 * rng.standard_normal(size=(n_in, n_out)), dtype=theano.config.floatX)
-        else:
-            W_values = numpy.asarray(rng.uniform(low=-numpy.sqrt(6. / (n_in + n_out)), high=numpy.sqrt(6. / (n_in + n_out)),
-                                                 size=(n_in, n_out)), dtype=theano.config.floatX)
+
+        # initialize weights with random weights
+        n_in, n_out, fan_in, fan_out = get_input_info(input_shape, sum_out=sum_out, ngram=2)
+        W_values = get_W_values(rng=rng, activation=activation, fan_in=fan_in, fan_out=fan_out, n_in=n_in, n_out=n_out,
+                                n_kernels=0)
 
         self.Tr = theano.shared(W_values, borrow=True, name="Tr")
         self.Tl = theano.shared(W_values, borrow=True, name="Tl")
@@ -65,7 +76,7 @@ class BigramLayer(object):
 
 
 class TrigramLayer(object):
-    def __init__(self, rng, input, n_in, n_out, activation=tanh, use_bias=False, sum_out=True):
+    def __init__(self, rng, input, input_shape, activation=tanh, use_bias=False, sum_out=True):
         """
         Allocate a BigramLayer with shared variable internal parameters.
         """
@@ -73,11 +84,11 @@ class TrigramLayer(object):
         self.input = input
         self.activation = activation
         self.use_bias = use_bias
-        if "relu" in activation.func_name:
-            W_values = numpy.asarray(0.01 * rng.standard_normal(size=(n_in, n_out)), dtype=theano.config.floatX)
-        else:
-            W_values = numpy.asarray(rng.uniform(low=-numpy.sqrt(6. / (n_in + n_out)), high=numpy.sqrt(6. / (n_in + n_out)),
-                                                 size=(n_in, n_out)), dtype=theano.config.floatX)
+
+        # initialize weights with random weights
+        n_in, n_out, fan_in, fan_out = get_input_info(input_shape, sum_out=sum_out, ngram=3)
+        W_values = get_W_values(rng=rng, activation=activation, fan_in=fan_in, fan_out=fan_out, n_in=n_in, n_out=n_out,
+                                n_kernels=0)
 
         self.T1 = theano.shared(W_values, borrow=True, name="T1")
         self.T2 = theano.shared(W_values, borrow=True, name="T2")
@@ -99,20 +110,18 @@ class TrigramLayer(object):
 
 
 class MuiltiUnigramLayer(object):
-    def __init__(self, rng, input, n_in, n_out, activation=relu, n_kernels=4, sum_out=True, mean=True, concat_out=False):
+    def __init__(self, rng, input, input_shape, activation=relu, n_kernels=4, sum_out=True, mean=True, concat_out=False):
         """
         Allocate a UnigramLayer with shared variable internal parameters.
         """
 
         self.input = input
         self.activation = activation
-        # initialize weights with random weights
-        if "relu" in activation.func_name:
-            W_values = numpy.asarray(0.01 * rng.standard_normal(size=(n_kernels, n_in, n_out)), dtype=theano.config.floatX)
-        else:
-            W_values = numpy.asarray(rng.uniform(low=-numpy.sqrt(6. / (n_in + n_out)), high=numpy.sqrt(6. / (n_in + n_out)),
-                                                 size=(n_kernels, n_in, n_out)), dtype=theano.config.floatX)
 
+        # initialize weights with random weights
+        n_in, n_out, fan_in, fan_out = get_input_info(input_shape, sum_out=sum_out, ngram=1)
+        W_values = get_W_values(rng=rng, activation=activation, fan_in=fan_in, fan_out=fan_out, n_in=n_in, n_out=n_out,
+                                n_kernels=n_kernels)
         self.W = theano.shared(W_values, borrow=True, name="W_cov")
 
         cov_out = T.dot(input, self.W)
@@ -129,18 +138,18 @@ class MuiltiUnigramLayer(object):
 
 
 class MultiBigramLayer(object):
-    def __init__(self, rng, input, n_in, n_out, activation=tanh, n_kernels=4, mean=True, sum_out=True, concat_out=False):
+    def __init__(self, rng, input, input_shape, activation=tanh, n_kernels=4, mean=True, sum_out=True, concat_out=False):
         """
         Allocate a BigramLayer with shared variable internal parameters.
         """
 
         self.input = input
         self.activation = activation
-        if "relu" in activation.func_name:
-            W_values = numpy.asarray(0.01 * rng.standard_normal(size=(n_kernels, n_in, n_out)), dtype=theano.config.floatX)
-        else:
-            W_values = numpy.asarray(rng.uniform(low=-numpy.sqrt(6. / (n_in + n_out)), high=numpy.sqrt(6. / (n_in + n_out)),
-                                                 size=(n_kernels, n_in, n_out)), dtype=theano.config.floatX)
+
+        # initialize weights with random weights
+        n_in, n_out, fan_in, fan_out = get_input_info(input_shape, sum_out=sum_out, ngram=2)
+        W_values = get_W_values(rng=rng, activation=activation, fan_in=fan_in, fan_out=fan_out, n_in=n_in, n_out=n_out,
+                                n_kernels=n_kernels)
 
         self.Tr = theano.shared(W_values, borrow=True, name="Tr")
         self.Tl = theano.shared(W_values, borrow=True, name="Tl")
@@ -164,18 +173,18 @@ class MultiBigramLayer(object):
 
 
 class MultiTrigramLayer(object):
-    def __init__(self, rng, input, n_in, n_out, activation=tanh, n_kernels=4, mean=True, sum_out=True, concat_out=False):
+    def __init__(self, rng, input, input_shape, activation=tanh, n_kernels=4, mean=True, sum_out=True, concat_out=False):
         """
         Allocate a BigramLayer with shared variable internal parameters.
         """
 
         self.input = input
         self.activation = activation
-        if "relu" in activation.func_name:
-            W_values = numpy.asarray(0.01 * rng.standard_normal(size=(n_kernels, n_in, n_out)), dtype=theano.config.floatX)
-        else:
-            W_values = numpy.asarray(rng.uniform(low=-numpy.sqrt(6. / (n_in + n_out)), high=numpy.sqrt(6. / (n_in + n_out)),
-                                                 size=(n_kernels, n_in, n_out)), dtype=theano.config.floatX)
+
+        # initialize weights with random weights
+        n_in, n_out, fan_in, fan_out = get_input_info(input_shape, sum_out=sum_out, ngram=3)
+        W_values = get_W_values(rng=rng, activation=activation, fan_in=fan_in, fan_out=fan_out, n_in=n_in, n_out=n_out,
+                                n_kernels=n_kernels)
 
         self.T1 = theano.shared(W_values, borrow=True, name="T1")
         self.T2 = theano.shared(W_values, borrow=True, name="T2")

@@ -9,8 +9,9 @@ import numpy as np
 
 def wrapper(data=SST_SENT_POL):
     train_x, train_y, validate_x, validate_y, test_x, test_y = read_matrices_pickle(google=True, data=data, cv=False)
-    dim = train_x[0].shape[1]
-    print "input data shape", train_x[0].shape
+    # get input shape
+    input_shape = train_x[0].shape
+    print "input data shape", input_shape
     n_out = len(np.unique(test_y))
     shuffle_indices = np.random.permutation(train_x.shape[0])
     datasets = (train_x[shuffle_indices], train_y[shuffle_indices], validate_x, validate_y, test_x, test_y)
@@ -18,16 +19,16 @@ def wrapper(data=SST_SENT_POL):
         datasets=datasets,
         n_epochs=15,
         ngrams=(2, 1),
-        dim=dim,
+        input_shape=input_shape,
         ngram_bias=False,
         multi_kernel=True,
         concat_out=False,
-        n_kernels=(2, 2),
+        n_kernels=(4, 4),
         use_bias=True,
         lr_rate=0.02,
         dropout=True,
         dropout_rate=0.5,
-        n_hidden=300,
+        n_hidden=400,
         n_out=n_out,
         ngram_activation=leaky_relu,
         activation=leaky_relu,

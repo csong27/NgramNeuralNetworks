@@ -8,8 +8,8 @@ import cPickle as pkl
 
 def train_ngram_conv_net(
         datasets,
+        input_shape,
         ngrams=(2, 1),
-        dim=50,
         ngram_activation=tanh,
         n_epochs=25,
         multi_kernel=True,
@@ -57,11 +57,13 @@ def train_ngram_conv_net(
 
     # weather or not to use multiple kernels in the n gram layer
     if multi_kernel:
-        ngram_net = MultiKernelNgramNetwork(rng=rng, input=x, dim=dim, ngrams=ngrams, n_kernels=n_kernels,
+        ngram_net = MultiKernelNgramNetwork(rng=rng, input=x, input_shape=input_shape, ngrams=ngrams, n_kernels=n_kernels,
                                             activation=ngram_activation, mean=mean_pool, concat_out=concat_out)
     else:
-        ngram_net = NgramNetwork(rng=rng, input=x, dim=dim, ngrams=ngrams, use_bias=ngram_bias, activation=ngram_activation)
+        ngram_net = NgramNetwork(rng=rng, input=x, input_shape=input_shape, ngrams=ngrams, use_bias=ngram_bias,
+                                 activation=ngram_activation)
 
+    dim = input_shape[1]
     mlp_input = ngram_net.output
     mlp_n_in = dim * n_kernels[-1] if concat_out else dim
 
@@ -170,7 +172,7 @@ def save_ngram_vectors(data=SST_KAGGLE, validate_ratio=0.2):
     else:
         raise NotImplementedError
 
-    dim = train_x[0].shape[1]
+    input_shape = train_x[0].shape
 
     n_out = len(np.unique(train_y))
     saved_train, saved_validate, saved_test = train_ngram_conv_net(
@@ -179,7 +181,7 @@ def save_ngram_vectors(data=SST_KAGGLE, validate_ratio=0.2):
         use_bias=True,
         n_epochs=30,
         ngram_bias=False,
-        dim=dim,
+        input_shape=input_shape,
         lr_rate=0.05,
         n_out=n_out,
         dropout=True,
@@ -192,7 +194,7 @@ def save_ngram_vectors(data=SST_KAGGLE, validate_ratio=0.2):
         no_test_y=no_test_y,
         save_ngram=True
     )
-    saved_train_all = np.zeros((train_x.shape[0], dim))
+    saved_train_all = np.zeros((train_x.shape[0], input_shape[1]))
     saved_train_all[train_index] = saved_train
     saved_train_all[test_index] = saved_validate
 

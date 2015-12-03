@@ -5,7 +5,7 @@ from lasagne.init import *
 
 W = GlorotNormal('relu').sample((5, 3, 3))
 
-print W.shape
+print W.dtype
 
 W_value = numpy.ones((5, 3, 3))
 
