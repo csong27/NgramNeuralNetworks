@@ -1,4 +1,5 @@
 import numpy
+import theano
 from non_linear import *
 
 

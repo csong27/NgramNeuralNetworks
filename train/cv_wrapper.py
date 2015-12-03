@@ -26,7 +26,7 @@ def cross_validation(validation_ratio=0.1, data=ROTTEN_TOMATOES, shuffle=True):
         datasets = (train_x[shuffle_indices], train_y[shuffle_indices], validate_x, validate_y, test_x, test_y)
         test_accuracy = train_ngram_conv_net(
             datasets=datasets,
-            n_epochs=10,
+            n_epochs=50,
             ngrams=(2, 1),
             dim=dim,
             ngram_bias=False,

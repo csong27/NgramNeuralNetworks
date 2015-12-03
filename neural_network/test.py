@@ -1,6 +1,11 @@
 import numpy
 import theano
 import theano.tensor as T
+from lasagne.init import *
+
+W = GlorotNormal('relu').sample((5, 3, 3))
+
+print W.shape
 
 W_value = numpy.ones((5, 3, 3))
 
