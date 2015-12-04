@@ -27,23 +27,24 @@ def cross_validation(validation_ratio=0.1, data=ROTTEN_TOMATOES, shuffle=True):
         datasets = (train_x[shuffle_indices], train_y[shuffle_indices], validate_x, validate_y, test_x, test_y)
         test_accuracy = train_ngram_conv_net(
             datasets=datasets,
-            n_epochs=50,
+            n_epochs=15,
             ngrams=(2, 1),
             input_shape=input_shape,
             ngram_bias=False,
             multi_kernel=True,
             concat_out=False,
             n_kernels=(4, 4),
-            use_bias=True,
-            lr_rate=0.02,
+            use_bias=False,
+            lr_rate=0.0175,
             dropout=True,
-            dropout_rate=0.5,
-            n_hidden=400,
+            dropout_rate=0.3,
+            n_hidden=600,
             n_out=n_out,
-            ngram_activation=tanh,
+            ngram_activation=leaky_relu,
             activation=leaky_relu,
             batch_size=50,
-            update_rule='adagrad'
+            update_rule='adagrad',
+            mean_pool=False
         )
         accuracy_list.append(test_accuracy)
 

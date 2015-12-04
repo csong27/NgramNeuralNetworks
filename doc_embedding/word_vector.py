@@ -120,9 +120,9 @@ def read_aggregated_vectors(google=True, data=SST_KAGGLE):
     return train_x, train_y, test_x
 
 
-def get_document_matrices(google=False, dim=100, cutoff=50, uniform=True, data='rotten', cv=True, kaggle=False):
+def get_document_matrices(google=False, dim=100, cutoff=50, uniform=True, data='rotten', cv=True, huge=False):
     print "getting concatenated word vectors for documents..."
-    model = read_google_model() if google else read_glove_model(dim=dim)
+    model = read_google_model() if google else read_glove_model(dim=dim, huge=huge)
     if cv:
         if data == ROTTEN_TOMATOES:
             x, y = read_rotten_pickle()
@@ -146,10 +146,10 @@ def get_document_matrices(google=False, dim=100, cutoff=50, uniform=True, data='
             train_x, train_y, validate_x, validate_y, test_x, test_y = read_imdb_pickle()
             cutoff = 75
         elif data == SST_SENT:
-            cutoff = 45
+            cutoff = 50
             train_x, train_y, validate_x, validate_y, test_x, test_y = read_sst_sent_pickle()
         elif data == SST_SENT_POL:
-            cutoff = 45
+            cutoff = 50
             train_x, train_y, validate_x, validate_y, test_x, test_y = read_sst_sent_pickle(polarity=True)
         elif data == TREC:
             train_x, train_y, validate_x, validate_y, test_x, test_y = read_trec_pickle()
@@ -168,49 +168,37 @@ def get_document_matrices(google=False, dim=100, cutoff=50, uniform=True, data='
         test_y = np.asarray(test_y)
 
         return train_x, train_y, validate_x, validate_y, test_x, test_y
-    elif kaggle:
-        cutoff = 40
-        train_x, train_y, test_x = read_sst_kaggle_pickle()
-        train_x = get_reviews_vectors(train_x, model, aggregate=False, cutoff=cutoff, uniform=uniform)
-        test_x = get_reviews_vectors(test_x, model, aggregate=False, cutoff=cutoff, uniform=uniform)
-        train_x = np.asarray(train_x)
-        train_y = np.asarray(train_y)
-        test_x = np.asarray(test_x)
-        return train_x, train_y, test_x
     else:
         return Exception('Something went wrong')
     
 
-def save_matrices_pickle(google=True, data='rotten', cv=True, kaggle=False, dim=50):
+def save_matrices_pickle(google=True, data='rotten', cv=True, dim=50, huge=False):
     path = data_path + str(dim) if dim != 300 else data_path
+    if huge:
+        path += "huge_"
     dataname = data + '_google.pkl' if google else data + '_glove.pkl'
     filename = Path(path + dataname)
     print 'saving data to %s...' % filename
     f = open(filename, 'wb')
     if cv:
-        x, y = get_document_matrices(google=google, dim=dim, data=data)
+        x, y = get_document_matrices(google=google, dim=dim, data=data, huge=huge)
         pkl.dump((x, y), f, -1)
-    elif not kaggle:
+    else:
         train_x, train_y, validate_x, validate_y, test_x, test_y = get_document_matrices(google=google, data=data,
-                                                                                         cv=False, dim=dim)
+                                                                                         cv=False, dim=dim, huge=huge)
         pkl.dump((train_x, train_y), f, -1)
         pkl.dump((validate_x, validate_y), f, -1)
         pkl.dump((test_x, test_y), f, -1)
-    elif kaggle:    # too big, need to save with np.save
-        train_x, train_y, test_x = get_document_matrices(google=google, data=data, cv=False, kaggle=kaggle, dim=dim)
-        f_train = open('D:/data/nlpdata/pickled_data/kaggle/train_' + dataname, 'wb')
-        f_test = open('D:/data/nlpdata/pickled_data/kaggle/test_' + dataname, 'wb')
-        np.save(f_train, train_x)
-        np.save(f_test, test_x)
-        f_train.close()
-        f_test.close()
+
     f.close()
 
 
-def read_matrices_pickle(data='rotten', google=True, cv=True, dim=300):
+def read_matrices_pickle(data='rotten', google=True, cv=True, dim=300, huge=False):
     path = data_path
     if dim != 300:
         path += str(dim)
+    if huge:
+        path += "huge_"
     filename = data + '_google.pkl' if google else data + '_glove.pkl'
     filename = Path(path + filename)
     print 'loading data from %s...' % filename

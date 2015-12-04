@@ -138,7 +138,8 @@ class MuiltiUnigramLayer(object):
 
 
 class MultiBigramLayer(object):
-    def __init__(self, rng, input, input_shape, activation=tanh, n_kernels=4, mean=True, sum_out=True, concat_out=False):
+    def __init__(self, rng, input, input_shape, activation=tanh, n_kernels=4, mean=True, sum_out=True, concat_out=False,
+                 skip_gram=False):
         """
         Allocate a BigramLayer with shared variable internal parameters.
         """
@@ -154,8 +155,9 @@ class MultiBigramLayer(object):
         self.Tr = theano.shared(W_values, borrow=True, name="Tr")
         self.Tl = theano.shared(W_values, borrow=True, name="Tl")
 
-        left = T.dot(input, self.Tl)[:, :-1]
-        right = T.dot(input, self.Tr)[:, 1:]
+        offset = 2 if skip_gram else 1
+        left = T.dot(input, self.Tl)[:, :-offset]
+        right = T.dot(input, self.Tr)[:, offset:]
 
         cov_out = left + right
         activation_out = activation(cov_out)

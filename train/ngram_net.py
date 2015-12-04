@@ -172,7 +172,7 @@ def save_ngram_vectors(data=SST_KAGGLE, validate_ratio=0.2):
     else:
         raise NotImplementedError
 
-    input_shape = train_x[0].shape
+    input_shap = train_x[0].shape
 
     n_out = len(np.unique(train_y))
     saved_train, saved_validate, saved_test = train_ngram_conv_net(
@@ -181,7 +181,7 @@ def save_ngram_vectors(data=SST_KAGGLE, validate_ratio=0.2):
         use_bias=True,
         n_epochs=30,
         ngram_bias=False,
-        input_shape=input_shape,
+        dim=dim,
         lr_rate=0.05,
         n_out=n_out,
         dropout=True,
@@ -194,7 +194,7 @@ def save_ngram_vectors(data=SST_KAGGLE, validate_ratio=0.2):
         no_test_y=no_test_y,
         save_ngram=True
     )
-    saved_train_all = np.zeros((train_x.shape[0], input_shape[1]))
+    saved_train_all = np.zeros((train_x.shape[0], dim))
     saved_train_all[train_index] = saved_train
     saved_train_all[test_index] = saved_validate
 

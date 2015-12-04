@@ -1,7 +1,9 @@
 from path import Path
 from gensim.models import Word2Vec
-
+import numpy as np
 import platform
+from gensim import utils
+
 
 if platform.system() == 'Windows':
     data_path = 'D:/data/nlpdata/'
@@ -21,7 +23,7 @@ def read_google_model():
     return Word2Vec.load_word2vec_format(google_vector, binary=True)  # C binary format
 
 
-def read_glove_model(dim=50):
+def read_glove_model(dim=50, huge=False):
     print "reading gloVe word embedding vectors..."
     if dim == 50:
         return Word2Vec.load_word2vec_format(glove_vector_50, binary=False)
@@ -31,5 +33,19 @@ def read_glove_model(dim=50):
         return Word2Vec.load_word2vec_format(glove_vector_200, binary=False)
     elif dim == 300:
         return Word2Vec.load_word2vec_format(glove_vector_300, binary=False)
-    else:
-        raise NotImplementedError
+    elif huge:
+        return Word2Vec.load_word2vec_format(glove_vector_huge, binary=False)
+
+
+def read_glove_to_dict(p):
+    f = open(p)
+    model = {}
+    for line in f:
+        arr = utils.to_unicode(line.rstrip(), encoding='utf8').split(" ")
+        word = arr[0]
+        vector = np.asarray(arr[1:], dtype=float)
+        model[word] = vector
+    return model
+
+
+read_glove_to_dict(glove_vector_huge)
