@@ -141,7 +141,7 @@ def get_document_matrices(google=False, dim=100, cutoff=50, uniform=True, data='
         x = np.asarray(x)
         y = np.asarray(y)
         return x, y
-    elif not kaggle:
+    else:
         if data == IMDB:
             train_x, train_y, validate_x, validate_y, test_x, test_y = read_imdb_pickle()
             cutoff = 75
@@ -168,9 +168,7 @@ def get_document_matrices(google=False, dim=100, cutoff=50, uniform=True, data='
         test_y = np.asarray(test_y)
 
         return train_x, train_y, validate_x, validate_y, test_x, test_y
-    else:
-        return Exception('Something went wrong')
-    
+
 
 def save_matrices_pickle(google=True, data='rotten', cv=True, dim=50, huge=False):
     path = data_path + str(dim) if dim != 300 else data_path
@@ -230,4 +228,4 @@ def read_matrices_kaggle_pickle():
     return train_x, train_y, test_x
 
 if __name__ == '__main__':
-    save_matrices_pickle(data=SST_SENT_POL, cv=False, google=False, dim=300)
+    save_matrices_pickle(data=SST_SENT_POL, cv=False, google=False, dim=300, huge=True)

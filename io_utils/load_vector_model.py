@@ -34,18 +34,18 @@ def read_glove_model(dim=50, huge=False):
     elif dim == 300:
         return Word2Vec.load_word2vec_format(glove_vector_300, binary=False)
     elif huge:
-        return Word2Vec.load_word2vec_format(glove_vector_huge, binary=False)
+        return read_glove_to_dict(glove_vector_huge)
 
 
 def read_glove_to_dict(p):
     f = open(p)
     model = {}
+    count = 0
     for line in f:
         arr = utils.to_unicode(line.rstrip(), encoding='utf8').split(" ")
         word = arr[0]
         vector = np.asarray(arr[1:], dtype=float)
         model[word] = vector
+        count += 1
+    print "loaded with %d words" % count
     return model
-
-
-read_glove_to_dict(glove_vector_huge)
