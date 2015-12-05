@@ -84,12 +84,13 @@ def wrapper_rec(data=SST_SENT_POL, rec_type='lstm'):
     datasets = (train_x[shuffle_indices], train_y[shuffle_indices], validate_x, validate_y, test_x, test_y)
     test_accuracy = train_ngram_rec_net(
         U=W,
+        non_static=False,
         datasets=datasets,
-        n_epochs=15,
+        n_epochs=30,
         ngrams=(2, 1),
         input_shape=input_shape,
         n_kernels=(4, 4),
-        lr_rate=0.02,
+        lr_rate=0.01,
         dropout_rate=0.5,
         n_hidden=400,
         n_out=n_out,

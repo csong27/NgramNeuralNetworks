@@ -125,4 +125,4 @@ def save_index_data(data, google=False, huge=False):
 
 
 if __name__ == '__main__':
-    save_index_data(SST_SENT_POL, google=True)
+    save_index_data(TREC, google=True)
