@@ -9,10 +9,10 @@ def get_input_info(input_shape, sum_out, ngram):
     assert ngram <= 3
     fan_in = input_shape[0] * input_shape[1]
     n_in = n_out = input_shape[1]
-    if sum_out:
-        fan_out = input_shape[1]
-    else:
-        fan_out = (input_shape[0] - ngram + 1) * input_shape[1]
+    # if sum_out:
+    #     fan_out = input_shape[1]
+    # else:
+    fan_out = (input_shape[0] - ngram + 1) * input_shape[1]
     return n_in, n_out, fan_in, fan_out
 
 

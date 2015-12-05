@@ -18,7 +18,7 @@ TREC = 'trec'
 SUBJ = 'subj'
 IMDB = 'imdb'
 
-all_datasets = [IMDB, ROTTEN_TOMATOES, CUSTOMER_REVIEW, MPQA, SST_SENT, TREC, SUBJ]
+all_datasets = [ROTTEN_TOMATOES, CUSTOMER_REVIEW, MPQA, SST_SENT, TREC, SUBJ]
 
 
 def load_raw_datasets(datasets):
@@ -30,6 +30,8 @@ def load_raw_datasets(datasets):
         return read_mpqa_pickle()
     elif datasets == SST_SENT:
         return read_sst_sent_pickle()
+    elif datasets == SST_SENT_POL:
+        return read_sst_sent_pickle(polarity=True)
     elif datasets == TREC:
         return read_trec_pickle()
     elif datasets == SUBJ:

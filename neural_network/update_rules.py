@@ -25,14 +25,18 @@ def updates_momentum(cost, params, learning_rate, momentum):
     return updates
 
 
-def updates_adadelta(params, cost, rho=0.95, epsilon=1e-6, norm_lim=9):
+def updates_adadelta(params, cost, rho=0.95, epsilon=1e-6, norm_lim=9, word_vec_name='Words'):
+    """
+    adadelta update rule, mostly from
+    https://groups.google.com/forum/#!topic/pylearn-dev/3QbKtCumAW4 (for Adadelta)
+    """
     updates = OrderedDict({})
     exp_sqr_grads = OrderedDict({})
     exp_sqr_ups = OrderedDict({})
     gparams = []
     for param in params:
         empty = np.zeros_like(param.get_value())
-        exp_sqr_grads[param] = theano.shared(value=as_floatX(empty),name="exp_grad_%s" % param.name)
+        exp_sqr_grads[param] = theano.shared(value=as_floatX(empty), name="exp_grad_%s" % param.name)
         gp = T.grad(cost, param)
         exp_sqr_ups[param] = theano.shared(value=as_floatX(empty), name="exp_grad_%s" % param.name)
         gparams.append(gp)
@@ -44,7 +48,7 @@ def updates_adadelta(params, cost, rho=0.95, epsilon=1e-6, norm_lim=9):
         step = -(T.sqrt(exp_su + epsilon) / T.sqrt(up_exp_sg + epsilon)) * gp
         updates[exp_su] = rho * exp_su + (1 - rho) * T.sqr(step)
         stepped_param = param + step
-        if (param.get_value(borrow=True).ndim == 2) and (param.name != 'Words'):    # update word vectors if we want to
+        if (param.get_value(borrow=True).ndim == 2) and (param.name != 'Words'):
             col_norms = T.sqrt(T.sum(T.sqr(stepped_param), axis=0))
             desired_norms = T.clip(col_norms, 0, T.sqrt(norm_lim))
             scale = desired_norms / (1e-7 + col_norms)

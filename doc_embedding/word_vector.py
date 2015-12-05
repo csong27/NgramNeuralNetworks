@@ -17,7 +17,7 @@ def chunks(l, n):
         yield l[i:i+n]
 
 
-def get_document_matrix(text, model, cutoff=300, uniform=False, scale=0.025, shrink=True):
+def get_document_matrix(text, model, cutoff=300, uniform=True, scale=0.25, shrink=False):
     matrix = None
     rand_vector = np.random.uniform(-scale, scale, model.vector_size) if uniform \
         else np.random.normal(0, scale, model.vector_size)
@@ -130,7 +130,7 @@ def get_document_matrices(google=False, dim=100, cutoff=50, uniform=True, data='
         elif data == SUBJ:
             x, y = read_subj_pickle()
         elif data == CUSTOMER_REVIEW:
-            cutoff = 40
+            cutoff = 45
             x, y = read_cr_pickle()
         elif data == MPQA:
             x, y = read_mpqa_pickle()
