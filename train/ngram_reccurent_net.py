@@ -1,4 +1,3 @@
-from ngram_net import get_grad_updates
 from neural_network import *
 
 

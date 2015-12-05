@@ -6,24 +6,6 @@ from sklearn.cross_validation import StratifiedShuffleSplit
 import cPickle as pkl
 
 
-def get_grad_updates(update_rule, cost, params, lr_rate, momentum_ratio):
-    if update_rule == 'adadelta':
-        grad_updates = adadelta(loss_or_grads=cost, params=params, learning_rate=lr_rate, rho=0.95, epsilon=1e-6)
-    elif update_rule == 'adagrad':
-        grad_updates = adagrad(loss_or_grads=cost, params=params, learning_rate=lr_rate, epsilon=1e-6)
-    elif update_rule == 'adam':
-        grad_updates = adam(loss_or_grads=cost, params=params, learning_rate=lr_rate, beta1=0.9, beta2=0.999, epsilon=1e-8)
-    elif update_rule == 'momentum':
-        grad_updates = momentum(loss_or_grads=cost, params=params, momentum=momentum_ratio, learning_rate=lr_rate)
-    elif update_rule == 'rmsprop':
-        grad_updates = rmsprop(loss_or_grads=cost, params=params, learning_rate=lr_rate)
-    elif update_rule == 'sgd':
-        grad_updates = sgd(loss_or_grads=cost, params=params, learning_rate=lr_rate)
-    else:
-        raise NotImplementedError("This optimization method is not implemented %s" % update_rule)
-    return grad_updates
-
-
 def train_ngram_conv_net(
         datasets,
         input_shape,
@@ -337,53 +319,3 @@ def train_ngram_net_embedding(
         return test_accuracy
     else:
         return best_prediction
-
-
-def save_ngram_vectors(data=SST_KAGGLE, validate_ratio=0.2):
-    if data == SST_KAGGLE:
-        train_x, train_y, test_x = read_matrices_kaggle_pickle()
-        sss_indices = StratifiedShuffleSplit(y=train_y, n_iter=1, test_size=validate_ratio, random_state=42)
-        for indices in sss_indices:
-            train_index, test_index = indices
-        datasets = (train_x[train_index], train_y[train_index], train_x[test_index], train_y[test_index], test_x)
-        no_test_y = True
-    else:
-        raise NotImplementedError
-
-    input_shap = train_x[0].shape
-
-    n_out = len(np.unique(train_y))
-    saved_train, saved_validate, saved_test = train_ngram_conv_net(
-        datasets=datasets,
-        ngrams=(2, 1),
-        use_bias=True,
-        n_epochs=30,
-        ngram_bias=False,
-        input_shape=input_shap,
-        lr_rate=0.05,
-        n_out=n_out,
-        dropout=True,
-        dropout_rate=0.5,
-        n_hidden=300,
-        activation=leaky_relu,
-        ngram_activation=leaky_relu,
-        batch_size=100,
-        update_rule='adagrad',
-        no_test_y=no_test_y,
-        save_ngram=True
-    )
-    saved_train_all = np.zeros((train_x.shape[0], dim))
-    saved_train_all[train_index] = saved_train
-    saved_train_all[test_index] = saved_validate
-
-    save_path = "D:/data/nlpdata/pickled_data/doc2vec/"
-    save_path += data + "_ngram.pkl"
-    print "saving doc2vec to %s" % save_path
-
-    f = open(Path(save_path), "wb")
-    pkl.dump((saved_train_all, saved_test), f, -1)
-    f.close()
-
-
-if __name__ == '__main__':
-    save_ngram_vectors()
