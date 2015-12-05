@@ -53,6 +53,7 @@ def wrapper_word2index(data=SST_SENT_POL):
         datasets=datasets,
         n_epochs=20,
         ngrams=(2, ),
+        ngram_out=(200, ),
         non_static=False,
         input_shape=input_shape,
         ngram_bias=False,
@@ -84,7 +85,7 @@ def wrapper_rec(data=SST_SENT_POL, rec_type='lstm'):
     datasets = (train_x[shuffle_indices], train_y[shuffle_indices], validate_x, validate_y, test_x, test_y)
     test_accuracy = train_ngram_rec_net(
         U=W,
-        non_static=False,
+        non_static=True,
         datasets=datasets,
         n_epochs=30,
         ngrams=(2, 1),

@@ -4,20 +4,20 @@ from non_linear import *
 from initialization import get_W_values
 
 
-def get_input_info(input_shape, sum_out, ngram):
+def get_input_info(input_shape, sum_out, ngram, n_out):
     assert len(input_shape) == 2
     assert ngram <= 3
     fan_in = input_shape[0] * input_shape[1]
-    n_in = n_out = input_shape[1]
-    # if sum_out:
-    #     fan_out = input_shape[1]
-    # else:
-    fan_out = (input_shape[0] - ngram + 1) * input_shape[1]
+    n_in = input_shape[1]
+    if sum_out:
+        fan_out = n_out
+    else:
+        fan_out = (input_shape[0] - ngram + 1) * n_out
     return n_in, n_out, fan_in, fan_out
 
 
 class UnigramLayer(object):
-    def __init__(self, rng, input, input_shape, activation=relu, use_bias=False, sum_out=True):
+    def __init__(self, rng, input, input_shape, n_out=300, activation=relu, use_bias=False, sum_out=True):
         """
         Allocate a UnigramLayer with shared variable internal parameters.
         """
@@ -26,7 +26,7 @@ class UnigramLayer(object):
         self.use_bias = use_bias
 
         # initialize weights with random weights
-        n_in, n_out, fan_in, fan_out = get_input_info(input_shape, sum_out=sum_out, ngram=1)
+        n_in, n_out, fan_in, fan_out = get_input_info(input_shape, sum_out=sum_out, ngram=1, n_out=n_out)
         W_values = get_W_values(rng=rng, activation=activation, fan_in=fan_in, fan_out=fan_out, n_in=n_in, n_out=n_out,
                                 n_kernels=0)
 
@@ -44,7 +44,7 @@ class UnigramLayer(object):
 
 
 class BigramLayer(object):
-    def __init__(self, rng, input, input_shape, activation=tanh, use_bias=False, sum_out=True):
+    def __init__(self, rng, input, input_shape, activation=tanh, n_out=300, use_bias=False, sum_out=True):
         """
         Allocate a BigramLayer with shared variable internal parameters.
         """
@@ -54,7 +54,7 @@ class BigramLayer(object):
         self.use_bias = use_bias
 
         # initialize weights with random weights
-        n_in, n_out, fan_in, fan_out = get_input_info(input_shape, sum_out=sum_out, ngram=2)
+        n_in, n_out, fan_in, fan_out = get_input_info(input_shape, sum_out=sum_out, ngram=2, n_out=n_out)
         W_values = get_W_values(rng=rng, activation=activation, fan_in=fan_in, fan_out=fan_out, n_in=n_in, n_out=n_out,
                                 n_kernels=0)
 
@@ -76,7 +76,7 @@ class BigramLayer(object):
 
 
 class TrigramLayer(object):
-    def __init__(self, rng, input, input_shape, activation=tanh, use_bias=False, sum_out=True):
+    def __init__(self, rng, input, input_shape, activation=tanh, n_out=300, use_bias=False, sum_out=True):
         """
         Allocate a BigramLayer with shared variable internal parameters.
         """
@@ -86,7 +86,7 @@ class TrigramLayer(object):
         self.use_bias = use_bias
 
         # initialize weights with random weights
-        n_in, n_out, fan_in, fan_out = get_input_info(input_shape, sum_out=sum_out, ngram=3)
+        n_in, n_out, fan_in, fan_out = get_input_info(input_shape, sum_out=sum_out, ngram=3, n_out=n_out)
         W_values = get_W_values(rng=rng, activation=activation, fan_in=fan_in, fan_out=fan_out, n_in=n_in, n_out=n_out,
                                 n_kernels=0)
 
@@ -110,7 +110,8 @@ class TrigramLayer(object):
 
 
 class MuiltiUnigramLayer(object):
-    def __init__(self, rng, input, input_shape, activation=relu, n_kernels=4, sum_out=True, mean=True, concat_out=False):
+    def __init__(self, rng, input, input_shape, activation=relu, n_kernels=4, n_out=300,
+                 sum_out=True, mean=True, concat_out=False):
         """
         Allocate a UnigramLayer with shared variable internal parameters.
         """
@@ -119,7 +120,7 @@ class MuiltiUnigramLayer(object):
         self.activation = activation
 
         # initialize weights with random weights
-        n_in, n_out, fan_in, fan_out = get_input_info(input_shape, sum_out=sum_out, ngram=1)
+        n_in, n_out, fan_in, fan_out = get_input_info(input_shape, sum_out=sum_out, ngram=1, n_out=n_out)
         W_values = get_W_values(rng=rng, activation=activation, fan_in=fan_in, fan_out=fan_out, n_in=n_in, n_out=n_out,
                                 n_kernels=n_kernels)
         self.W = theano.shared(W_values, borrow=True, name="W_cov")
@@ -138,8 +139,8 @@ class MuiltiUnigramLayer(object):
 
 
 class MultiBigramLayer(object):
-    def __init__(self, rng, input, input_shape, activation=tanh, n_kernels=4, mean=True, sum_out=True, concat_out=False,
-                 skip_gram=False):
+    def __init__(self, rng, input, input_shape, activation=tanh, n_kernels=4, n_out=300,
+                 mean=True, sum_out=True, concat_out=False, skip_gram=False):
         """
         Allocate a BigramLayer with shared variable internal parameters.
         """
@@ -148,7 +149,7 @@ class MultiBigramLayer(object):
         self.activation = activation
 
         # initialize weights with random weights
-        n_in, n_out, fan_in, fan_out = get_input_info(input_shape, sum_out=sum_out, ngram=2)
+        n_in, n_out, fan_in, fan_out = get_input_info(input_shape, sum_out=sum_out, ngram=2, n_out=n_out)
         W_values = get_W_values(rng=rng, activation=activation, fan_in=fan_in, fan_out=fan_out, n_in=n_in, n_out=n_out,
                                 n_kernels=n_kernels)
 
@@ -175,7 +176,8 @@ class MultiBigramLayer(object):
 
 
 class MultiTrigramLayer(object):
-    def __init__(self, rng, input, input_shape, activation=tanh, n_kernels=4, mean=True, sum_out=True, concat_out=False):
+    def __init__(self, rng, input, input_shape, activation=tanh, n_kernels=4, n_out=300,
+                 mean=True, sum_out=True, concat_out=False):
         """
         Allocate a BigramLayer with shared variable internal parameters.
         """
@@ -184,7 +186,7 @@ class MultiTrigramLayer(object):
         self.activation = activation
 
         # initialize weights with random weights
-        n_in, n_out, fan_in, fan_out = get_input_info(input_shape, sum_out=sum_out, ngram=3)
+        n_in, n_out, fan_in, fan_out = get_input_info(input_shape, sum_out=sum_out, ngram=3, n_out=n_out)
         W_values = get_W_values(rng=rng, activation=activation, fan_in=fan_in, fan_out=fan_out, n_in=n_in, n_out=n_out,
                                 n_kernels=n_kernels)
 

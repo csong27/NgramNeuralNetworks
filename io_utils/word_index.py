@@ -125,4 +125,5 @@ def save_index_data(data, google=False, huge=False):
 
 
 if __name__ == '__main__':
-    save_index_data(TREC, google=True)
+    for data in [ROTTEN_TOMATOES, MPQA, CUSTOMER_REVIEW, SUBJ]:
+        save_index_data(data, google=True)

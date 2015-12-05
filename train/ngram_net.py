@@ -174,6 +174,7 @@ def train_ngram_net_embedding(
         input_shape,
         non_static=True,
         ngrams=(2, 1),
+        ngram_out=(200, 100),
         ngram_activation=tanh,
         n_epochs=25,
         multi_kernel=True,
@@ -226,10 +227,21 @@ def train_ngram_net_embedding(
     ngram_input = Words[T.cast(x, dtype="int32")]
     # weather or not to use multiple kernels in the n gram layer
     if multi_kernel:
-        ngram_net = MultiKernelNgramNetwork(rng=rng, input=ngram_input, input_shape=input_shape, ngrams=ngrams, n_kernels=n_kernels,
-                                            activation=ngram_activation, mean=mean_pool, concat_out=concat_out)
+        ngram_net = MultiKernelNgramNetwork(rng=rng,
+                                            input=ngram_input,
+                                            input_shape=input_shape,
+                                            ngrams=ngrams,
+                                            ngram_out=ngram_out,
+                                            n_kernels=n_kernels,
+                                            activation=ngram_activation,
+                                            mean=mean_pool,
+                                            concat_out=concat_out)
     else:
-        ngram_net = NgramNetwork(rng=rng, input=ngram_input, input_shape=input_shape, ngrams=ngrams, use_bias=ngram_bias,
+        ngram_net = NgramNetwork(rng=rng,
+                                 input=ngram_input,
+                                 input_shape=input_shape,
+                                 ngrams=ngrams,
+                                 use_bias=ngram_bias,
                                  activation=ngram_activation)
 
     dim = input_shape[1]
