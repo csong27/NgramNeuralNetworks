@@ -1,9 +1,4 @@
 from neural_network import *
-from io_utils.load_data import *
-from doc_embedding import read_matrices_kaggle_pickle
-from path import Path
-from sklearn.cross_validation import StratifiedShuffleSplit
-import cPickle as pkl
 
 
 def train_ngram_conv_net(
@@ -223,10 +218,11 @@ def train_ngram_net_embedding(
                                  input=ngram_input,
                                  input_shape=input_shape,
                                  ngrams=ngrams,
+                                 ngram_out=ngram_out,
                                  use_bias=ngram_bias,
                                  activation=ngram_activation)
 
-    dim = input_shape[1]
+    dim = ngram_out[-1]
     mlp_input = ngram_net.output
     mlp_n_in = dim * n_kernels[-1] if concat_out else dim
 

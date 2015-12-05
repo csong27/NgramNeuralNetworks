@@ -40,7 +40,7 @@ def wrapper(data=SST_SENT_POL):
 
 
 def wrapper_word2index(data=SST_SENT_POL):
-    datasets, W = read_word2index_data(data=data, google=True, cv=False)
+    datasets, W, _ = read_word2index_data(data=data, google=True, cv=False)
     train_x, train_y, validate_x, validate_y, test_x, test_y = datasets
     # get input shape
     input_shape = (train_x[0].shape[0], W.shape[1])
@@ -106,4 +106,4 @@ def wrapper_rec(data=SST_SENT_POL, rec_type='lstm'):
 
 
 if __name__ == '__main__':
-    wrapper_rec()
+    wrapper_word2index()
