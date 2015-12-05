@@ -7,8 +7,8 @@ import numpy as np
 
 
 def wrapper(data=SST_SENT_POL):
-    train_x, train_y, validate_x, validate_y, test_x, test_y = read_matrices_pickle(google=False, data=data, cv=False,
-                                                                                    huge=True)
+    train_x, train_y, validate_x, validate_y, test_x, test_y = read_matrices_pickle(google=True, data=data, cv=False,
+                                                                                    huge=False)
     # get input shape
     input_shape = train_x[0].shape
     print "input data shape", input_shape
@@ -73,4 +73,4 @@ def wrapper_word2index(data=SST_SENT_POL):
 
 
 if __name__ == '__main__':
-    wrapper_word2index()
+    wrapper()

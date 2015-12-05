@@ -6,6 +6,22 @@ from sklearn.cross_validation import StratifiedShuffleSplit
 import cPickle as pkl
 
 
+def get_grad_updates(update_rule, cost, params, lr_rate, momentum_ratio):
+    if update_rule == 'adadelta':
+        grad_updates = adadelta(loss_or_grads=cost, params=params, learning_rate=lr_rate, rho=0.95, epsilon=1e-6)
+    elif update_rule == 'adagrad':
+        grad_updates = adagrad(loss_or_grads=cost, params=params, learning_rate=lr_rate, epsilon=1e-6)
+    elif update_rule == 'adam':
+        grad_updates = adam(loss_or_grads=cost, params=params, learning_rate=lr_rate, beta1=0.9, beta2=0.999, epsilon=1e-8)
+    elif update_rule == 'momentum':
+        grad_updates = momentum(loss_or_grads=cost, params=params, momentum=momentum_ratio, learning_rate=lr_rate)
+    elif update_rule == 'sgd':
+        grad_updates = sgd(loss_or_grads=cost, params=params, learning_rate=lr_rate)
+    else:
+        raise NotImplementedError("This optimization method is not implemented %s" % update_rule)
+    return grad_updates
+
+
 def train_ngram_conv_net(
         datasets,
         input_shape,
@@ -91,19 +107,8 @@ def train_ngram_conv_net(
 
     params = ngram_net.params + mlp.params
 
-    if update_rule == 'adadelta':
-        grad_updates = adadelta(loss_or_grads=cost, params=params, learning_rate=lr_rate, rho=0.95, epsilon=1e-6)
-    elif update_rule == 'adagrad':
-        grad_updates = adagrad(loss_or_grads=cost, params=params, learning_rate=lr_rate, epsilon=1e-6)
-    elif update_rule == 'adam':
-        grad_updates = adam(loss_or_grads=cost, params=params, learning_rate=lr_rate, beta1=0.9, beta2=0.999, epsilon=1e-8)
-    elif update_rule == 'momentum':
-        grad_updates = momentum(loss_or_grads=cost, params=params, momentum=momentum_ratio, learning_rate=lr_rate)
-    elif update_rule == 'sgd':
-        grad_updates = sgd(loss_or_grads=cost, params=params, learning_rate=lr_rate)
-    else:
-        raise NotImplementedError("This optimization method is not implemented %s" % update_rule)
-
+    grad_updates = get_grad_updates(update_rule=update_rule, cost=cost, params=params, lr_rate=lr_rate,
+                                    momentum_ratio=momentum_ratio)
     # functions for training
     train_model = theano.function([index], cost, updates=grad_updates,
                                   givens={
@@ -255,18 +260,8 @@ def train_ngram_net_embedding(
     if non_static:
         params += [Words]
 
-    if update_rule == 'adadelta':
-        grad_updates = updates_adadelta(params=params, cost=cost)
-    elif update_rule == 'adagrad':
-        grad_updates = adagrad(loss_or_grads=cost, params=params, learning_rate=lr_rate, epsilon=1e-6)
-    elif update_rule == 'adam':
-        grad_updates = adam(loss_or_grads=cost, params=params, learning_rate=lr_rate, beta1=0.9, beta2=0.999, epsilon=1e-8)
-    elif update_rule == 'momentum':
-        grad_updates = momentum(loss_or_grads=cost, params=params, momentum=momentum_ratio, learning_rate=lr_rate)
-    elif update_rule == 'sgd':
-        grad_updates = sgd(loss_or_grads=cost, params=params, learning_rate=lr_rate)
-    else:
-        raise NotImplementedError("This optimization method is not implemented %s" % update_rule)
+    grad_updates = get_grad_updates(update_rule=update_rule, cost=cost, params=params, lr_rate=lr_rate,
+                                    momentum_ratio=momentum_ratio)
 
     # functions for training
     train_model = theano.function([index], cost, updates=grad_updates,

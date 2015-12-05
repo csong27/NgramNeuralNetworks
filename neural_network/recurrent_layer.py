@@ -1,9 +1,9 @@
 import theano
 import numpy as np
+from theano.tensor.extra_ops import repeat
 from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 from non_linear import *
-
-
+from update_rules import shared0s, sharedX, floatX
 srng = RandomStreams()
 
 
@@ -14,66 +14,52 @@ def dropout(X, p=0.):
     return X
 
 
-def floatX(X):
-    return np.asarray(X, dtype=theano.config.floatX)
-
-
-def sharedX(X, dtype=theano.config.floatX, name=None):
-    return theano.shared(np.asarray(X, dtype=dtype), name=name)
-
-
-def shared0s(shape, dtype=theano.config.floatX, name=None):
-    return sharedX(np.zeros(shape), dtype=dtype, name=name)
-
-
-def orthogonal(shape, scale=1.1):
-    """ benanne lasagne ortho init (faster than qr approach)"""
+def orthogonal(shape, scale=1.1, name=None):
     flat_shape = (shape[0], np.prod(shape[1:]))
     a = np.random.normal(0.0, 1.0, flat_shape)
     u, _, v = np.linalg.svd(a, full_matrices=False)
-    q = u if u.shape == flat_shape else v # pick the one with the correct shape
+    q = u if u.shape == flat_shape else v  # pick the one with the correct shape
     q = q.reshape(shape)
-    return sharedX(scale * q[:shape[0], :shape[1]])
+    return sharedX(scale * q[:shape[0], :shape[1]], name=name)
 
 
-class LSTMLayer(object):
-
-    def __init__(self, size=256, activation=tanh, gate_activation=steeper_sigmoid, init=orthogonal,
+class LSTM(object):
+    def __init__(self, input, n_in, n_out=256, activation=tanh, gate_activation=steeper_sigmoid, init=orthogonal,
                  truncate_gradient=-1, seq_output=False, p_drop=0., weights=None):
         self.settings = locals()
         del self.settings['self']
+        self.input = x
         self.activation_str = activation
         self.activation = activation
         self.gate_activation = gate_activation
         self.init = init
-        self.size = size
+        self.n_out = n_out
         self.truncate_gradient = truncate_gradient
         self.seq_output = seq_output
         self.p_drop = p_drop
         self.weights = weights
-
-    def connect(self, l_in, n_in):
-        self.l_in = l_in
         self.n_in = n_in
+        self.connect()
 
-        self.w_i = self.init((self.n_in, self.size))
-        self.w_f = self.init((self.n_in, self.size))
-        self.w_o = self.init((self.n_in, self.size))
-        self.w_c = self.init((self.n_in, self.size))
+    def connect(self):
+        self.w_i = self.init((self.n_in, self.n_out), name="w_i")
+        self.w_f = self.init((self.n_in, self.n_out), name="w_f")
+        self.w_o = self.init((self.n_in, self.n_out), name="w_o")
+        self.w_c = self.init((self.n_in, self.n_out), name="w_c")
 
-        self.b_i = shared0s((self.size))
-        self.b_f = shared0s((self.size))
-        self.b_o = shared0s((self.size))
-        self.b_c = shared0s((self.size))
+        self.b_i = shared0s(self.n_out, name="b_i")
+        self.b_f = shared0s(self.n_out, name="b_f")
+        self.b_o = shared0s(self.n_out, name="b_o")
+        self.b_c = shared0s(self.n_out, name="b_c")
 
-        self.u_i = self.init((self.size, self.size))
-        self.u_f = self.init((self.size, self.size))
-        self.u_o = self.init((self.size, self.size))
-        self.u_c = self.init((self.size, self.size))
+        self.u_i = self.init((self.n_out, self.n_out), name="u_i")
+        self.u_f = self.init((self.n_out, self.n_out), name="u_f")
+        self.u_o = self.init((self.n_out, self.n_out), name="u_o")
+        self.u_c = self.init((self.n_out, self.n_out), name="u_c")
 
         self.params = [self.w_i, self.w_f, self.w_o, self.w_c, 
-            self.u_i, self.u_f, self.u_o, self.u_c,  
-            self.b_i, self.b_f, self.b_o, self.b_c]
+                       self.u_i, self.u_f, self.u_o, self.u_c,
+                       self.b_i, self.b_f, self.b_o, self.b_c]
 
         if self.weights is not None:
             for param, weight in zip(self.params, self.weights):
@@ -87,22 +73,109 @@ class LSTMLayer(object):
         h_t = o_t * self.activation(c_t)
         return h_t, c_t
 
-    def output(self, dropout_active=False):
-        X = self.l_in
+    def output(self, dropout_active=False, pool=True):
+        X = self.input
         if self.p_drop > 0. and dropout_active:
             X = dropout(X, self.p_drop)
         x_i = T.dot(X, self.w_i) + self.b_i
         x_f = T.dot(X, self.w_f) + self.b_f
         x_o = T.dot(X, self.w_o) + self.b_o
         x_c = T.dot(X, self.w_c) + self.b_c
-        [out, cells], _ = theano.scan(
+        [out, _], _ = theano.scan(
             self.step,
             sequences=[x_i, x_f, x_o, x_c], 
-            outputs_info=[T.alloc(0., X.shape[1], self.size), T.alloc(0., X.shape[1], self.size)], 
+            outputs_info=[T.alloc(0., X.shape[1], self.n_out), T.alloc(0., X.shape[1], self.n_out)],
             non_sequences=[self.u_i, self.u_f, self.u_o, self.u_c],
             truncate_gradient=self.truncate_gradient
         )
-        if self.seq_output:
+        if pool:
+            return T.mean(out, axis=1)
+        elif self.seq_output:
             return out
         else:
             return out[-1]
+
+
+class GatedRecurrentUnit(object):
+    def __init__(self, input, n_in, n_out=256, activation=tanh, gate_activation=steeper_sigmoid, init=orthogonal,
+                 truncate_gradient=-1, seq_output=False, p_drop=0., direction='forward', weights=None):
+        self.activation = activation
+        self.gate_activation = gate_activation
+        self.init = init
+        self.n_out = n_out
+        self.truncate_gradient = truncate_gradient
+        self.seq_output = seq_output
+        self.p_drop = p_drop
+        self.weights = weights
+        self.direction = direction
+        self.input = input
+        self.n_in = n_in
+        self.connect()
+
+    def connect(self):
+        self.h0 = shared0s((1, self.n_out), name="h_0")
+
+        self.w_z = self.init((self.n_in, self.n_out), name="w_z")
+        self.w_r = self.init((self.n_in, self.n_out), name="w_r")
+
+        self.u_z = self.init((self.n_out, self.n_out), name="u_z")
+        self.u_r = self.init((self.n_out, self.n_out), name="u_r")
+
+        self.b_z = shared0s(self.n_out, name="b_z")
+        self.b_r = shared0s(self.n_out, name="b_r")
+
+        if 'maxout' in self.activation.func_name:
+            self.w_h = self.init((self.n_in, self.n_out*2), name="w_h")
+            self.u_h = self.init((self.n_out, self.n_out*2), name="u_h")
+            self.b_h = shared0s((self.n_out*2), name="b_h")
+        else:
+            self.w_h = self.init((self.n_in, self.n_out), name="w_h")
+            self.u_h = self.init((self.n_out, self.n_out), name="u_h")
+            self.b_h = shared0s(self.n_out, name="b_h")
+
+        self.params = [self.h0,
+                       self.w_z, self.w_r, self.w_h,
+                       self.u_z, self.u_r, self.u_h,
+                       self.b_z, self.b_r, self.b_h]
+
+        if self.weights is not None:
+            for param, weight in zip(self.params, self.weights):
+                param.set_value(floatX(weight))
+
+    def step(self, xz_t, xr_t, xh_t, h_tm1, u_z, u_r, u_h):
+        z = self.gate_activation(xz_t + T.dot(h_tm1, u_z))
+        r = self.gate_activation(xr_t + T.dot(h_tm1, u_r))
+        h_tilda_t = self.activation(xh_t + T.dot(r * h_tm1, u_h))
+        h_t = z * h_tm1 + (1 - z) * h_tilda_t
+        return h_t
+
+    def output(self, dropout_active=False, pool=True):
+        X = self.input
+        if self.direction == 'backward':
+            X = X[::-1]
+        if self.p_drop > 0. and dropout_active:
+            X = dropout(X, self.p_drop)
+        x_z = T.dot(X, self.w_z) + self.b_z
+        x_r = T.dot(X, self.w_r) + self.b_r
+        x_h = T.dot(X, self.w_h) + self.b_h
+        out, _ = theano.scan(
+            self.step,
+            sequences=[x_z, x_r, x_h],
+            outputs_info=[repeat(self.h0, x_h.shape[1], axis=0)],
+            non_sequences=[self.u_z, self.u_r, self.u_h],
+            truncate_gradient=self.truncate_gradient
+        )
+        if pool:
+            return T.mean(out, axis=1)
+        elif self.seq_output:
+            return out
+        else:
+            return out[-1]
+
+if __name__ == '__main__':
+    x = T.tensor3()
+    layer = GatedRecurrentUnit(input=x, n_in=3, n_out=10, seq_output=True, p_drop=0.5)
+    output = layer.output(dropout_active=True)
+    f = theano.function([x], output)
+    print f([[[1, 2, 3], [2, 3, 4], [3, 4, 5]], [[3, 4, 5], [2, 3, 4], [1, 2, 3]]])
+    print layer.params

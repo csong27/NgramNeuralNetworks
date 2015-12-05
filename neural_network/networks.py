@@ -1,5 +1,6 @@
 from regular_layer import _dropout_from_layer, DropoutHiddenLayer, HiddenLayer, LogisticRegression
 from ngram_layer import UnigramLayer, BigramLayer, TrigramLayer, MuiltiUnigramLayer, MultiBigramLayer, MultiTrigramLayer
+from recurrent_layer import GatedRecurrentUnit, LSTM
 from non_linear import *
 import theano.tensor as T
 
@@ -189,4 +190,45 @@ class MultiKernelNgramNetwork(object):
 
         self.layers.append(last_layer)
         self.output = self.layers[-1].output
+        self.params = [param for layer in self.layers for param in layer.params]
+
+
+class NgramRecurrentNetwork(object):
+    def __init__(self, rng, input, input_shape, ngrams=(3, 2, 1), n_kernels=(4, 4, 4), mean=False, ngram_activation=tanh,
+                 rec_type='lstm', n_hidden=150, n_out=2, dropout_rate=0.5):
+        assert len(ngrams) == len(n_kernels)    # need to have same number of layers
+        self.layers = []
+        prev_out = input
+        for i, ngram in enumerate(ngrams):
+            x = prev_out
+            if ngram == 1:
+                ngram_layer = MuiltiUnigramLayer(rng=rng, input=x, input_shape=input_shape, activation=ngram_activation,
+                                                 mean=mean, sum_out=False, n_kernels=n_kernels[i])
+            elif ngram == 2:
+                ngram_layer = MultiBigramLayer(rng=rng, input=x, input_shape=input_shape, activation=ngram_activation,
+                                               mean=mean, sum_out=False, n_kernels=n_kernels[i])
+            elif ngram == 3:
+                ngram_layer = MultiTrigramLayer(rng=rng, input=x, input_shape=input_shape, activation=ngram_activation,
+                                                mean=mean, sum_out=False, n_kernels=n_kernels[i])
+            else:
+                raise NotImplementedError('This %d gram layer is not implemented' % ngram)
+            self.layers.append(ngram_layer)
+            prev_out = ngram_layer.output
+        # recurrent layer
+        rec_input = prev_out
+        if rec_type == 'lstm':
+            rec_layer = LSTM(input=rec_input, n_in=input_shape[1], n_out=n_hidden, p_drop=dropout_rate)
+        elif rec_type == 'gru':
+            rec_layer = GatedRecurrentUnit(input=rec_input, n_in=input_shape[1], n_out=n_hidden, p_drop=dropout_rate)
+        else:
+            raise NotImplementedError('This %s is not implemented' % rec_type)
+        self.layers.append(rec_layer)
+        rec_output = rec_layer.output(dropout_active=True)
+        # output layer
+        output_layer = LogisticRegression(input=rec_output, n_in=n_hidden, n_out=n_out)
+        self.layers.append(output_layer)
+        self.output = self.layers[-1].output
+        self.negative_log_likelihood = self.layers[-1].negative_log_likelihood
+        self.errors = self.layers[-1].errors
+
         self.params = [param for layer in self.layers for param in layer.params]
