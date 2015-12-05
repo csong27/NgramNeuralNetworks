@@ -73,7 +73,7 @@ def wrapper_word2index(data=SST_SENT_POL):
     return test_accuracy
 
 
-def wrapper_rec(data=SST_SENT_POL, rec_type='gru'):
+def wrapper_rec(data=SST_SENT_POL, rec_type='lstm'):
     datasets, W, mask = read_word2index_data(data=data, google=True, cv=False)
     train_x, train_y, validate_x, validate_y, test_x, test_y = datasets
     # get input shape
@@ -86,9 +86,9 @@ def wrapper_rec(data=SST_SENT_POL, rec_type='gru'):
         U=W,
         datasets=datasets,
         n_epochs=15,
-        ngrams=(2, ),
+        ngrams=(2, 1),
         input_shape=input_shape,
-        n_kernels=(4, ),
+        n_kernels=(4, 4),
         lr_rate=0.02,
         dropout_rate=0.5,
         n_hidden=400,

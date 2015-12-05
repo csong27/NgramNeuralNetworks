@@ -216,7 +216,8 @@ class NgramRecurrentNetwork(object):
             prev_out = ngram_layer.output
         if mask is not None:
             offset = sum(ngrams) - len(ngrams)
-            mask = mask[:, : -offset]
+            if offset != 0:
+                mask = mask[:, : -offset]
         # recurrent layer
         rec_input = prev_out
         if rec_type == 'lstm':
