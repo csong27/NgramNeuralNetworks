@@ -2,15 +2,19 @@ import numpy
 import theano
 import theano.tensor as T
 
+s = numpy.random.normal(size=(2, 5, 10))
+s = numpy.asarray(s, dtype=theano.config.floatX)
+m = numpy.asarray([[1, 1, 1, 0, 0], [1, 1, 1, 1, 0]], dtype=theano.config.floatX)
 
-W_value = numpy.random.normal(size=(5, 5))
-print W_value
-W = theano.shared(W_value.astype(theano.config.floatX))
+mask = T.matrix()
+sentence = T.tensor3()
 
-x = T.imatrix('index')
+sum_1 = T.sum(sentence, axis=1)
+sum_2 = T.sum(mask, axis=1).dimshuffle(0, 'x')
 
-s = W[x]
+out = sum_1 / sum_2
 
-f = theano.function([x], s)
+f = theano.function([sentence, mask], out)
 
-print f([[0, 1, 2], [2, 1, 0]])
+print f(s, m)
+
