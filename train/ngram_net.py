@@ -1,6 +1,13 @@
 from neural_network import *
 
 
+def l2_regularization(l2_ratio, params, cost):
+    for param in params:
+        if param.ndim > 1:
+            cost += T.sum(param ** 2) * l2_ratio
+    return cost
+
+
 def train_ngram_conv_net(
         datasets,
         input_shape,
@@ -170,6 +177,7 @@ def train_ngram_net_embedding(
         update_rule='adadelta',
         lr_rate=0.01,
         momentum_ratio=0.9,
+        l2_ratio=1e-4,
         no_test_y=False,
         save_ngram=False,
         validation_only=False
@@ -248,10 +256,13 @@ def train_ngram_net_embedding(
         )
         cost = mlp.negative_log_likelihood(y)
 
-    params = ngram_net.params + mlp.params    # learning word vectors as well
+    params = ngram_net.params + mlp.params
+    # learning word vectors as well
     if non_static:
         params += [Words]
-
+    # L2 norm
+    if l2_ratio > 0:
+        cost = l2_regularization(l2_ratio, params, cost)
     grad_updates = get_grad_updates(update_rule=update_rule, cost=cost, params=params, lr_rate=lr_rate,
                                     momentum_ratio=momentum_ratio)
 

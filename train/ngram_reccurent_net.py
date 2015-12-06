@@ -1,4 +1,5 @@
 from neural_network import *
+from ngram_net import l2_regularization
 
 
 def train_ngram_rec_net(
@@ -21,6 +22,7 @@ def train_ngram_rec_net(
         rec_type='lstm',
         lr_rate=0.01,
         momentum_ratio=0.9,
+        l2_ratio=1e-4,
         validation_only=False,
         mask=None
 ):
@@ -80,8 +82,12 @@ def train_ngram_rec_net(
     errors = ngram_net.errors
     cost = ngram_net.negative_log_likelihood(y)
     params = ngram_net.params
+    # learning word vectors as well
     if non_static:
         params += [Words]
+    # L2 norm
+    if l2_ratio > 0:
+        cost = l2_regularization(l2_ratio, params, cost)
 
     grad_updates = get_grad_updates(update_rule=update_rule, cost=cost, params=params, lr_rate=lr_rate,
                                     momentum_ratio=momentum_ratio)
