@@ -85,7 +85,6 @@ def main(job_id, params):
         ngram_out=params['ngram_out'],  # passed as a list of three numbers
         n_kernels=params['n_kernels'],  # passed as a list of three numbers
         ngrams=params['ngrams'],  # passed as a list of three numbers
-        dropout=params['dropout'][0],
         dropout_rate=params['dropout_rate'][0],
         n_hidden=params['n_hidden'][0],
         mean_pool=params['mean_pool'][0],
