@@ -1,26 +1,8 @@
 import theano
-import numpy as np
 from theano.tensor.extra_ops import repeat
-from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 from non_linear import *
-from update_rules import shared0s, sharedX, floatX
-srng = RandomStreams()
-
-
-def dropout(X, p=0.):
-    if p != 0:
-        retain_prob = 1 - p
-        X = X / retain_prob * srng.binomial(X.shape, p=retain_prob, dtype=theano.config.floatX)
-    return X
-
-
-def orthogonal(shape, scale=1.1, name=None):
-    flat_shape = (shape[0], np.prod(shape[1:]))
-    a = np.random.normal(0.0, 1.0, flat_shape)
-    u, _, v = np.linalg.svd(a, full_matrices=False)
-    q = u if u.shape == flat_shape else v  # pick the one with the correct shape
-    q = q.reshape(shape)
-    return sharedX(scale * q[:shape[0], :shape[1]], name=name)
+from helper import dropout, shared0s, floatX
+from initialization import orthogonal
 
 
 class LSTM(object):
@@ -245,7 +227,7 @@ if __name__ == '__main__':
     x = T.tensor3()
     mask = T.matrix()
     layer = LSTM(input=x, n_in=3, n_out=10, seq_output=True, p_drop=0.5, mask=mask)
-    output = layer.output(pool=True)
+    output = layer.output(pool=False)
     f = theano.function([x, mask], output, on_unused_input='ignore')
     print f([[[1, 2, 3], [2, 3, 4], [3, 4, 5]], [[3, 4, 5], [2, 3, 4], [1, 2, 3]], [[3, 4, 5], [2, 3, 4], [1, 2, 3]]
              , [[3, 4, 5], [2, 3, 4], [1, 2, 3]], [[3, 4, 5], [2, 3, 4], [1, 2, 3]]],

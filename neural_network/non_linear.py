@@ -55,3 +55,7 @@ def steeper_sigmoid(x):
 
 def hard_sigmoid(x):
     return T.clip(x + 0.5, 0., 1.)
+
+
+def elu(x):
+    return T.switch(x > 0, x, T.exp(x) - 1)

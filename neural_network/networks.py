@@ -3,7 +3,6 @@ from ngram_layer import UnigramLayer, BigramLayer, TrigramLayer, MuiltiUnigramLa
 from recurrent_layer import GatedRecurrentUnit, LSTM
 from non_linear import *
 import theano.tensor as T
-import theano
 
 
 class MLPDropout(object):
@@ -237,7 +236,8 @@ class NgramRecurrentNetwork(object):
         # recurrent layer
         rec_input = prev_out
         if rec_type == 'lstm':
-            rec_layer = LSTM(input=rec_input, n_in=input_shape[1], n_out=n_hidden, p_drop=dropout_rate, mask=mask)
+            rec_layer = LSTM(input=rec_input, n_in=input_shape[1], n_out=n_hidden, p_drop=dropout_rate, mask=mask,
+                             seq_output=False)
         elif rec_type == 'gru':
             rec_layer = GatedRecurrentUnit(input=rec_input, n_in=input_shape[1], n_out=n_hidden, p_drop=dropout_rate,
                                            mask=mask, seq_output=False)

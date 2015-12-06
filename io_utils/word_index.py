@@ -93,7 +93,7 @@ def save_index_data_pickle(data, datasets, W, word2index, cutoff, cv=False, goog
 
 
 def read_word2index_data(data, cv, google=False, huge=False):
-    assert google != huge
+    assert not (google and huge)
     file_name = data + "_word2index.pkl"
     if google:
         file_name = "google_" + file_name

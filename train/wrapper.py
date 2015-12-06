@@ -40,7 +40,7 @@ def wrapper(data=SST_SENT_POL):
 
 
 def wrapper_word2index(data=SST_SENT_POL):
-    datasets, W, _ = read_word2index_data(data=data, google=True, cv=False)
+    datasets, W, _ = read_word2index_data(data=data, google=False, cv=False)
     train_x, train_y, validate_x, validate_y, test_x, test_y = datasets
     # get input shape
     input_shape = (train_x[0].shape[0], W.shape[1])
@@ -52,9 +52,9 @@ def wrapper_word2index(data=SST_SENT_POL):
         U=W,
         datasets=datasets,
         n_epochs=20,
-        ngrams=(1, 2),
+        ngrams=(2, 1),
         ngram_out=(300, 250),
-        non_static=False,
+        non_static=True,
         input_shape=input_shape,
         ngram_bias=False,
         multi_kernel=True,
@@ -63,13 +63,13 @@ def wrapper_word2index(data=SST_SENT_POL):
         use_bias=False,
         lr_rate=0.02,
         dropout=True,
-        dropout_rate=0.3,
+        dropout_rate=0.,
         n_hidden=200,
         n_out=n_out,
-        ngram_activation=leaky_relu,
-        activation=leaky_relu,
+        ngram_activation=elu,
+        activation=elu,
         batch_size=50,
-        update_rule='rmsprop'
+        update_rule='adagrad'
     )
     return test_accuracy
 
@@ -88,17 +88,17 @@ def wrapper_rec(data=SST_SENT_POL, rec_type='lstm'):
         non_static=True,
         datasets=datasets,
         n_epochs=30,
-        ngrams=(3, ),
+        ngrams=(1, 2),
         input_shape=input_shape,
-        n_kernels=(4, ),
-        ngram_out=(250, ),
+        n_kernels=(4, 4),
+        ngram_out=(300, 250),
         lr_rate=0.02,
-        dropout_rate=0.3,
+        dropout_rate=0.,
         n_hidden=200,
         n_out=n_out,
         ngram_activation=leaky_relu,
         batch_size=20,
-        update_rule='rmsprop',
+        update_rule='adagrad',
         rec_type=rec_type,
         pool=True,
         mask=mask
@@ -107,4 +107,4 @@ def wrapper_rec(data=SST_SENT_POL, rec_type='lstm'):
 
 
 if __name__ == '__main__':
-    wrapper_rec()
+    wrapper_word2index()
