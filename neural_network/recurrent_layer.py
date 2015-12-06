@@ -66,7 +66,12 @@ class LSTM(object):
             for param, weight in zip(self.params, self.weights):
                 param.set_value(floatX(weight))
 
-    def step(self, xi_t, xf_t, xo_t, xc_t, h_tm1, c_tm1, u_i, u_f, u_o, u_c):
+    def step(self, x_t, h_tm1, c_tm1, u_i, u_f, u_o, u_c):
+        xi_t = T.dot(x_t, self.w_i) + self.b_i
+        xf_t = T.dot(x_t, self.w_f) + self.b_f
+        xo_t = T.dot(x_t, self.w_o) + self.b_o
+        xc_t = T.dot(x_t, self.w_c) + self.b_c
+
         i_t = self.gate_activation(xi_t + T.dot(h_tm1, u_i))
         f_t = self.gate_activation(xf_t + T.dot(h_tm1, u_f))
         c_t = f_t * c_tm1 + i_t * self.activation(xc_t + T.dot(h_tm1, u_c))
@@ -74,7 +79,12 @@ class LSTM(object):
         h_t = o_t * self.activation(c_t)
         return h_t, c_t
 
-    def step_masked(self, mask, xi_t, xf_t, xo_t, xc_t, h_tm1, c_tm1, u_i, u_f, u_o, u_c):
+    def step_masked(self, mask, x_t, h_tm1, c_tm1, u_i, u_f, u_o, u_c):
+        xi_t = T.dot(x_t, self.w_i) + self.b_i
+        xf_t = T.dot(x_t, self.w_f) + self.b_f
+        xo_t = T.dot(x_t, self.w_o) + self.b_o
+        xc_t = T.dot(x_t, self.w_c) + self.b_c
+
         i_t = self.gate_activation(xi_t + T.dot(h_tm1, u_i))
         f_t = self.gate_activation(xf_t + T.dot(h_tm1, u_f))
         c_t = f_t * c_tm1 + i_t * self.activation(xc_t + T.dot(h_tm1, u_c))
@@ -91,15 +101,14 @@ class LSTM(object):
         X = self.input
         if self.p_drop > 0. and dropout_active:
             X = dropout(X, self.p_drop)
-        x_i = T.dot(X, self.w_i) + self.b_i
-        x_f = T.dot(X, self.w_f) + self.b_f
-        x_o = T.dot(X, self.w_o) + self.b_o
-        x_c = T.dot(X, self.w_c) + self.b_c
+        # shuffle dimension so scan over axis 1
+        X = X.dimshuffle(1, 0, 2)
         if self.mask is not None:
-            seq_input = [self.mask, x_i, x_f, x_o, x_c]
+            mask = self.mask.dimshuffle(1, 0)
+            seq_input = [mask, X]
             step = self.step_masked
         else:
-            seq_input = [x_i, x_f, x_o, x_c]
+            seq_input = [X]
             step = self.step
         [out, _], _ = theano.scan(
             step,
@@ -108,11 +117,13 @@ class LSTM(object):
             non_sequences=[self.u_i, self.u_f, self.u_o, self.u_c],
             truncate_gradient=self.truncate_gradient
         )
+        # shuffle dimension back
+        out = out.dimshuffle(1, 0, 2)
         if pool:
             if self.mask is not None:
-                sum_1 = T.sum(out, axis=1)
-                sum_2 = T.sum(self.mask, axis=1).dimshuffle(0, 'x')      # length of sentence
-                return sum_1 / sum_2
+                out = (out * self.mask[:, :, None]).sum(axis=0)
+                out = out / self.mask.sum(axis=0)[:, None]
+                return out
             # if no mask, return naive mean
             return T.mean(out, axis=1)
         elif self.seq_output:
@@ -168,7 +179,11 @@ class GatedRecurrentUnit(object):
             for param, weight in zip(self.params, self.weights):
                 param.set_value(floatX(weight))
 
-    def step(self, xz_t, xr_t, xh_t, h_tm1, u_z, u_r, u_h):
+    def step(self, x_t, h_tm1, u_z, u_r, u_h):
+        xz_t = T.dot(x_t, self.w_z) + self.b_z
+        xr_t = T.dot(x_t, self.w_r) + self.b_r
+        xh_t = T.dot(x_t, self.w_h) + self.b_h
+
         z = self.gate_activation(xz_t + T.dot(h_tm1, u_z))
         r = self.gate_activation(xr_t + T.dot(h_tm1, u_r))
         h_tilda_t = self.activation(xh_t + T.dot(r * h_tm1, u_h))
@@ -176,7 +191,11 @@ class GatedRecurrentUnit(object):
 
         return h_t
 
-    def step_masked(self, mask, xz_t, xr_t, xh_t, h_tm1, u_z, u_r, u_h):
+    def step_masked(self, mask, x_t, h_tm1, u_z, u_r, u_h):
+        xz_t = T.dot(x_t, self.w_z) + self.b_z
+        xr_t = T.dot(x_t, self.w_r) + self.b_r
+        xh_t = T.dot(x_t, self.w_h) + self.b_h
+
         z = self.gate_activation(xz_t + T.dot(h_tm1, u_z))
         r = self.gate_activation(xr_t + T.dot(h_tm1, u_r))
         h_tilda_t = self.activation(xh_t + T.dot(r * h_tm1, u_h))
@@ -193,27 +212,29 @@ class GatedRecurrentUnit(object):
             X = X[::-1]
         if self.p_drop > 0. and dropout_active:
             X = dropout(X, self.p_drop)
-        x_z = T.dot(X, self.w_z) + self.b_z
-        x_r = T.dot(X, self.w_r) + self.b_r
-        x_h = T.dot(X, self.w_h) + self.b_h
+        # shuffle dimension so scan over axis 1
+        X = X.dimshuffle(1, 0, 2)
         if self.mask is not None:
-            seq_input = [self.mask, x_z, x_r, x_h]
+            mask = self.mask.dimshuffle(1, 0)
+            seq_input = [mask, X]
             step = self.step_masked
         else:
-            seq_input = [x_z, x_r, x_h]
+            seq_input = [X]
             step = self.step
         out, _ = theano.scan(
             step,
             sequences=seq_input,
-            outputs_info=[repeat(self.h0, x_h.shape[1], axis=0)],
+            outputs_info=[repeat(self.h0, X.shape[1], axis=0)],
             non_sequences=[self.u_z, self.u_r, self.u_h],
             truncate_gradient=self.truncate_gradient
         )
+        # shuffle dimension back
+        out = out.dimshuffle(1, 0, 2)
         if pool:
             if self.mask is not None:
-                sum_1 = T.sum(out, axis=1)
-                sum_2 = T.sum(self.mask, axis=1).dimshuffle(0, 'x')      # length of sentence
-                return sum_1 / sum_2
+                out = (out * self.mask[:, :, None]).sum(axis=0)
+                out = out / self.mask.sum(axis=0)[:, None]
+                return out
             return T.mean(out, axis=1)
         elif self.seq_output:
             return out
@@ -223,8 +244,8 @@ class GatedRecurrentUnit(object):
 if __name__ == '__main__':
     x = T.tensor3()
     mask = T.matrix()
-    layer = LSTM(input=x, n_in=3, n_out=10, seq_output=True, p_drop=0.5, mask=mask)
-    output = layer.output(pool=False)
+    layer = GatedRecurrentUnit(input=x, n_in=3, n_out=10, seq_output=True, p_drop=0.5, mask=None)
+    output = layer.output(pool=True)
     f = theano.function([x, mask], output, on_unused_input='ignore')
-    print f([[[1, 2, 3], [2, 3, 4], [3, 4, 5]], [[3, 4, 5], [2, 3, 4], [1, 2, 3]]], [[1, 0, 0], [1, 1, 0]])
+    print f([[[1, 2, 3], [2, 3, 4], [3, 4, 5]], [[3, 4, 5], [2, 3, 4], [1, 2, 3]]], [[1, 0, 0], [1, 1, 0]]).shape
     print layer.params
