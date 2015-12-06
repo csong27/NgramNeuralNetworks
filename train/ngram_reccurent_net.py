@@ -1,5 +1,7 @@
 from neural_network import *
 from ngram_net import l2_regularization
+import theano
+import numpy as np
 
 
 def train_ngram_rec_net(

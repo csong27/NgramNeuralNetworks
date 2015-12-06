@@ -1,11 +1,6 @@
 from neural_network import *
-
-
-def l2_regularization(l2_ratio, params, cost):
-    for param in params:
-        if param.ndim > 1:
-            cost += T.sum(param ** 2) * l2_ratio
-    return cost
+import numpy as np
+import theano
 
 
 def train_ngram_conv_net(
@@ -34,6 +29,9 @@ def train_ngram_conv_net(
         save_ngram=False,
         validation_only=False
 ):
+    import warnings
+    warnings.warn("This method is deprecated", DeprecationWarning)
+
     rng = np.random.RandomState(23455)
     if no_test_y:
         train_x, train_y, validate_x, validate_y, test_x = datasets

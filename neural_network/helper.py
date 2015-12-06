@@ -30,3 +30,11 @@ def shared_dataset(data_xy, borrow=True):
     shared_x = theano.shared(np.asarray(data_x, dtype=theano.config.floatX), borrow=borrow)
     shared_y = theano.shared(np.asarray(data_y, dtype=theano.config.floatX), borrow=borrow)
     return shared_x, T.cast(shared_y, 'int32')
+
+
+def l2_regularization(l2_ratio, params, cost):
+    for param in params:
+        if param.ndim > 1:
+            cost += T.sum(param ** 2) * l2_ratio
+    return cost
+

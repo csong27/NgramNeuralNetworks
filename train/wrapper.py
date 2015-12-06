@@ -40,7 +40,7 @@ def wrapper(data=SST_SENT_POL):
 
 
 def wrapper_word2index(data=SST_SENT_POL):
-    datasets, W, _ = read_word2index_data(data=data, google=False, cv=False)
+    datasets, W, _ = read_word2index_data(data=data, google=True, cv=False)
     train_x, train_y, validate_x, validate_y, test_x, test_y = datasets
     # get input shape
     input_shape = (train_x[0].shape[0], W.shape[1])
@@ -59,7 +59,7 @@ def wrapper_word2index(data=SST_SENT_POL):
         ngram_bias=False,
         multi_kernel=True,
         concat_out=False,
-        n_kernels=(4, 4),
+        n_kernels=(6, 2),
         use_bias=False,
         lr_rate=0.02,
         dropout=True,
