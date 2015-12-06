@@ -207,7 +207,7 @@ class MultiKernelNgramNetwork(object):
 class NgramRecurrentNetwork(object):
     def __init__(self, rng, input, input_shape, ngrams=(3, 2, 1), n_kernels=(4, 4, 4), mean=False, mask=None,
                  ngram_out=(300, 200, 100), ngram_activation=tanh, rec_type='lstm', n_hidden=150, n_out=2,
-                 dropout_rate=0.5):
+                 dropout_rate=0.5, pool=True):
         assert len(ngrams) == len(n_kernels) == len(ngram_out)    # need to have same number of layers
         self.layers = []
         prev_out = input
@@ -239,11 +239,11 @@ class NgramRecurrentNetwork(object):
             rec_layer = LSTM(input=rec_input, n_in=input_shape[1], n_out=n_hidden, p_drop=dropout_rate, mask=mask)
         elif rec_type == 'gru':
             rec_layer = GatedRecurrentUnit(input=rec_input, n_in=input_shape[1], n_out=n_hidden, p_drop=dropout_rate,
-                                           mask=mask)
+                                           mask=mask, seq_output=False)
         else:
             raise NotImplementedError('This %s is not implemented' % rec_type)
         self.layers.append(rec_layer)
-        rec_output = rec_layer.output(dropout_active=True)
+        rec_output = rec_layer.output(dropout_active=True, pool=pool)
         # output layer
         output_layer = LogisticRegression(input=rec_output, n_in=n_hidden, n_out=n_out)
         self.layers.append(output_layer)

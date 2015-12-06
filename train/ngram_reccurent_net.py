@@ -23,6 +23,7 @@ def train_ngram_rec_net(
         lr_rate=0.01,
         momentum_ratio=0.9,
         l2_ratio=1e-4,
+        pool=True,
         validation_only=False,
         mask=None
 ):
@@ -77,7 +78,8 @@ def train_ngram_rec_net(
         mean=mean_pool,
         ngram_activation=ngram_activation,
         rec_type=rec_type,
-        mask=m
+        mask=m,
+        pool=pool
     )
     errors = ngram_net.errors
     cost = ngram_net.negative_log_likelihood(y)

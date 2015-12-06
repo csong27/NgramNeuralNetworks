@@ -62,10 +62,13 @@ def get_index_data(word2index, x, cutoff):
     return index_matrix, mask_matrix
 
 
-def save_index_data_pickle(data, datasets, W, word2index, cutoff, cv=False, google=False):
+def save_index_data_pickle(data, datasets, W, word2index, cutoff, cv=False, google=False, huge=False):
+    assert google != huge
     file_name = data + "_word2index.pkl"
     if google:
         file_name = "google_" + file_name
+    if huge:
+        file_name = "huge_" + file_name
     file_path = data_path + file_name
     f = open(file_path, 'wb')
     if cv:
@@ -89,10 +92,13 @@ def save_index_data_pickle(data, datasets, W, word2index, cutoff, cv=False, goog
     f.close()
 
 
-def read_word2index_data(data, cv, google=False):
+def read_word2index_data(data, cv, google=False, huge=False):
+    assert google != huge
     file_name = data + "_word2index.pkl"
     if google:
         file_name = "google_" + file_name
+    if huge:
+        file_name = "huge_" + file_name
     file_path = data_path + file_name
     f = open(file_path, 'rb')
     if cv:
@@ -119,9 +125,9 @@ def save_index_data(data, google=False, huge=False):
     cutoff = cutoff_map[data]
     print "saving word2index..."
     if data in [ROTTEN_TOMATOES, MPQA, CUSTOMER_REVIEW, SUBJ]:
-        save_index_data_pickle(data, datasets, W, word2index, cutoff, cv=True, google=google)
+        save_index_data_pickle(data, datasets, W, word2index, cutoff, cv=True, google=google, huge=huge)
     elif data in [SST_SENT, SST_SENT_POL, TREC]:
-        save_index_data_pickle(data, datasets, W, word2index, cutoff, google=google)
+        save_index_data_pickle(data, datasets, W, word2index, cutoff, google=google, huge=huge)
 
 
 if __name__ == '__main__':

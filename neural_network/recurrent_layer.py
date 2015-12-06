@@ -223,7 +223,7 @@ class GatedRecurrentUnit(object):
 if __name__ == '__main__':
     x = T.tensor3()
     mask = T.matrix()
-    layer = LSTM(input=x, n_in=3, n_out=10, seq_output=True, p_drop=0.5, mask=None)
+    layer = LSTM(input=x, n_in=3, n_out=10, seq_output=True, p_drop=0.5, mask=mask)
     output = layer.output(pool=False)
     f = theano.function([x, mask], output, on_unused_input='ignore')
     print f([[[1, 2, 3], [2, 3, 4], [3, 4, 5]], [[3, 4, 5], [2, 3, 4], [1, 2, 3]]], [[1, 0, 0], [1, 1, 0]])

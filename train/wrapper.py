@@ -52,24 +52,24 @@ def wrapper_word2index(data=SST_SENT_POL):
         U=W,
         datasets=datasets,
         n_epochs=20,
-        ngrams=(2, ),
-        ngram_out=(200, ),
+        ngrams=(1, 2),
+        ngram_out=(300, 250),
         non_static=False,
         input_shape=input_shape,
         ngram_bias=False,
         multi_kernel=True,
         concat_out=False,
-        n_kernels=(4, ),
+        n_kernels=(4, 4),
         use_bias=False,
-        lr_rate=0.05,
+        lr_rate=0.02,
         dropout=True,
         dropout_rate=0.3,
-        n_hidden=300,
+        n_hidden=200,
         n_out=n_out,
         ngram_activation=leaky_relu,
         activation=leaky_relu,
         batch_size=50,
-        update_rule='adagrad'
+        update_rule='rmsprop'
     )
     return test_accuracy
 
@@ -88,11 +88,11 @@ def wrapper_rec(data=SST_SENT_POL, rec_type='lstm'):
         non_static=True,
         datasets=datasets,
         n_epochs=30,
-        ngrams=(2, ),
+        ngrams=(3, ),
         input_shape=input_shape,
         n_kernels=(4, ),
-        ngram_out=(200, ),
-        lr_rate=0.5,
+        ngram_out=(250, ),
+        lr_rate=0.02,
         dropout_rate=0.3,
         n_hidden=200,
         n_out=n_out,
@@ -100,10 +100,11 @@ def wrapper_rec(data=SST_SENT_POL, rec_type='lstm'):
         batch_size=50,
         update_rule='rmsprop',
         rec_type=rec_type,
+        pool=True,
         mask=mask
     )
     return test_accuracy
 
 
 if __name__ == '__main__':
-    wrapper_word2index()
+    wrapper_rec()

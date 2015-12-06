@@ -8,7 +8,7 @@
             "type" : "INT",
             "size" : 1,
             "min"  : 1,
-            "max"  : 50
+            "max"  : 20
         },
         "n_epochs" : {
             "type" : "INT",
@@ -19,8 +19,8 @@
         "batch_size" : {
             "type" : "INT",
             "size" : 1,
-            "min"  : 2,
-            "max"  : 40
+            "min"  : 1,
+            "max"  : 20
         },
         "ngram_layers" : {
             "type" : "INT",
@@ -38,7 +38,13 @@
             "type" : "INT",
             "size" : 2,
             "min"  : 2,
-            "max"  : 16
+            "max"  : 10
+        },
+        "ngram_out" : {
+            "type" : "INT",
+            "size" : 2,
+            "min"  : 15,
+            "max"  : 30
         },
         "ngrams" : {
             "type" : "INT",
@@ -46,29 +52,35 @@
             "min"  : 1,
             "max"  : 3
         },
-        "dropout" : {
-            "type" : "INT",
-            "size" : 1,
-            "min"  : 0,
-            "max"  : 1
-        },
         "dropout_rate" : {
             "type" : "INT",
             "size" : 1,
-            "min"  : 1,
-            "max"  : 7
+            "min"  : 0,
+            "max"  : 6
         },
         "n_hidden" : {
             "type" : "INT",
             "size" : 1,
-            "min"  : 30,
-            "max"  : 100
+            "min"  : 10,
+            "max"  : 30
         },
         "mean_pool" : {
             "type" : "INT",
             "size" : 1,
             "min"  : 0,
             "max"  : 1
-        }
+        },
+        "non_static" : {
+            "type" : "INT",
+            "size" : 1,
+            "min"  : 0,
+            "max"  : 1
+        },
+       "l2_ratio" : {
+            "type" : "INT",
+            "size" : 1,
+            "min"  : 1,
+            "max"  : 100
+       }
     }
 }
