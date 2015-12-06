@@ -121,8 +121,8 @@ class LSTM(object):
         out = out.dimshuffle(1, 0, 2)
         if pool:
             if self.mask is not None:
-                out = (out * self.mask[:, :, None]).sum(axis=0)
-                out = out / self.mask.sum(axis=0)[:, None]
+                out = (out * self.mask[:, :, None]).sum(axis=1)
+                out = out / self.mask.sum(axis=1)[:, None]
                 return out
             # if no mask, return naive mean
             return T.mean(out, axis=1)
@@ -232,8 +232,8 @@ class GatedRecurrentUnit(object):
         out = out.dimshuffle(1, 0, 2)
         if pool:
             if self.mask is not None:
-                out = (out * self.mask[:, :, None]).sum(axis=0)
-                out = out / self.mask.sum(axis=0)[:, None]
+                out = (out * self.mask[:, :, None]).sum(axis=1)
+                out = out / self.mask.sum(axis=1)[:, None]
                 return out
             return T.mean(out, axis=1)
         elif self.seq_output:
@@ -244,8 +244,10 @@ class GatedRecurrentUnit(object):
 if __name__ == '__main__':
     x = T.tensor3()
     mask = T.matrix()
-    layer = GatedRecurrentUnit(input=x, n_in=3, n_out=10, seq_output=True, p_drop=0.5, mask=None)
+    layer = LSTM(input=x, n_in=3, n_out=10, seq_output=True, p_drop=0.5, mask=mask)
     output = layer.output(pool=True)
     f = theano.function([x, mask], output, on_unused_input='ignore')
-    print f([[[1, 2, 3], [2, 3, 4], [3, 4, 5]], [[3, 4, 5], [2, 3, 4], [1, 2, 3]]], [[1, 0, 0], [1, 1, 0]]).shape
+    print f([[[1, 2, 3], [2, 3, 4], [3, 4, 5]], [[3, 4, 5], [2, 3, 4], [1, 2, 3]], [[3, 4, 5], [2, 3, 4], [1, 2, 3]]
+             , [[3, 4, 5], [2, 3, 4], [1, 2, 3]], [[3, 4, 5], [2, 3, 4], [1, 2, 3]]],
+            [[1, 0, 0], [1, 1, 0], [1, 0, 0], [1, 1, 0], [1, 1, 1]]).shape
     print layer.params

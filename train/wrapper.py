@@ -97,7 +97,7 @@ def wrapper_rec(data=SST_SENT_POL, rec_type='lstm'):
         n_hidden=200,
         n_out=n_out,
         ngram_activation=leaky_relu,
-        batch_size=50,
+        batch_size=20,
         update_rule='rmsprop',
         rec_type=rec_type,
         pool=True,

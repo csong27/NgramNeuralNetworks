@@ -3,6 +3,7 @@ from ngram_layer import UnigramLayer, BigramLayer, TrigramLayer, MuiltiUnigramLa
 from recurrent_layer import GatedRecurrentUnit, LSTM
 from non_linear import *
 import theano.tensor as T
+import theano
 
 
 class MLPDropout(object):
