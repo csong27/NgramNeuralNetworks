@@ -1,20 +1,21 @@
-import numpy
 import theano
-import theano.tensor as T
+import numpy as np
+from non_linear import *
 
-s = numpy.random.normal(size=(2, 5, 10))
-s = numpy.asarray(s, dtype=theano.config.floatX)
-m = numpy.asarray([[1, 1, 1, 0, 0], [1, 1, 1, 1, 0]], dtype=theano.config.floatX)
 
-mask = T.matrix()
-sentence = T.tensor3()
+x = np.arange(27, dtype='float32').reshape((3, 3, 3))
+W = theano.shared(np.ones((3, 3)))
 
-sum_1 = T.sum(sentence, axis=1)
-sum_2 = T.sum(mask, axis=1).dimshuffle(0, 'x')
+t = T.tensor3()
 
-out = sum_1 / sum_2
+out = T.dot(t, W)
+act_out = maxout(out)
 
-f = theano.function([sentence, mask], out)
+f = theano.function([t], [out, act_out])
 
-print f(s, m)
+print f(x)
+
+
+
+
 

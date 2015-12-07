@@ -86,7 +86,7 @@ class LSTM(object):
         # shuffle dimension so scan over axis 1
         X = X.dimshuffle(1, 0, 2)
         if self.mask is not None:
-            mask = self.mask.dimshuffle(1, 0)
+            mask = self.mask.dimshuffle(1, 0)   # first axis is number of hidden unit
             seq_input = [mask, X]
             step = self.step_masked
         else:

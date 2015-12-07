@@ -41,12 +41,12 @@ def clipped_maxout(x):
     return T.clip(T.maximum(x[:, 0::2], x[:, 1::2]), -5., 5.)
 
 
-def clipped_rectify(x):
-    return T.clip((x + abs(x)) / 2.0, 0., 5.)
+def clipped_relu(x):
+    return T.clip(leaky_relu(x), -5., 10.)
 
 
 def hard_tanh(x):
-    return T.clip(x, -1. , 1.)
+    return T.clip(x, -1., 1.)
 
 
 def steeper_sigmoid(x):

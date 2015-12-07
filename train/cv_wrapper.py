@@ -76,7 +76,7 @@ def cross_validation_embedding(validation_ratio=0.1, data=ROTTEN_TOMATOES, shuff
         test_accuracy = train_ngram_net_embedding(
             U=W,
             datasets=datasets,
-            n_epochs=20,
+            n_epochs=15,
             non_static=False,
             ngrams=(1, 2),
             input_shape=input_shape,
@@ -91,7 +91,8 @@ def cross_validation_embedding(validation_ratio=0.1, data=ROTTEN_TOMATOES, shuff
             dropout_rate=0.,
             n_hidden=200,
             n_out=n_out,
-            ngram_activation=leaky_relu,
+            l2_ratio=1e-4,
+            ngram_activation=tanh,
             activation=leaky_relu,
             batch_size=25,
             update_rule='adagrad',

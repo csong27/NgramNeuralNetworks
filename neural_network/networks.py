@@ -207,7 +207,7 @@ class MultiKernelNgramNetwork(object):
 class NgramRecurrentNetwork(object):
     def __init__(self, rng, input, input_shape, ngrams=(3, 2, 1), n_kernels=(4, 4, 4), mean=False, mask=None,
                  ngram_out=(300, 200, 100), ngram_activation=tanh, rec_type='lstm', n_hidden=150, n_out=2,
-                 dropout_rate=0.5, pool=True):
+                 dropout_rate=0.5, pool=True, rec_activation=tanh):
         assert len(ngrams) == len(n_kernels) == len(ngram_out)    # need to have same number of layers
         self.layers = []
         prev_out = input
@@ -237,10 +237,10 @@ class NgramRecurrentNetwork(object):
         rec_input = prev_out
         if rec_type == 'lstm':
             rec_layer = LSTM(input=rec_input, n_in=input_shape[1], n_out=n_hidden, p_drop=dropout_rate, mask=mask,
-                             seq_output=False)
+                             seq_output=False, activation=rec_activation)
         elif rec_type == 'gru':
             rec_layer = GatedRecurrentUnit(input=rec_input, n_in=input_shape[1], n_out=n_hidden, p_drop=dropout_rate,
-                                           mask=mask, seq_output=False)
+                                           mask=mask, seq_output=False, activation=rec_activation)
         else:
             raise NotImplementedError('This %s is not implemented' % rec_type)
         self.layers.append(rec_layer)
