@@ -104,4 +104,4 @@ def cross_validation_embedding(validation_ratio=0.1, data=ROTTEN_TOMATOES, shuff
 
 
 if __name__ == '__main__':
-    cross_validation_embedding(data=ROTTEN_TOMATOES)
+    cross_validation_embedding(data=SUBJ)

@@ -1,5 +1,6 @@
 import numpy as np
 import theano
+from helper import sharedX
 
 
 def get_W_values(rng, activation, fan_in, fan_out, n_in, n_out, n_kernels, normal=True, gain=1.0, Xavier=True):
