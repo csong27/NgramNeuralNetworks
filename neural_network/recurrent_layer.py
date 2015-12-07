@@ -109,7 +109,10 @@ class LSTM(object):
             # if no mask, return naive mean
             return T.mean(out, axis=1)
         elif self.seq_output:
-            return out
+            if self.mask is not None:
+                return out * self.mask[:, :, None]
+            else:
+                return out
         else:
             return out[-1]
 
@@ -219,7 +222,10 @@ class GatedRecurrentUnit(object):
                 return out
             return T.mean(out, axis=1)
         elif self.seq_output:
-            return out
+            if self.mask is not None:
+                return out * self.mask[:, :, None]
+            else:
+                return out
         else:
             return out[-1]
 
@@ -231,5 +237,5 @@ if __name__ == '__main__':
     f = theano.function([x, mask], output, on_unused_input='ignore')
     print f([[[1, 2, 3], [2, 3, 4], [3, 4, 5]], [[3, 4, 5], [2, 3, 4], [1, 2, 3]], [[3, 4, 5], [2, 3, 4], [1, 2, 3]]
              , [[3, 4, 5], [2, 3, 4], [1, 2, 3]], [[3, 4, 5], [2, 3, 4], [1, 2, 3]]],
-            [[1, 0, 0], [1, 1, 0], [1, 0, 0], [1, 1, 0], [1, 1, 1]]).shape
+            [[1, 0, 0], [1, 1, 0], [1, 0, 0], [1, 1, 0], [1, 1, 1]])
     print layer.params

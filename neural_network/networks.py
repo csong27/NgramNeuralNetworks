@@ -252,3 +252,52 @@ class NgramRecurrentNetwork(object):
         self.errors = self.layers[-1].errors
 
         self.params = [param for layer in self.layers for param in layer.params]
+
+
+class ReversedNgramRecurrentNetwork(object):
+    def __init__(self, rng, input, input_shape, ngrams=(3, 2, 1), n_kernels=(4, 4, 4), mean=False, mask=None,
+                 ngram_out=(300, 200, 100), ngram_activation=tanh, rec_type='lstm', n_hidden=150, n_out=2,
+                 dropout_rate=0.5, rec_activation=tanh, mlp=True):
+        assert len(ngrams) == len(n_kernels) == len(ngram_out)    # need to have same number of layers
+        # recurrent layer in the bottom
+        if rec_type == 'lstm':
+            self.rec_layer = LSTM(input=input, n_in=input_shape[1], n_out=n_hidden, p_drop=dropout_rate, mask=mask,
+                                  seq_output=True, activation=rec_activation)
+        elif rec_type == 'gru':
+            self.rec_layer = GatedRecurrentUnit(input=input, n_in=input_shape[1], n_out=n_hidden, p_drop=dropout_rate,
+                                                mask=mask, seq_output=True, activation=rec_activation)
+        else:
+            raise NotImplementedError('This %s is not implemented' % rec_type)
+
+        rec_output = self.rec_layer.output(dropout_active=True, pool=False)
+        # input shape for ngram net
+        input_shape = (input_shape[0], n_hidden)
+        self.ngram_net = MultiKernelNgramNetwork(
+            rng=rng,
+            input=rec_output,
+            input_shape=input_shape,
+            ngram_out=ngram_out,
+            ngrams=ngrams,
+            n_kernels=n_kernels,
+            activation=ngram_activation,
+            mean=mean
+        )
+        classifier_input = self.ngram_net.output
+        n_in = ngram_out[-1]
+        if mlp:
+            self.classifier = MLPDropout(
+                rng=rng,
+                input=classifier_input,
+                dropout_rates=[dropout_rate],
+                activations=[ngram_activation],
+                layer_sizes=[n_in, n_hidden, n_out]
+            )
+        else:
+            self.classifier = LogisticRegression(
+                input=classifier_input,
+                n_in=n_in,
+                n_out=n_out
+            )
+        self.negative_log_likelihood = self.classifier.negative_log_likelihood
+        self.errors = self.classifier.errors
+        self.params = self.rec_layer.params + self.ngram_net.params + self.classifier.params
