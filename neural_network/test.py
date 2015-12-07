@@ -11,9 +11,11 @@ t = T.tensor3()
 out = T.dot(t, W)
 act_out = maxout(out)
 
-f = theano.function([t], [out, act_out])
+z = T.cast(T.alloc(0., 3, 3), theano.config.floatX)
 
-print f(x)
+f = theano.function([t], z, on_unused_input='ignore')
+
+print f(x).dtype
 
 
 

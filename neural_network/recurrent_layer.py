@@ -1,7 +1,7 @@
 import theano
 from theano.tensor.extra_ops import repeat
 from non_linear import *
-from helper import dropout, shared0s, floatX
+from helper import dropout, shared0s, floatX, t_floatX
 from initialization import orthogonal
 
 
@@ -95,7 +95,7 @@ class LSTM(object):
         [out, _], _ = theano.scan(
             step,
             sequences=seq_input,
-            outputs_info=[T.alloc(0., X.shape[1], self.n_out), T.alloc(0., X.shape[1], self.n_out)],
+            outputs_info=[t_floatX(T.alloc(0., X.shape[1], self.n_out)), t_floatX(T.alloc(0., X.shape[1], self.n_out))],
             non_sequences=[self.u_i, self.u_f, self.u_o, self.u_c],
             truncate_gradient=self.truncate_gradient
         )

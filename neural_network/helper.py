@@ -17,6 +17,10 @@ def floatX(X):
     return np.asarray(X, dtype=theano.config.floatX)
 
 
+def t_floatX(variable):
+    return T.cast(variable, theano.config.floatX)
+
+
 def sharedX(X, dtype=theano.config.floatX, name=None):
     return theano.shared(np.asarray(X, dtype=dtype), name=name)
 

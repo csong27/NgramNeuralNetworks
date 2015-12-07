@@ -118,4 +118,6 @@ def wrapper_rec(data=SST_SENT_POL, rec_type='lstm'):
 
 
 if __name__ == '__main__':
-    wrapper_word2index()
+    wrapper_rec(rec_type='lstm')
+    print '\ndone\n'
+    wrapper_rec(rec_type='gru')
