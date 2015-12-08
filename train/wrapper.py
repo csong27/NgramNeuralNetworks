@@ -74,7 +74,7 @@ def wrapper_rec(data=SST_SENT_POL, rec_type='lstm'):
         dropout_rate=0.,
         n_hidden=200,
         n_out=n_out,
-        ngram_activation=leaky_relu,
+        ngram_activation=tanh,
         batch_size=20,
         update_rule='adagrad',
         rec_type=rec_type,
@@ -103,7 +103,7 @@ def wrapper_reversed_rec(data=SST_SENT_POL, rec_type='lstm'):
         n_kernels=(4, 4),
         ngram_out=(250, 200),
         lr_rate=0.02,
-        dropout_rate=0.0,
+        dropout_rate=0.,
         rec_hidden=300,
         mlp_hidden=200,
         n_out=n_out,
@@ -115,10 +115,14 @@ def wrapper_reversed_rec(data=SST_SENT_POL, rec_type='lstm'):
         rec_type=rec_type,
         l2_ratio=1e-4,
         mask=mask,
-        mlp=False
+        mlp=True
     )
     return test_accuracy
 
 
 if __name__ == '__main__':
-    wrapper_reversed_rec(rec_type='lstm')
+    for data in [SST_SENT, SST_SENT_POL]:
+        print '\n', data, 'lstm'
+        wrapper_reversed_rec(data=data, rec_type='lstm')
+        print '\n', data, 'gru'
+        wrapper_reversed_rec(data=data, rec_type='gru')
