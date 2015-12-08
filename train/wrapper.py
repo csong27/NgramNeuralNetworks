@@ -1,4 +1,4 @@
-from ngram_net import train_ngram_net_embedding
+from ngram_net import train_ngram_net
 from ngram_reccurent_net import train_ngram_rec_net, train_reversed_ngram_rec_net
 from io_utils.word_index import read_word2index_data
 from neural_network.non_linear import *
@@ -25,7 +25,7 @@ def wrapper_ngram(data=TREC, resplit=True, validate_ratio=0.2):
     n_out = len(np.unique(test_y))
     shuffle_indices = np.random.permutation(train_x.shape[0])
     datasets = (train_x[shuffle_indices], train_y[shuffle_indices], validate_x, validate_y, test_x, test_y)
-    test_accuracy = train_ngram_net_embedding(
+    test_accuracy = train_ngram_net(
         U=W,
         datasets=datasets,
         n_epochs=15,
@@ -98,18 +98,22 @@ def wrapper_reversed_rec(data=SST_SENT_POL, rec_type='lstm'):
         non_static=True,
         datasets=datasets,
         n_epochs=30,
-        ngrams=(2, ),
+        ngrams=(1, 2),
         input_shape=input_shape,
-        n_kernels=(4, ),
-        ngram_out=(300, ),
+        n_kernels=(4, 4),
+        ngram_out=(250, 200),
         lr_rate=0.02,
-        dropout_rate=0.,
-        n_hidden=300,
+        dropout_rate=0.0,
+        rec_hidden=300,
+        mlp_hidden=200,
         n_out=n_out,
-        ngram_activation=leaky_relu,
-        batch_size=20,
+        ngram_activation=tanh,
+        mlp_activation=leaky_relu,
+        rec_activation=leaky_relu,
+        batch_size=50,
         update_rule='adagrad',
         rec_type=rec_type,
+        l2_ratio=1e-4,
         mask=mask,
         mlp=False
     )

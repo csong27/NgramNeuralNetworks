@@ -3,7 +3,7 @@ import numpy as np
 import theano
 
 
-def train_ngram_net_embedding(
+def train_ngram_net(
         datasets,
         U,
         input_shape,

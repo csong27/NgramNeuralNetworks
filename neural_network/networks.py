@@ -256,22 +256,22 @@ class NgramRecurrentNetwork(object):
 
 class ReversedNgramRecurrentNetwork(object):
     def __init__(self, rng, input, input_shape, ngrams=(3, 2, 1), n_kernels=(4, 4, 4), mean=False, mask=None,
-                 ngram_out=(300, 200, 100), ngram_activation=tanh, rec_type='lstm', n_hidden=150, n_out=2,
-                 dropout_rate=0.5, rec_activation=tanh, mlp=True):
+                 ngram_out=(300, 200, 100), ngram_activation=tanh, rec_type='lstm', rec_hidden=150, n_out=2,
+                 dropout_rate=0.5, rec_activation=tanh, mlp=True, mlp_activation=leaky_relu, mlp_hidden=300):
         assert len(ngrams) == len(n_kernels) == len(ngram_out)    # need to have same number of layers
         # recurrent layer in the bottom
         if rec_type == 'lstm':
-            self.rec_layer = LSTM(input=input, n_in=input_shape[1], n_out=n_hidden, p_drop=dropout_rate, mask=mask,
+            self.rec_layer = LSTM(input=input, n_in=input_shape[1], n_out=rec_hidden, p_drop=dropout_rate, mask=mask,
                                   seq_output=True, activation=rec_activation)
         elif rec_type == 'gru':
-            self.rec_layer = GatedRecurrentUnit(input=input, n_in=input_shape[1], n_out=n_hidden, p_drop=dropout_rate,
+            self.rec_layer = GatedRecurrentUnit(input=input, n_in=input_shape[1], n_out=rec_hidden, p_drop=dropout_rate,
                                                 mask=mask, seq_output=True, activation=rec_activation)
         else:
             raise NotImplementedError('This %s is not implemented' % rec_type)
 
         rec_output = self.rec_layer.output(dropout_active=True, pool=False)
         # input shape for ngram net
-        input_shape = (input_shape[0], n_hidden)
+        input_shape = (input_shape[0], rec_hidden)
         self.ngram_net = MultiKernelNgramNetwork(
             rng=rng,
             input=rec_output,
@@ -289,8 +289,8 @@ class ReversedNgramRecurrentNetwork(object):
                 rng=rng,
                 input=classifier_input,
                 dropout_rates=[dropout_rate],
-                activations=[ngram_activation],
-                layer_sizes=[n_in, n_hidden, n_out]
+                activations=[mlp_activation],
+                layer_sizes=[n_in, mlp_hidden, n_out]
             )
         else:
             self.classifier = LogisticRegression(
