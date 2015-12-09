@@ -38,7 +38,7 @@ def shared_dataset(data_xy, borrow=True):
 
 def l2_regularization(l2_ratio, params, cost):
     for param in params:
-        if param.ndim > 1:
+        if param.ndim > 1 and (param.name != 'Words'):
             cost += T.sum(param ** 2) * l2_ratio
     return cost
 

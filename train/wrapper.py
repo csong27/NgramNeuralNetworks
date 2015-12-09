@@ -29,13 +29,13 @@ def wrapper_ngram(data=TREC, resplit=True, validate_ratio=0.2):
         U=W,
         datasets=datasets,
         n_epochs=15,
-        ngrams=(1, 2),
-        ngram_out=(300, 300),
-        non_static=False,
+        ngrams=(2, 1),
+        ngram_out=(200, 100),
+        non_static=True,
         input_shape=input_shape,
         ngram_bias=False,
         multi_kernel=True,
-        concat_out=False,
+        concat_out=True,
         n_kernels=(4, 4),
         use_bias=False,
         lr_rate=0.02,
@@ -97,23 +97,23 @@ def wrapper_reversed_rec(data=SST_SENT_POL, rec_type='lstm'):
         U=W,
         non_static=True,
         datasets=datasets,
-        n_epochs=30,
+        n_epochs=15,
         ngrams=(1, 2),
         input_shape=input_shape,
         n_kernels=(4, 4),
-        ngram_out=(250, 200),
-        lr_rate=0.02,
-        dropout_rate=0.,
+        ngram_out=(300, 300),
+        lr_rate=0.025,
+        dropout_rate=0.3,
         rec_hidden=300,
-        mlp_hidden=200,
+        mlp_hidden=300,
         n_out=n_out,
-        ngram_activation=tanh,
+        ngram_activation=leaky_relu,
         mlp_activation=leaky_relu,
-        rec_activation=leaky_relu,
+        rec_activation=tanh,
         batch_size=50,
         update_rule='adagrad',
         rec_type=rec_type,
-        l2_ratio=1e-4,
+        l2_ratio=1e-5,
         mask=mask,
         mlp=True
     )
@@ -121,8 +121,4 @@ def wrapper_reversed_rec(data=SST_SENT_POL, rec_type='lstm'):
 
 
 if __name__ == '__main__':
-    for data in [SST_SENT, SST_SENT_POL]:
-        print '\n', data, 'lstm'
-        wrapper_reversed_rec(data=data, rec_type='lstm')
-        print '\n', data, 'gru'
-        wrapper_reversed_rec(data=data, rec_type='gru')
+    wrapper_ngram(data=SST_SENT_POL)

@@ -1,4 +1,5 @@
 from neural_network import *
+from train import main_loop
 import numpy as np
 import theano
 
@@ -29,8 +30,6 @@ def train_ngram_net(
         lr_rate=0.01,
         momentum_ratio=0.9,
         l2_ratio=1e-4,
-        no_test_y=False,
-        save_ngram=False,
         validation_only=False
 ):
     rng = np.random.RandomState(23455)
@@ -126,54 +125,7 @@ def train_ngram_net(
     val_model = theano.function([index], mlp.errors(y), on_unused_input='ignore', givens={x: validate_x, y: validate_y})
     test_model = theano.function([index], mlp.errors(y), on_unused_input='ignore', givens={x: test_x, y: test_y})
 
-    # functions for making prediction
-    if no_test_y:
-        predict_output = mlp.layers[-1].y_pred if dropout else mlp.logRegressionLayer.y_pred
-        predict_model = theano.function([index], predict_output, on_unused_input='ignore', givens={x: test_x, y: test_y})
-
-    # functions for getting document vectors
-    if save_ngram:
-        save_train = theano.function([index], ngram_net.output, on_unused_input='ignore', givens={x: train_x, y: train_y})
-        save_validate = theano.function([index], ngram_net.output, on_unused_input='ignore', givens={x: validate_x, y: validate_y})
-        save_test = theano.function([index], ngram_net.output, on_unused_input='ignore', givens={x: test_x, y: test_y})
-
     print 'training with %s...' % update_rule
-    epoch = 0
-    best_val_accuracy = 0
-    test_accuracy = 0
-    best_prediction = None
-    while epoch < n_epochs:
-        epoch += 1
-        cost_list = []
-        # shuffle mini-batch if specified
-        indices = np.random.permutation(range(n_train_batches)) if shuffle_batch else xrange(n_train_batches)
-        for minibatch_index in indices:
-            cost_mini = train_model(minibatch_index)
-            cost_list.append(cost_mini)
-            set_zero(zero_vec)  # reset the zero vectors
-        val_accuracy = 1 - val_model(epoch)
-        # get a best result
-        if val_accuracy >= best_val_accuracy:
-            best_val_accuracy = val_accuracy
-            if not no_test_y:
-                test_accuracy = 1 - test_model(epoch)
-            else:
-                best_prediction = predict_model(epoch)
-            # saving best pretrained vectors
-            if save_ngram:
-                saved_train = save_train(epoch)
-                saved_validate = save_validate(epoch)
-                saved_test = save_test(epoch)
-        cost_epoch = np.mean(cost_list)
-        print 'epoch %i, train cost %f, validate accuracy %f' % (epoch, cost_epoch, val_accuracy * 100.)
-
-    # return values
-    if validation_only:
-        return best_val_accuracy
-    if save_ngram:
-        return saved_train, saved_validate, saved_test
-    if not no_test_y:
-        print "\nbest test accuracy is %f" % test_accuracy
-        return test_accuracy
-    else:
-        return best_prediction
+    return main_loop(n_epochs=n_epochs, train_model=train_model, val_model=val_model, test_model=test_model,
+                     set_zero=set_zero, zero_vec=zero_vec, n_train_batches=n_train_batches, shuffle_batch=shuffle_batch,
+                     validation_only=validation_only)

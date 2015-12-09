@@ -1,5 +1,5 @@
 from neural_network import *
-from ngram_net import l2_regularization
+from train import main_loop
 import theano
 import numpy as np
 
@@ -120,28 +120,9 @@ def train_ngram_rec_net(
         test_model = theano.function([index], errors(y), on_unused_input='ignore', givens={x: test_x, y: test_y})
 
     print 'training with %s...' % update_rule
-    epoch = 0
-    best_val_accuracy = 0
-    test_accuracy = 0
-    while epoch < n_epochs:
-        epoch += 1
-        cost_list = []
-        indices = np.random.permutation(range(n_train_batches)) if shuffle_batch else xrange(n_train_batches)
-        for minibatch_index in indices:
-            cost_mini = train_model(minibatch_index)
-            cost_list.append(cost_mini)
-            set_zero(zero_vec)  # reset the zero vectors
-        val_accuracy = 1 - val_model(epoch)
-        if val_accuracy >= best_val_accuracy:
-            best_val_accuracy = val_accuracy
-            test_accuracy = 1 - test_model(epoch)
-        cost_epoch = np.mean(cost_list)
-        print 'epoch %i, train cost %f, validate accuracy %f' % (epoch, cost_epoch, val_accuracy * 100.)
-    if validation_only:
-        return best_val_accuracy
-    else:
-        print "\nbest test accuracy is %f" % test_accuracy
-        return test_accuracy
+    return main_loop(n_epochs=n_epochs, train_model=train_model, val_model=val_model, test_model=test_model,
+                     set_zero=set_zero, zero_vec=zero_vec, n_train_batches=n_train_batches, shuffle_batch=shuffle_batch,
+                     validation_only=validation_only)
 
 
 def train_reversed_ngram_rec_net(
@@ -266,25 +247,7 @@ def train_reversed_ngram_rec_net(
         test_model = theano.function([index], errors(y), on_unused_input='ignore', givens={x: test_x, y: test_y})
 
     print 'training with %s...' % update_rule
-    epoch = 0
-    best_val_accuracy = 0
-    test_accuracy = 0
-    while epoch < n_epochs:
-        epoch += 1
-        cost_list = []
-        indices = np.random.permutation(range(n_train_batches)) if shuffle_batch else xrange(n_train_batches)
-        for minibatch_index in indices:
-            cost_mini = train_model(minibatch_index)
-            cost_list.append(cost_mini)
-            set_zero(zero_vec)  # reset the zero vectors
-        val_accuracy = 1 - val_model(epoch)
-        if val_accuracy >= best_val_accuracy:
-            best_val_accuracy = val_accuracy
-            test_accuracy = 1 - test_model(epoch)
-        cost_epoch = np.mean(cost_list)
-        print 'epoch %i, train cost %f, validate accuracy %f' % (epoch, cost_epoch, val_accuracy * 100.)
-    if validation_only:
-        return best_val_accuracy
-    else:
-        print "\nbest test accuracy is %f" % test_accuracy
-        return test_accuracy
+    return main_loop(n_epochs=n_epochs, train_model=train_model, val_model=val_model, test_model=test_model,
+                     set_zero=set_zero, zero_vec=zero_vec, n_train_batches=n_train_batches, shuffle_batch=shuffle_batch,
+                     validation_only=validation_only)
+
