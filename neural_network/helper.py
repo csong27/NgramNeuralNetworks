@@ -36,8 +36,10 @@ def shared_dataset(data_xy, borrow=True):
     return shared_x, T.cast(shared_y, 'int32')
 
 
-def l2_regularization(l2_ratio, params, cost):
+def l2_regularization(l2_ratio, params, cost, norm_words=True):
     for param in params:
+        if (param.name == 'Words') and norm_words:
+            cost += T.sum(param ** 2) * l2_ratio
         if param.ndim > 1 and (param.name != 'Words'):
             cost += T.sum(param ** 2) * l2_ratio
     return cost

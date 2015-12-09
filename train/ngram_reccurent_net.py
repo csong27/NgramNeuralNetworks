@@ -150,6 +150,7 @@ def train_reversed_ngram_rec_net(
         l2_ratio=1e-4,
         mlp=False,
         mlp_hidden=200,
+        concat_out=False,
         validation_only=False,
         mask=None
 ):
@@ -203,6 +204,7 @@ def train_reversed_ngram_rec_net(
         mean=mean_pool,
         ngram_activation=ngram_activation,
         rec_type=rec_type,
+        concat_out=concat_out,
         mask=m,
         mlp=mlp
     )
