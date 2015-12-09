@@ -2,18 +2,7 @@ import numpy
 import theano
 from non_linear import *
 from initialization import get_W_values
-
-
-def get_input_info(input_shape, sum_out, ngram, n_out):
-    assert len(input_shape) == 2
-    assert ngram <= 3
-    fan_in = input_shape[0] * input_shape[1]
-    n_in = input_shape[1]
-    if sum_out:
-        fan_out = n_out
-    else:
-        fan_out = (input_shape[0] - ngram + 1) * n_out
-    return n_in, n_out, fan_in, fan_out
+from helper import get_input_info
 
 
 class UnigramLayer(object):

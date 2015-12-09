@@ -3,14 +3,23 @@ import theano
 import numpy as np
 import theano.tensor as T
 
-srng = RandomStreams()
+
+def get_fans(shape):
+    fan_in = shape[0] if len(shape) == 2 else np.prod(shape[1:])
+    fan_out = shape[1] if len(shape) == 2 else shape[0]
+    return fan_in, fan_out
 
 
-def dropout(X, p=0.):
-    if p != 0:
-        retain_prob = 1 - p
-        X = X / retain_prob * srng.binomial(X.shape, p=retain_prob, dtype=theano.config.floatX)
-    return X
+def get_input_info(input_shape, sum_out, ngram, n_out):
+    assert len(input_shape) == 2
+    assert ngram <= 3
+    fan_in = input_shape[0] * input_shape[1]
+    n_in = input_shape[1]
+    if sum_out:
+        fan_out = n_out
+    else:
+        fan_out = (input_shape[0] - ngram + 1) * n_out
+    return n_in, n_out, fan_in, fan_out
 
 
 def floatX(X):

@@ -21,24 +21,8 @@ def tanh(x):
     return T.tanh(x)
 
 
-def identity(x):
-    return x
-
-
 def cube(x):
     return T.power(x, 3)
-
-
-def maxout(x):
-    return T.maximum(x[:, 0::2], x[:, 1::2])
-
-
-def conv_maxout(x):
-    return T.maximum(x[:, 0::2, :, :], x[:, 1::2, :, :])
-
-
-def clipped_maxout(x):
-    return T.clip(T.maximum(x[:, 0::2], x[:, 1::2]), -5., 5.)
 
 
 def clipped_relu(x):

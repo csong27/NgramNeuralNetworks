@@ -122,7 +122,7 @@ def wrapper_reversed_rec(data=SST_SENT_POL, resplit=True, validate_ratio=0.2, re
     test_accuracy = train_ngram_rec_net(
         reverse=True,
         U=W,
-        non_static=True,
+        non_static=False,
         datasets=datasets,
         n_epochs=15,
         ngrams=(1, 2),
@@ -132,12 +132,12 @@ def wrapper_reversed_rec(data=SST_SENT_POL, resplit=True, validate_ratio=0.2, re
         lr_rate=0.02,
         dropout_rate=0.5,
         concat_out=False,
-        rec_hidden=250,
+        rec_hidden=300,
         mlp_hidden=300,
         n_out=n_out,
         ngram_activation=leaky_relu,
         mlp_activation=leaky_relu,
-        rec_activation=tanh,
+        rec_activation=leaky_relu,
         batch_size=50,
         update_rule='adagrad',
         rec_type=rec_type,
@@ -150,4 +150,4 @@ def wrapper_reversed_rec(data=SST_SENT_POL, resplit=True, validate_ratio=0.2, re
 
 
 if __name__ == '__main__':
-    wrapper_reversed_rec(data=SST_SENT_POL, rec_type='lstm')
+    wrapper_reversed_rec(data=SST_SENT_POL, rec_type='gru')

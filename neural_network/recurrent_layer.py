@@ -2,7 +2,7 @@ import theano
 from theano.tensor.extra_ops import repeat
 from non_linear import *
 from helper import shared0s, floatX, t_floatX
-from initialization import orthogonal
+from initialization import orthogonal, identity
 
 
 def clip_gradients(variables, clipping):
