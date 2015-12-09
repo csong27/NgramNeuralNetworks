@@ -1,4 +1,6 @@
 import cPickle as pkl
+import theano
+import numpy as np
 from path import Path
 from sklearn.cross_validation import StratifiedShuffleSplit
 from neural_network import *
@@ -6,6 +8,7 @@ from io_utils import save_csv
 from io_utils.load_data import *
 from baseline.train_base import read_all_predict_score
 from doc_embedding import read_aggregated_vectors
+
 
 def train_dropout_net(
         datasets,

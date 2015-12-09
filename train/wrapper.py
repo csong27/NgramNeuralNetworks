@@ -3,6 +3,7 @@ from ngram_reccurent_net import train_ngram_rec_net, train_reversed_ngram_rec_ne
 from io_utils.word_index import read_word2index_data
 from neural_network.non_linear import *
 from io_utils.load_data import *
+from sklearn.cross_validation import StratifiedShuffleSplit
 import numpy as np
 
 
@@ -10,17 +11,28 @@ def prepare_datasets(data, resplit=True, validation_ratio=0.2):
     datasets, W, mask = read_word2index_data(data=data, google=True, cv=False)
     train_x, train_y, validate_x, validate_y, test_x, test_y = datasets
     if data == TREC and resplit:
-        train_x, train_y, validate_x, validate_y = resplit_train_data(train_x, train_y, validate_x, validate_y,
-                                                                      validation_ratio)
+        train_x, train_y, validate_x, validate_y, mask = resplit_train_data(train_x, train_y, validate_x, validate_y,
+                                                                            validation_ratio, mask=mask)
     return train_x, train_y, validate_x, validate_y, test_x, test_y, W, mask
 
 
-def resplit_train_data(train_x, train_y, validate_x, validate_y, validate_ratio):
+def resplit_train_data(train_x, train_y, validate_x, validate_y, validate_ratio, mask=None):
     all_x = np.concatenate((train_x, validate_x), axis=0)
     all_y = np.concatenate((train_y, validate_y))
-    from sklearn.cross_validation import train_test_split
-    train_x, validate_x, train_y, validate_y = train_test_split(all_x, all_y, test_size=validate_ratio, stratify=all_y)
-    return train_x, train_y, validate_x, validate_y
+    sss_indices = StratifiedShuffleSplit(y=all_y, n_iter=1, test_size=validate_ratio)
+    for indices in sss_indices:
+        train_index, test_index = indices
+    train_x = all_x[train_index]
+    validate_x = all_x[test_index]
+    train_y = all_y[train_index]
+    validate_y = all_y[test_index]
+    if mask is not None:
+        train_mask, validate_mask, test_mask = mask
+        all_mask = np.concatenate((train_mask, validate_mask), axis=0)
+        train_mask = all_mask[train_index]
+        validate_mask = all_mask[test_index]
+        mask = (train_mask, validate_mask, test_mask)
+    return train_x, train_y, validate_x, validate_y, mask
 
 
 def wrapper_ngram(data=TREC, resplit=True, validate_ratio=0.2):
@@ -128,7 +140,7 @@ def wrapper_reversed_rec(data=SST_SENT_POL, resplit=True, validate_ratio=0.2, re
 
 
 if __name__ == '__main__':
-    for data in [SST_SENT_POL, SST_SENT, TREC]:
+    for data in [TREC, SST_SENT_POL, SST_SENT]:
         for rec in ['lstm', 'gru']:
             print data, rec, "\n"
             wrapper_reversed_rec(data=data, rec_type=rec)
