@@ -98,7 +98,8 @@ def wrapper_rec(data=SST_SENT_POL, resplit=True, validate_ratio=0.2, rec_type='l
         update_rule='adagrad',
         rec_type=rec_type,
         pool=True,
-        mask=mask
+        mask=mask,
+        clipping=1
     )
     return test_accuracy
 
@@ -133,6 +134,7 @@ def wrapper_reversed_rec(data=SST_SENT_POL, resplit=True, validate_ratio=0.2, re
         batch_size=50,
         update_rule='adagrad',
         rec_type=rec_type,
+        clipping=1,
         l2_ratio=1e-5,
         mask=mask,
         mlp=True

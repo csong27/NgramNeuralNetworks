@@ -206,8 +206,9 @@ class MultiKernelNgramNetwork(object):
 
 class NgramRecurrentNetwork(object):
     def __init__(self, rng, input, input_shape, ngrams=(3, 2, 1), n_kernels=(4, 4, 4), mean=False, mask=None,
-                 ngram_out=(300, 200, 100), ngram_activation=tanh, rec_type='lstm', n_hidden=150, n_out=2,
-                 dropout_rate=0.5, pool=True, rec_activation=tanh, concat_out=False, clipping=10):
+                 ngram_out=(300, 200, 100), ngram_activation=tanh, rec_type='lstm', rec_hidden=150, n_out=2,
+                 dropout_rate=0.5, pool=True, rec_activation=tanh, concat_out=False, clipping=10, mlp=False,
+                 mlp_hidden=300, mlp_activation=leaky_relu):
 
         assert len(ngrams) == len(n_kernels) == len(ngram_out)    # need to have same number of layers
         self.layers = []
@@ -241,22 +242,32 @@ class NgramRecurrentNetwork(object):
         # recurrent layer
         rec_input = prev_out
         if rec_type == 'lstm':
-            rec_layer = LSTM(input=rec_input, n_in=input_shape[1], n_out=n_hidden, p_drop=dropout_rate, mask=mask,
+            rec_layer = LSTM(input=rec_input, n_in=input_shape[1], n_out=rec_hidden, p_drop=dropout_rate, mask=mask,
                              seq_output=False, activation=rec_activation, clipping=clipping)
         elif rec_type == 'gru':
-            rec_layer = GatedRecurrentUnit(input=rec_input, n_in=input_shape[1], n_out=n_hidden, p_drop=dropout_rate,
+            rec_layer = GatedRecurrentUnit(input=rec_input, n_in=input_shape[1], n_out=rec_hidden, p_drop=dropout_rate,
                                            mask=mask, seq_output=False, activation=rec_activation, clipping=clipping)
         else:
             raise NotImplementedError('This %s is not implemented' % rec_type)
         self.layers.append(rec_layer)
-        rec_output = rec_layer.output(dropout_active=True, pool=pool)
-        # output layer
-        output_layer = LogisticRegression(input=rec_output, n_in=n_hidden, n_out=n_out)
-        self.layers.append(output_layer)
-        self.negative_log_likelihood = self.layers[-1].negative_log_likelihood
-        self.errors = self.layers[-1].errors
-
-        self.params = [param for layer in self.layers for param in layer.params]
+        rec_output = rec_layer.output(pool=pool)
+        if mlp:
+            self.classifier = MLPDropout(
+                rng=rng,
+                input=rec_output,
+                dropout_rates=[dropout_rate],
+                activations=[mlp_activation],
+                layer_sizes=[rec_hidden, mlp_hidden, n_out]
+            )
+        else:
+            self.classifier = LogisticRegression(
+                input=rec_output,
+                n_in=rec_hidden,
+                n_out=n_out
+            )
+        self.negative_log_likelihood = self.classifier.negative_log_likelihood
+        self.errors = self.classifier.errors
+        self.params = [param for layer in self.layers for param in layer.params] + self.classifier.params
 
 
 class ReversedNgramRecurrentNetwork(object):
@@ -275,7 +286,7 @@ class ReversedNgramRecurrentNetwork(object):
         else:
             raise NotImplementedError('This %s is not implemented' % rec_type)
 
-        rec_output = self.rec_layer.output(dropout_active=True, pool=False)
+        rec_output = self.rec_layer.output(pool=False)
         # input shape for ngram net
         input_shape = (input_shape[0], rec_hidden)
         self.ngram_net = MultiKernelNgramNetwork(

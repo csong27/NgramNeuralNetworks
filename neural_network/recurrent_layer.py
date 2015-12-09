@@ -1,7 +1,7 @@
 import theano
 from theano.tensor.extra_ops import repeat
 from non_linear import *
-from helper import dropout, shared0s, floatX, t_floatX
+from helper import shared0s, floatX, t_floatX
 from initialization import orthogonal
 
 
@@ -82,10 +82,8 @@ class LSTM(object):
             c_t = mask * c_t + (1 - mask) * c_tm1
         return h_t, c_t
 
-    def output(self, dropout_active=False, pool=True):
+    def output(self, pool=True):
         X = self.input
-        if self.p_drop > 0. and dropout_active:
-            X = dropout(X, self.p_drop)
         # shuffle dimension so scan over axis 1
         X = X.dimshuffle(1, 0, 2)
         if self.mask is not None:
@@ -194,12 +192,10 @@ class GatedRecurrentUnit(object):
             h_t = mask * h_t + (1 - mask) * h_tm1
         return h_t
 
-    def output(self, dropout_active=False, pool=True):
+    def output(self, pool=True):
         X = self.input
         if self.direction == 'backward':
             X = X[::-1]
-        if self.p_drop > 0. and dropout_active:
-            X = dropout(X, self.p_drop)
         # shuffle dimension so scan over axis 1
         X = X.dimshuffle(1, 0, 2)
         if self.mask is not None:
