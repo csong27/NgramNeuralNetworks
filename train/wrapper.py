@@ -1,5 +1,5 @@
 from ngram_net import train_ngram_net
-from ngram_reccurent_net import train_ngram_rec_net, train_reversed_ngram_rec_net
+from ngram_reccurent_net import train_ngram_rec_net
 from io_utils.word_index import read_word2index_data
 from neural_network.non_linear import *
 from io_utils.load_data import *
@@ -86,17 +86,23 @@ def wrapper_rec(data=SST_SENT_POL, resplit=True, validate_ratio=0.2, rec_type='l
         datasets=datasets,
         n_epochs=30,
         ngrams=(1, 2),
+        concat_out=False,
         input_shape=input_shape,
         n_kernels=(4, 4),
         ngram_out=(300, 250),
         lr_rate=0.02,
-        dropout_rate=0.,
-        n_hidden=200,
+        dropout_rate=0.5,
+        rec_hidden=200,
+        mlp_hidden=200,
+        mlp=True,
         n_out=n_out,
-        ngram_activation=tanh,
+        ngram_activation=leaky_relu,
+        rec_activation=tanh,
+        mlp_activation=leaky_relu,
         batch_size=20,
         update_rule='adagrad',
         rec_type=rec_type,
+        l2_ratio=1e-5,
         pool=True,
         mask=mask,
         clipping=1
@@ -113,7 +119,8 @@ def wrapper_reversed_rec(data=SST_SENT_POL, resplit=True, validate_ratio=0.2, re
     n_out = len(np.unique(test_y))
     shuffle_indices = np.random.permutation(train_x.shape[0])
     datasets = (train_x[shuffle_indices], train_y[shuffle_indices], validate_x, validate_y, test_x, test_y)
-    test_accuracy = train_reversed_ngram_rec_net(
+    test_accuracy = train_ngram_rec_net(
+        reverse=True,
         U=W,
         non_static=True,
         datasets=datasets,
@@ -121,10 +128,10 @@ def wrapper_reversed_rec(data=SST_SENT_POL, resplit=True, validate_ratio=0.2, re
         ngrams=(1, 2),
         input_shape=input_shape,
         n_kernels=(4, 4),
-        ngram_out=(200, 100),
+        ngram_out=(250, 200),
         lr_rate=0.02,
         dropout_rate=0.5,
-        concat_out=True,
+        concat_out=False,
         rec_hidden=250,
         mlp_hidden=300,
         n_out=n_out,
