@@ -6,6 +6,15 @@ from io_utils.load_data import *
 import numpy as np
 
 
+def prepare_datasets(data, resplit=True, validation_ratio=0.2):
+    datasets, W, mask = read_word2index_data(data=data, google=True, cv=False)
+    train_x, train_y, validate_x, validate_y, test_x, test_y = datasets
+    if data == TREC and resplit:
+        train_x, train_y, validate_x, validate_y = resplit_train_data(train_x, train_y, validate_x, validate_y,
+                                                                      validation_ratio)
+    return train_x, train_y, validate_x, validate_y, test_x, test_y, W, mask
+
+
 def resplit_train_data(train_x, train_y, validate_x, validate_y, validate_ratio):
     all_x = np.concatenate((train_x, validate_x), axis=0)
     all_y = np.concatenate((train_y, validate_y))
@@ -15,10 +24,8 @@ def resplit_train_data(train_x, train_y, validate_x, validate_y, validate_ratio)
 
 
 def wrapper_ngram(data=TREC, resplit=True, validate_ratio=0.2):
-    datasets, W, _ = read_word2index_data(data=data, google=True, cv=False)
-    train_x, train_y, validate_x, validate_y, test_x, test_y = datasets
-    if data == TREC and resplit:
-        train_x, train_y, validate_x, validate_y = resplit_train_data(train_x, train_y, validate_x, validate_y, validate_ratio)
+    train_x, train_y, validate_x, validate_y, test_x, test_y, \
+    W, mask = prepare_datasets(data, resplit=resplit, validation_ratio=validate_ratio)
     # get input shape
     input_shape = (train_x[0].shape[0], W.shape[1])
     print "input data shape", input_shape
@@ -52,9 +59,9 @@ def wrapper_ngram(data=TREC, resplit=True, validate_ratio=0.2):
     return test_accuracy
 
 
-def wrapper_rec(data=SST_SENT_POL, rec_type='lstm'):
-    datasets, W, mask = read_word2index_data(data=data, google=True, cv=False)
-    train_x, train_y, validate_x, validate_y, test_x, test_y = datasets
+def wrapper_rec(data=SST_SENT_POL, resplit=True, validate_ratio=0.2, rec_type='lstm'):
+    train_x, train_y, validate_x, validate_y, test_x, test_y, \
+    W, mask = prepare_datasets(data, resplit=resplit, validation_ratio=validate_ratio)
     # get input shape
     input_shape = (train_x[0].shape[0], W.shape[1])
     print "input data shape", input_shape
@@ -84,9 +91,9 @@ def wrapper_rec(data=SST_SENT_POL, rec_type='lstm'):
     return test_accuracy
 
 
-def wrapper_reversed_rec(data=SST_SENT_POL, rec_type='lstm'):
-    datasets, W, mask = read_word2index_data(data=data, google=True, cv=False)
-    train_x, train_y, validate_x, validate_y, test_x, test_y = datasets
+def wrapper_reversed_rec(data=SST_SENT_POL, resplit=True, validate_ratio=0.2, rec_type='lstm'):
+    train_x, train_y, validate_x, validate_y, test_x, test_y, \
+    W, mask = prepare_datasets(data, resplit=resplit, validation_ratio=validate_ratio)
     # get input shape
     input_shape = (train_x[0].shape[0], W.shape[1])
     print "input data shape", input_shape
@@ -102,7 +109,7 @@ def wrapper_reversed_rec(data=SST_SENT_POL, rec_type='lstm'):
         input_shape=input_shape,
         n_kernels=(4, 4),
         ngram_out=(300, 300),
-        lr_rate=0.025,
+        lr_rate=0.02,
         dropout_rate=0.3,
         rec_hidden=300,
         mlp_hidden=300,
@@ -121,4 +128,7 @@ def wrapper_reversed_rec(data=SST_SENT_POL, rec_type='lstm'):
 
 
 if __name__ == '__main__':
-    wrapper_ngram(data=SST_SENT_POL)
+    for data in [SST_SENT_POL, SST_SENT, TREC]:
+        for rec in ['lstm', 'gru']:
+            print data, rec, "\n"
+            wrapper_reversed_rec(data=data, rec_type=rec)

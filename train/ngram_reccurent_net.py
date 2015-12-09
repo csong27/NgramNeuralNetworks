@@ -158,10 +158,6 @@ def train_reversed_ngram_rec_net(
     if mask is not None:
         print "using mask..."
         m = T.matrix('mask')
-        train_mask, validate_mask, test_mask = mask
-        train_mask = sharedX(train_mask)
-        validate_mask = sharedX(validate_mask)
-        test_mask = sharedX(test_mask)
     else:
         m = None
 
@@ -223,6 +219,10 @@ def train_reversed_ngram_rec_net(
     grad_updates = get_grad_updates(update_rule=update_rule, cost=cost, params=params, lr_rate=lr_rate,
                                     momentum_ratio=momentum_ratio)
     if mask is not None:
+        train_mask, validate_mask, test_mask = mask
+        train_mask = sharedX(train_mask)
+        validate_mask = sharedX(validate_mask)
+        test_mask = sharedX(test_mask)
         # functions for training
         train_model = theano.function([index], cost, updates=grad_updates,
                                       givens={

@@ -1,4 +1,4 @@
-__author__ = 'Song'
+import numpy as np
 
 
 def main_loop(n_epochs, n_train_batches, train_model, val_model, test_model, set_zero, zero_vec, shuffle_batch=True,
