@@ -1,5 +1,5 @@
 from neural_network.non_linear import *
-from train.ngram_net import train_ngram_net_embedding
+from train.ngram_net import train_ngram_net
 from io_utils.load_data import *
 from io_utils.word_index import read_word2index_data
 import numpy as np
@@ -43,7 +43,7 @@ def ngram_wrapper(
     n_kernels = tuple(n_kernels[:ngram_layers])
     ngrams = tuple(ngrams[:ngram_layers])
     ngram_out = tuple(ngram_out[:ngram_layers])
-    validation_accuracy = train_ngram_net_embedding(
+    validation_accuracy = train_ngram_net(
         U=W,
         datasets=datasets,
         n_epochs=n_epochs,

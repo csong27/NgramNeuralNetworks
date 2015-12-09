@@ -27,7 +27,8 @@ def train_ngram_rec_net(
         l2_ratio=1e-4,
         pool=True,
         validation_only=False,
-        mask=None
+        mask=None,
+        clipping=10
 ):
     rng = np.random.RandomState(23455)
     train_x, train_y, validate_x, validate_y, test_x, test_y = datasets
@@ -81,7 +82,8 @@ def train_ngram_rec_net(
         ngram_activation=ngram_activation,
         rec_type=rec_type,
         mask=m,
-        pool=pool
+        pool=pool,
+        clipping=clipping
     )
     errors = ngram_net.errors
     cost = ngram_net.negative_log_likelihood(y)
@@ -152,7 +154,8 @@ def train_reversed_ngram_rec_net(
         mlp_hidden=200,
         concat_out=False,
         validation_only=False,
-        mask=None
+        mask=None,
+        clipping=10
 ):
     rng = np.random.RandomState(23455)
     train_x, train_y, validate_x, validate_y, test_x, test_y = datasets
@@ -206,7 +209,8 @@ def train_reversed_ngram_rec_net(
         rec_type=rec_type,
         concat_out=concat_out,
         mask=m,
-        mlp=mlp
+        mlp=mlp,
+        clipping=clipping
     )
     errors = ngram_net.errors
     cost = ngram_net.negative_log_likelihood(y)

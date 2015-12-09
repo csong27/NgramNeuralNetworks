@@ -5,9 +5,16 @@ from helper import dropout, shared0s, floatX, t_floatX
 from initialization import orthogonal
 
 
+def clip_gradients(variables, clipping):
+    clipped_vars = []
+    for var in variables:
+        clipped_vars.append(theano.gradient.grad_clip(var, -clipping, clipping))
+    return clipped_vars
+
+
 class LSTM(object):
     def __init__(self, input, n_in, n_out=256, activation=tanh, gate_activation=steeper_sigmoid, init=orthogonal,
-                 truncate_gradient=-1, seq_output=False, p_drop=0., weights=None, mask=None):
+                 truncate_gradient=-1, seq_output=False, p_drop=0., weights=None, mask=None, clipping=5):
         self.settings = locals()
         del self.settings['self']
         self.input = input
@@ -22,6 +29,7 @@ class LSTM(object):
         self.weights = weights
         self.n_in = n_in
         self.mask = mask
+        self.clipping = clipping
         self.connect()
 
     def connect(self):
@@ -49,29 +57,24 @@ class LSTM(object):
                 param.set_value(floatX(weight))
 
     def step(self, x_t, h_tm1, c_tm1, u_i, u_f, u_o, u_c):
-        xi_t = T.dot(x_t, self.w_i) + self.b_i
-        xf_t = T.dot(x_t, self.w_f) + self.b_f
-        xo_t = T.dot(x_t, self.w_o) + self.b_o
-        xc_t = T.dot(x_t, self.w_c) + self.b_c
-
-        i_t = self.gate_activation(xi_t + T.dot(h_tm1, u_i))
-        f_t = self.gate_activation(xf_t + T.dot(h_tm1, u_f))
-        c_t = f_t * c_tm1 + i_t * self.activation(xc_t + T.dot(h_tm1, u_c))
-        o_t = self.gate_activation(xo_t + T.dot(h_tm1, u_o))
+        # calculate gate input
+        xi_t = T.dot(x_t, self.w_i) + self.b_i + T.dot(h_tm1, u_i)
+        xf_t = T.dot(x_t, self.w_f) + self.b_f + T.dot(h_tm1, u_f)
+        xo_t = T.dot(x_t, self.w_o) + self.b_o + T.dot(h_tm1, u_c)
+        xc_t = T.dot(x_t, self.w_c) + self.b_c + T.dot(h_tm1, u_o)
+        # apply gradient clipping
+        if self.clipping:
+            xi_t, xf_t, xo_t, xc_t = clip_gradients([xi_t, xf_t, xo_t, xc_t], self.clipping)
+        # calculate the gate value
+        i_t = self.gate_activation(xi_t)
+        f_t = self.gate_activation(xf_t)
+        c_t = f_t * c_tm1 + i_t * self.activation(xc_t)
+        o_t = self.gate_activation(xo_t)
         h_t = o_t * self.activation(c_t)
         return h_t, c_t
 
     def step_masked(self, mask, x_t, h_tm1, c_tm1, u_i, u_f, u_o, u_c):
-        xi_t = T.dot(x_t, self.w_i) + self.b_i
-        xf_t = T.dot(x_t, self.w_f) + self.b_f
-        xo_t = T.dot(x_t, self.w_o) + self.b_o
-        xc_t = T.dot(x_t, self.w_c) + self.b_c
-
-        i_t = self.gate_activation(xi_t + T.dot(h_tm1, u_i))
-        f_t = self.gate_activation(xf_t + T.dot(h_tm1, u_f))
-        c_t = f_t * c_tm1 + i_t * self.activation(xc_t + T.dot(h_tm1, u_c))
-        o_t = self.gate_activation(xo_t + T.dot(h_tm1, u_o))
-        h_t = o_t * self.activation(c_t)
+        h_t, c_t = self.step(x_t, h_tm1, c_tm1, u_i, u_f, u_o, u_c)
         if mask is not None:
             if h_t.ndim == 2 and mask.ndim == 1:
                 mask = mask.dimshuffle(0, 'x')
@@ -119,7 +122,8 @@ class LSTM(object):
 
 class GatedRecurrentUnit(object):
     def __init__(self, input, n_in, n_out=256, activation=tanh, gate_activation=steeper_sigmoid, init=orthogonal,
-                 truncate_gradient=-1, seq_output=False, p_drop=0., direction='forward', weights=None, mask=None):
+                 truncate_gradient=-1, seq_output=False, p_drop=0., direction='forward', weights=None, mask=None,
+                 clipping=5):
         self.activation = activation
         self.gate_activation = gate_activation
         self.init = init
@@ -132,6 +136,7 @@ class GatedRecurrentUnit(object):
         self.input = input
         self.n_in = n_in
         self.mask = mask
+        self.clipping = clipping
         self.connect()
 
     def connect(self):
@@ -165,26 +170,24 @@ class GatedRecurrentUnit(object):
                 param.set_value(floatX(weight))
 
     def step(self, x_t, h_tm1, u_z, u_r, u_h):
+        # gate input
         xz_t = T.dot(x_t, self.w_z) + self.b_z
         xr_t = T.dot(x_t, self.w_r) + self.b_r
         xh_t = T.dot(x_t, self.w_h) + self.b_h
-
+        # gate value
         z = self.gate_activation(xz_t + T.dot(h_tm1, u_z))
         r = self.gate_activation(xr_t + T.dot(h_tm1, u_r))
-        h_tilda_t = self.activation(xh_t + T.dot(r * h_tm1, u_h))
+        # update value
+        h_update = xh_t + T.dot(r * h_tm1, u_h)
+        if self.clipping:
+            h_update = theano.gradient.grad_clip(h_update, -self.clipping, self.clipping)
+        h_tilda_t = self.activation(h_update)
         h_t = z * h_tm1 + (1 - z) * h_tilda_t
 
         return h_t
 
     def step_masked(self, mask, x_t, h_tm1, u_z, u_r, u_h):
-        xz_t = T.dot(x_t, self.w_z) + self.b_z
-        xr_t = T.dot(x_t, self.w_r) + self.b_r
-        xh_t = T.dot(x_t, self.w_h) + self.b_h
-
-        z = self.gate_activation(xz_t + T.dot(h_tm1, u_z))
-        r = self.gate_activation(xr_t + T.dot(h_tm1, u_r))
-        h_tilda_t = self.activation(xh_t + T.dot(r * h_tm1, u_h))
-        h_t = z * h_tm1 + (1 - z) * h_tilda_t
+        h_t = self.step(x_t, h_tm1, u_z, u_r, u_h)
         if mask is not None:
             if h_t.ndim == 2 and mask.ndim == 1:
                 mask = mask.dimshuffle(0, 'x')

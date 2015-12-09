@@ -207,7 +207,7 @@ class MultiKernelNgramNetwork(object):
 class NgramRecurrentNetwork(object):
     def __init__(self, rng, input, input_shape, ngrams=(3, 2, 1), n_kernels=(4, 4, 4), mean=False, mask=None,
                  ngram_out=(300, 200, 100), ngram_activation=tanh, rec_type='lstm', n_hidden=150, n_out=2,
-                 dropout_rate=0.5, pool=True, rec_activation=tanh, concat_out=False):
+                 dropout_rate=0.5, pool=True, rec_activation=tanh, concat_out=False, clipping=10):
 
         assert len(ngrams) == len(n_kernels) == len(ngram_out)    # need to have same number of layers
         self.layers = []
@@ -242,10 +242,10 @@ class NgramRecurrentNetwork(object):
         rec_input = prev_out
         if rec_type == 'lstm':
             rec_layer = LSTM(input=rec_input, n_in=input_shape[1], n_out=n_hidden, p_drop=dropout_rate, mask=mask,
-                             seq_output=False, activation=rec_activation)
+                             seq_output=False, activation=rec_activation, clipping=clipping)
         elif rec_type == 'gru':
             rec_layer = GatedRecurrentUnit(input=rec_input, n_in=input_shape[1], n_out=n_hidden, p_drop=dropout_rate,
-                                           mask=mask, seq_output=False, activation=rec_activation)
+                                           mask=mask, seq_output=False, activation=rec_activation, clipping=clipping)
         else:
             raise NotImplementedError('This %s is not implemented' % rec_type)
         self.layers.append(rec_layer)
@@ -263,15 +263,15 @@ class ReversedNgramRecurrentNetwork(object):
     def __init__(self, rng, input, input_shape, ngrams=(3, 2, 1), n_kernels=(4, 4, 4), mean=False, mask=None,
                  ngram_out=(300, 200, 100), ngram_activation=tanh, rec_type='lstm', rec_hidden=150, n_out=2,
                  dropout_rate=0.5, rec_activation=tanh, mlp=True, mlp_activation=leaky_relu, mlp_hidden=300,
-                 concat_out=False):
+                 concat_out=False, clipping=10):
         assert len(ngrams) == len(n_kernels) == len(ngram_out)    # need to have same number of layers
         # recurrent layer in the bottom
         if rec_type == 'lstm':
             self.rec_layer = LSTM(input=input, n_in=input_shape[1], n_out=rec_hidden, p_drop=dropout_rate, mask=mask,
-                                  seq_output=True, activation=rec_activation)
+                                  seq_output=True, activation=rec_activation, clipping=clipping)
         elif rec_type == 'gru':
             self.rec_layer = GatedRecurrentUnit(input=input, n_in=input_shape[1], n_out=rec_hidden, p_drop=dropout_rate,
-                                                mask=mask, seq_output=True, activation=rec_activation)
+                                                mask=mask, seq_output=True, activation=rec_activation, clipping=clipping)
         else:
             raise NotImplementedError('This %s is not implemented' % rec_type)
 
