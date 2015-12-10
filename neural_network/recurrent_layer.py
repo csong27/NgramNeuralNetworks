@@ -149,14 +149,9 @@ class GatedRecurrentUnit(object):
         self.b_z = shared0s(self.n_out, name="b_z")
         self.b_r = shared0s(self.n_out, name="b_r")
 
-        if 'maxout' in self.activation.func_name:
-            self.w_h = self.init((self.n_in, self.n_out*2), name="w_h")
-            self.u_h = self.init((self.n_out, self.n_out*2), name="u_h")
-            self.b_h = shared0s((self.n_out*2), name="b_h")
-        else:
-            self.w_h = self.init((self.n_in, self.n_out), name="w_h")
-            self.u_h = self.init((self.n_out, self.n_out), name="u_h")
-            self.b_h = shared0s(self.n_out, name="b_h")
+        self.w_h = self.init((self.n_in, self.n_out), name="w_h")
+        self.u_h = self.init((self.n_out, self.n_out), name="u_h")
+        self.b_h = shared0s(self.n_out, name="b_h")
 
         self.params = [self.h0,
                        self.w_z, self.w_r, self.w_h,

@@ -124,8 +124,8 @@ def wrapper_reversed_rec(data=SST_SENT_POL, resplit=True, validate_ratio=0.2, re
         U=W,
         non_static=False,
         datasets=datasets,
-        n_epochs=30,
-        ngrams=(2, 2),
+        n_epochs=20,
+        ngrams=(3, 2),
         input_shape=input_shape,
         n_kernels=(4, 4),
         ngram_out=(250, 200),
@@ -150,4 +150,6 @@ def wrapper_reversed_rec(data=SST_SENT_POL, resplit=True, validate_ratio=0.2, re
 
 
 if __name__ == '__main__':
-    wrapper_reversed_rec(data=SST_SENT_POL, rec_type='lstm')
+    for data in [SST_SENT_POL, SST_SENT, TREC]:
+        for rec in ['lstm', 'gru']:
+            wrapper_reversed_rec(data=data, rec_type=rec)
