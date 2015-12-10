@@ -1,9 +1,9 @@
 import numpy
-import theano.tensor.shared_randomstreams
 import theano
 import theano.tensor as T
 from theano.tensor.signal import downsample
 from theano.tensor.nnet import conv
+from helper import _dropout_from_layer
 
 
 class HiddenLayer(object):
@@ -37,16 +37,6 @@ class HiddenLayer(object):
             self.params = [self.W, self.b]
         else:
             self.params = [self.W]
-
-
-def _dropout_from_layer(rng, layer, p):
-    srng = theano.tensor.shared_randomstreams.RandomStreams(rng.randint(999999))
-    # p=1-p because 1's indicate keep and p is prob of dropping
-    mask = srng.binomial(n=1, p=1-p, size=layer.shape)
-    # The cast is important because
-    # int * float32 = float64 which pulls things off the gpu
-    output = layer * T.cast(mask, theano.config.floatX)
-    return output
 
 
 class DropoutHiddenLayer(HiddenLayer):

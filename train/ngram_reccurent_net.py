@@ -34,7 +34,9 @@ def train_ngram_rec_net(
         skip_gram=False,
         concat_out=False,
         clipping=10,
-        reverse=False
+        reverse=False,
+        stack=False,
+        word_dropout_rate=0.5
 ):
     rng = np.random.RandomState(23455)
     train_x, train_y, validate_x, validate_y, test_x, test_y = datasets
@@ -49,6 +51,8 @@ def train_ngram_rec_net(
         m = None
 
     print 'size of train, validation, test set are %d, %d, %d' % (train_y.shape[0], validate_y.shape[0], test_x.shape[0])
+    if word_dropout_rate > 0:
+        train_x = dropout_rows(rng=rng, input=train_x, p=word_dropout_rate)
 
     train_x, train_y = shared_dataset((train_x, train_y))
     validate_x, validate_y = shared_dataset((validate_x, validate_y))
@@ -73,7 +77,31 @@ def train_ngram_rec_net(
 
     # declare ngram recurrent network
     ngram_input = Words[T.cast(x, dtype="int32")]
-    if reverse:
+
+    if stack:
+        ngram_net = StackedNgramRecurrentNetwork(
+            rng=rng,
+            input=ngram_input,
+            concat_out=concat_out,
+            input_shape=input_shape,
+            ngrams=ngrams,
+            ngram_out=ngram_out,
+            n_kernels=n_kernels,
+            dropout_rate=dropout_rate,
+            rec_hidden=rec_hidden,
+            n_out=n_out,
+            mean=mean_pool,
+            ngram_activation=ngram_activation,
+            mlp_activation=mlp_activation,
+            mlp_hidden=mlp_hidden,
+            rec_type=rec_type,
+            rec_activation=rec_activation,
+            mask=m,
+            mlp=mlp,
+            clipping=clipping,
+            skip_gram=skip_gram
+        )
+    elif reverse:
         ngram_net = ReversedNgramRecurrentNetwork(
             rng=rng,
             input=ngram_input,

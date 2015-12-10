@@ -279,3 +279,67 @@ class ReversedNgramRecurrentNetwork(object):
         self.negative_log_likelihood = self.classifier.negative_log_likelihood
         self.errors = self.classifier.errors
         self.params = self.rec_layer.params + self.ngram_net.params + self.classifier.params
+
+
+class StackedNgramRecurrentNetwork(object):
+    def __init__(self, rng, input, input_shape, ngrams=(3, 2, 1), n_kernels=(4, 4, 4), mean=False, mask=None,
+                 ngram_out=(300, 200, 100), ngram_activation=tanh, rec_type='lstm', rec_hidden=150, n_out=2,
+                 dropout_rate=0.5, rec_activation=tanh, mlp=True, mlp_activation=leaky_relu, mlp_hidden=300,
+                 concat_out=False, clipping=10, skip_gram=False):
+        assert len(ngrams) == len(n_kernels) == len(ngram_out)    # need to have same number of layers
+        self.layers = []
+        prev_out = input
+        for i, ngram in enumerate(ngrams):
+            x = prev_out
+            concat = concat_out and (i == len(ngrams) - 1)
+            tmp_out = ngram_out[i] * n_kernels[i] if concat else ngram_out[i]
+            if ngram == 1:
+                ngram_layer = MuiltiUnigramLayer(rng=rng, input=x, input_shape=input_shape, activation=ngram_activation,
+                                                 mean=mean, sum_out=False, n_kernels=n_kernels[i], n_out=tmp_out,
+                                                 concat_out=concat)
+            elif ngram == 2:
+                ngram_layer = MultiBigramLayer(rng=rng, input=x, input_shape=input_shape, activation=ngram_activation,
+                                               mean=mean, sum_out=False, n_kernels=n_kernels[i], n_out=tmp_out,
+                                               concat_out=concat, skip_gram=skip_gram)
+            elif ngram == 3:
+                ngram_layer = MultiTrigramLayer(rng=rng, input=x, input_shape=input_shape, activation=ngram_activation,
+                                                mean=mean, sum_out=False, n_kernels=n_kernels[i], n_out=tmp_out,
+                                                concat_out=concat, skip_gram=skip_gram)
+            else:
+                raise NotImplementedError('This %d gram layer is not implemented' % ngram)
+            self.layers.append(ngram_layer)
+            prev_out = ngram_layer.output
+            input_shape = (input_shape[0] - ngram + 1, tmp_out)
+        # get the shape of mask correct for ngram layer output
+        if mask is not None:
+            offset = sum(ngrams) - len(ngrams)
+            if offset != 0:
+                mask = mask[:, : -offset]
+
+        self.ngram_rec_net = ReversedNgramRecurrentNetwork(
+            rng=rng,
+            input=prev_out,
+            input_shape=input_shape,
+            ngram_out=ngram_out,
+            ngrams=ngrams,
+            n_kernels=n_kernels,
+            ngram_activation=ngram_activation,
+            rec_activation=rec_activation,
+            rec_type=rec_type,
+            rec_hidden=rec_hidden,
+            mean=mean,
+            concat_out=concat_out,
+            skip_gram=skip_gram,
+            mlp_activation=mlp_activation,
+            mlp_hidden=mlp_hidden,
+            n_out=n_out,
+            dropout_rate=dropout_rate,
+            mlp=mlp,
+            mask=mask,
+            clipping=clipping
+        )
+
+        self.negative_log_likelihood = self.ngram_rec_net.negative_log_likelihood
+        self.errors = self.ngram_rec_net.errors
+        self.params = [param for layer in self.layers for param in layer.params] + self.ngram_rec_net.params
+

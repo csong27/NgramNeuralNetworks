@@ -1,21 +1,16 @@
 import theano
+import theano.tensor as T
 import numpy as np
-from non_linear import *
+from helper import dropout_rows_3d
 
+rng = np.random.RandomState(23455)
 
-x = np.arange(27, dtype='float32').reshape((3, 3, 3))
-W = theano.shared(np.ones((3, 3)))
-
+x = np.arange(60, dtype='float32').reshape((5, 4, 3))
 t = T.tensor3()
 
-out = T.dot(t, W)
-act_out = maxout(out)
+f = theano.function([t], dropout_rows_3d(rng, t, 0.1), on_unused_input='ignore')
 
-z = T.cast(T.alloc(0., 3, 3), theano.config.floatX)
-
-f = theano.function([t], z, on_unused_input='ignore')
-
-print f(x).dtype
+print f(x)
 
 
 

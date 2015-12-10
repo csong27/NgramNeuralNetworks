@@ -29,13 +29,16 @@ def train_ngram_net(
         momentum_ratio=0.9,
         l2_ratio=1e-4,
         validation_only=False,
-        skip_gram=False
+        skip_gram=False,
+        word_dropout_rate=0.5
 ):
     rng = np.random.RandomState(23455)
 
     train_x, train_y, validate_x, validate_y, test_x, test_y = datasets
 
     print 'size of train, validation, test set are %d, %d, %d' % (train_y.shape[0], validate_y.shape[0], test_x.shape[0])
+    if word_dropout_rate > 0:
+        train_x = dropout_rows(rng=rng, input=train_x, p=word_dropout_rate)
 
     train_x, train_y = shared_dataset((train_x, train_y))
     validate_x, validate_y = shared_dataset((validate_x, validate_y))

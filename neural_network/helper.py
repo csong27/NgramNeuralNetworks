@@ -1,7 +1,24 @@
-from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 import theano
 import numpy as np
 import theano.tensor as T
+import theano.tensor.shared_randomstreams
+
+
+def dropout_rows(rng, input, p):
+    assert input.ndim == 2
+    mask = np.random.binomial(n=1, p=p, size=input.shape)
+    output = input * mask
+    return output
+
+
+def _dropout_from_layer(rng, layer, p):
+    srng = theano.tensor.shared_randomstreams.RandomStreams(rng.randint(999999))
+    # p=1-p because 1's indicate keep and p is prob of dropping
+    mask = srng.binomial(n=1, p=1-p, size=layer.shape)
+    # The cast is important because
+    # int * float32 = float64 which pulls things off the gpu
+    output = layer * T.cast(mask, theano.config.floatX)
+    return output
 
 
 def get_fans(shape):
