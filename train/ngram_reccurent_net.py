@@ -29,9 +29,9 @@ def train_ngram_rec_net(
         lr_rate=0.01,
         momentum_ratio=0.9,
         l2_ratio=1e-4,
-        pool=True,
         validation_only=False,
         mask=None,
+        skip_gram=False,
         concat_out=False,
         clipping=10,
         reverse=False
@@ -93,7 +93,8 @@ def train_ngram_rec_net(
             concat_out=concat_out,
             mask=m,
             mlp=mlp,
-            clipping=clipping
+            clipping=clipping,
+            skip_gram=skip_gram
         )
     else:
         ngram_net = NgramRecurrentNetwork(
@@ -114,9 +115,9 @@ def train_ngram_rec_net(
             rec_type=rec_type,
             rec_activation=rec_activation,
             mask=m,
-            pool=pool,
             mlp=mlp,
-            clipping=clipping
+            clipping=clipping,
+            skip_gram=skip_gram
         )
     errors = ngram_net.errors
     cost = ngram_net.negative_log_likelihood(y)

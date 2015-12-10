@@ -13,11 +13,9 @@ def train_ngram_net(
         ngram_out=(200, 100),
         ngram_activation=tanh,
         n_epochs=25,
-        multi_kernel=True,
         concat_out=False,
         n_kernels=(4, 3),
         use_bias=False,
-        ngram_bias=False,
         mean_pool=False,
         shuffle_batch=True,
         batch_size=50,
@@ -30,7 +28,8 @@ def train_ngram_net(
         lr_rate=0.01,
         momentum_ratio=0.9,
         l2_ratio=1e-4,
-        validation_only=False
+        validation_only=False,
+        skip_gram=False
 ):
     rng = np.random.RandomState(23455)
 
@@ -60,25 +59,17 @@ def train_ngram_net(
     set_zero = theano.function([zero_vec_tensor], updates=[(Words, T.set_subtensor(Words[0, :], zero_vec_tensor))])
 
     ngram_input = Words[T.cast(x, dtype="int32")]
-    # weather or not to use multiple kernels in the n gram layer
-    if multi_kernel:
-        ngram_net = MultiKernelNgramNetwork(rng=rng,
-                                            input=ngram_input,
-                                            input_shape=input_shape,
-                                            ngrams=ngrams,
-                                            ngram_out=ngram_out,
-                                            n_kernels=n_kernels,
-                                            activation=ngram_activation,
-                                            mean=mean_pool,
-                                            concat_out=concat_out)
-    else:
-        ngram_net = NgramNetwork(rng=rng,
-                                 input=ngram_input,
-                                 input_shape=input_shape,
-                                 ngrams=ngrams,
-                                 ngram_out=ngram_out,
-                                 use_bias=ngram_bias,
-                                 activation=ngram_activation)
+
+    ngram_net = MultiKernelNgramNetwork(rng=rng,
+                                        input=ngram_input,
+                                        input_shape=input_shape,
+                                        ngrams=ngrams,
+                                        ngram_out=ngram_out,
+                                        n_kernels=n_kernels,
+                                        activation=ngram_activation,
+                                        mean=mean_pool,
+                                        concat_out=concat_out,
+                                        skip_gram=skip_gram)
 
     dim = ngram_out[-1]
     mlp_input = ngram_net.output

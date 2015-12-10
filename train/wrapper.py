@@ -52,8 +52,6 @@ def wrapper_ngram(data=TREC, resplit=True, validate_ratio=0.2):
         ngram_out=(200, 100),
         non_static=True,
         input_shape=input_shape,
-        ngram_bias=False,
-        multi_kernel=True,
         concat_out=True,
         n_kernels=(4, 4),
         use_bias=False,
@@ -66,7 +64,8 @@ def wrapper_ngram(data=TREC, resplit=True, validate_ratio=0.2):
         activation=leaky_relu,
         batch_size=50,
         l2_ratio=1e-5,
-        update_rule='adagrad'
+        update_rule='adagrad',
+        skip_gram=True
     )
     return test_accuracy
 
@@ -84,28 +83,28 @@ def wrapper_rec(data=SST_SENT_POL, resplit=True, validate_ratio=0.2, rec_type='l
         U=W,
         non_static=True,
         datasets=datasets,
-        n_epochs=30,
-        ngrams=(1, 2),
+        n_epochs=20,
+        ngrams=(2, 2),
         concat_out=False,
         input_shape=input_shape,
         n_kernels=(4, 4),
         ngram_out=(300, 250),
-        lr_rate=0.02,
+        lr_rate=0.015,
         dropout_rate=0.5,
-        rec_hidden=200,
+        rec_hidden=250,
         mlp_hidden=200,
         mlp=True,
         n_out=n_out,
-        ngram_activation=leaky_relu,
+        ngram_activation=tanh,
         rec_activation=tanh,
-        mlp_activation=leaky_relu,
-        batch_size=20,
+        mlp_activation=tanh,
+        batch_size=50,
         update_rule='adagrad',
         rec_type=rec_type,
-        l2_ratio=1e-5,
-        pool=True,
+        l2_ratio=1e-4,
         mask=mask,
-        clipping=1
+        clipping=1,
+        skip_gram=True
     )
     return test_accuracy
 
@@ -144,12 +143,13 @@ def wrapper_reversed_rec(data=SST_SENT_POL, resplit=True, validate_ratio=0.2, re
         clipping=1,
         l2_ratio=1e-5,
         mask=mask,
-        mlp=True
+        mlp=True,
+        skip_gram=True
     )
     return test_accuracy
 
 
 if __name__ == '__main__':
-    for data in [SST_SENT_POL, SST_SENT, TREC]:
-        for rec in ['lstm', 'gru']:
-            wrapper_reversed_rec(data=data, rec_type=rec)
+    # for data in [SST_SENT_POL, SST_SENT, TREC]:
+    #     for rec in ['lstm', 'gru']:
+    wrapper_reversed_rec(data=SST_SENT_POL, rec_type='gru')

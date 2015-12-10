@@ -1,5 +1,5 @@
 from regular_layer import _dropout_from_layer, DropoutHiddenLayer, HiddenLayer, LogisticRegression
-from ngram_layer import UnigramLayer, BigramLayer, TrigramLayer, MuiltiUnigramLayer, MultiBigramLayer, MultiTrigramLayer
+from ngram_layer import MuiltiUnigramLayer, MultiBigramLayer, MultiTrigramLayer
 from recurrent_layer import GatedRecurrentUnit, LSTM
 from non_linear import *
 import theano.tensor as T
@@ -118,52 +118,9 @@ class MLP(object):
         self.params = self.hiddenLayer.params + self.logRegressionLayer.params
 
 
-class NgramNetwork(object):
-    def __init__(self, rng, input, input_shape, ngrams=(3, 2, 1), ngram_out=(300, 200, 100), use_bias=False,
-                 activation=tanh):
-        self.layers = []
-        prev_out = input
-        for i, ngram in enumerate(ngrams[:-1]):
-            x = prev_out
-            n_out = ngram_out[i]
-            if ngram == 1:
-                ngram_layer = UnigramLayer(rng=rng, input=x, input_shape=input_shape, activation=activation,
-                                           use_bias=use_bias, sum_out=False, n_out=n_out)
-            elif ngram == 2:
-                ngram_layer = BigramLayer(rng=rng, input=x, input_shape=input_shape, activation=activation,
-                                          use_bias=use_bias, sum_out=False, n_out=n_out)
-            elif ngram == 3:
-                ngram_layer = TrigramLayer(rng=rng, input=x, input_shape=input_shape, activation=activation,
-                                           use_bias=use_bias, sum_out=False, n_out=n_out)
-            else:
-                raise NotImplementedError('This %d gram layer is not implemented' % ngram)
-            self.layers.append(ngram_layer)
-            input_shape = (input_shape[0] - ngram + 1, n_out)
-            prev_out = ngram_layer.output
-
-        ngram = ngrams[-1]
-        n_out = ngram_out[-1]
-        x = self.layers[-1].output if len(self.layers) >= 1 else input
-        if ngram == 1:
-            last_layer = UnigramLayer(rng=rng, input=x, input_shape=input_shape, activation=activation,
-                                      use_bias=use_bias, n_out=n_out)
-        elif ngram == 2:
-            last_layer = BigramLayer(rng=rng, input=x, input_shape=input_shape, activation=activation,
-                                     use_bias=use_bias, n_out=n_out)
-        elif ngram == 3:
-            last_layer = TrigramLayer(rng=rng, input=x, input_shape=input_shape, activation=activation,
-                                      use_bias=use_bias, n_out=n_out)
-        else:
-            raise NotImplementedError('This %d gram layer is not implemented' % ngram)
-
-        self.layers.append(last_layer)
-        self.output = self.layers[-1].output
-        self.params = [param for layer in self.layers for param in layer.params]
-
-
 class MultiKernelNgramNetwork(object):
     def __init__(self, rng, input, input_shape, ngrams=(3, 2, 1), n_kernels=(4, 4, 4), ngram_out=(300, 200, 100),
-                 mean=False, activation=tanh, concat_out=False):
+                 mean=False, activation=tanh, concat_out=False, skip_gram=False):
         assert len(ngrams) == len(n_kernels) == len(ngram_out)    # need to have same number of layers
         self.layers = []
         prev_out = input
@@ -175,10 +132,12 @@ class MultiKernelNgramNetwork(object):
                                                  mean=mean, sum_out=False, n_kernels=n_kernels[i], n_out=n_out)
             elif ngram == 2:
                 ngram_layer = MultiBigramLayer(rng=rng, input=x, input_shape=input_shape, activation=activation,
-                                               mean=mean, sum_out=False, n_kernels=n_kernels[i], n_out=n_out)
+                                               mean=mean, sum_out=False, n_kernels=n_kernels[i], n_out=n_out,
+                                               skip_gram=skip_gram)
             elif ngram == 3:
                 ngram_layer = MultiTrigramLayer(rng=rng, input=x, input_shape=input_shape, activation=activation,
-                                                mean=mean, sum_out=False, n_kernels=n_kernels[i], n_out=n_out)
+                                                mean=mean, sum_out=False, n_kernels=n_kernels[i], n_out=n_out,
+                                                skip_gram=skip_gram)
             else:
                 raise NotImplementedError('This %d gram layer is not implemented' % ngram)
             self.layers.append(ngram_layer)
@@ -207,8 +166,8 @@ class MultiKernelNgramNetwork(object):
 class NgramRecurrentNetwork(object):
     def __init__(self, rng, input, input_shape, ngrams=(3, 2, 1), n_kernels=(4, 4, 4), mean=False, mask=None,
                  ngram_out=(300, 200, 100), ngram_activation=tanh, rec_type='lstm', rec_hidden=150, n_out=2,
-                 dropout_rate=0.5, pool=True, rec_activation=tanh, concat_out=False, clipping=10, mlp=False,
-                 mlp_hidden=300, mlp_activation=leaky_relu):
+                 dropout_rate=0.5, rec_activation=tanh, concat_out=False, clipping=10, mlp=False,
+                 mlp_hidden=300, mlp_activation=leaky_relu, skip_gram=False):
 
         assert len(ngrams) == len(n_kernels) == len(ngram_out)    # need to have same number of layers
         self.layers = []
@@ -224,11 +183,11 @@ class NgramRecurrentNetwork(object):
             elif ngram == 2:
                 ngram_layer = MultiBigramLayer(rng=rng, input=x, input_shape=input_shape, activation=ngram_activation,
                                                mean=mean, sum_out=False, n_kernels=n_kernels[i], n_out=tmp_out,
-                                               concat_out=concat)
+                                               concat_out=concat, skip_gram=skip_gram)
             elif ngram == 3:
                 ngram_layer = MultiTrigramLayer(rng=rng, input=x, input_shape=input_shape, activation=ngram_activation,
                                                 mean=mean, sum_out=False, n_kernels=n_kernels[i], n_out=tmp_out,
-                                                concat_out=concat)
+                                                concat_out=concat, skip_gram=skip_gram)
             else:
                 raise NotImplementedError('This %d gram layer is not implemented' % ngram)
             self.layers.append(ngram_layer)
@@ -250,7 +209,7 @@ class NgramRecurrentNetwork(object):
         else:
             raise NotImplementedError('This %s is not implemented' % rec_type)
         self.layers.append(rec_layer)
-        rec_output = rec_layer.output(pool=pool)
+        rec_output = rec_layer.output(pool=True)
         if mlp:
             self.classifier = MLPDropout(
                 rng=rng,
@@ -274,7 +233,7 @@ class ReversedNgramRecurrentNetwork(object):
     def __init__(self, rng, input, input_shape, ngrams=(3, 2, 1), n_kernels=(4, 4, 4), mean=False, mask=None,
                  ngram_out=(300, 200, 100), ngram_activation=tanh, rec_type='lstm', rec_hidden=150, n_out=2,
                  dropout_rate=0.5, rec_activation=tanh, mlp=True, mlp_activation=leaky_relu, mlp_hidden=300,
-                 concat_out=False, clipping=10):
+                 concat_out=False, clipping=10, skip_gram=False):
         assert len(ngrams) == len(n_kernels) == len(ngram_out)    # need to have same number of layers
         # recurrent layer in the bottom
         if rec_type == 'lstm':
@@ -298,7 +257,8 @@ class ReversedNgramRecurrentNetwork(object):
             n_kernels=n_kernels,
             activation=ngram_activation,
             mean=mean,
-            concat_out=concat_out
+            concat_out=concat_out,
+            skip_gram=skip_gram
         )
         classifier_input = self.ngram_net.output
         n_in = ngram_out[-1] * n_kernels[-1] if concat_out else ngram_out[-1]
