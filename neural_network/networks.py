@@ -69,7 +69,7 @@ class MLPDropout(object):
         self.cross_entropy = self.layers[-1].cross_entropy
 
         self.errors = self.layers[-1].errors
-
+        self.prediction = self.layers[-1].y_pred
         # Grab all the parameters together.
         self.params = [param for layer in self.dropout_layers for param in layer.params]
 

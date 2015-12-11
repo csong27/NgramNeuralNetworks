@@ -30,7 +30,8 @@ def train_ngram_net(
         l2_ratio=1e-4,
         validation_only=False,
         skip_gram=False,
-        word_dropout_rate=0.5
+        word_dropout_rate=0.0,
+        predict=True
 ):
     rng = np.random.RandomState(23455)
 
@@ -119,7 +120,10 @@ def train_ngram_net(
     val_model = theano.function([index], mlp.errors(y), on_unused_input='ignore', givens={x: validate_x, y: validate_y})
     test_model = theano.function([index], mlp.errors(y), on_unused_input='ignore', givens={x: test_x, y: test_y})
 
+    predict_model = theano.function([index], mlp.prediction, on_unused_input='ignore',  # for error analysis
+                                    givens={x: validate_x, y: validate_y}) if predict else None
+
     print 'training with %s...' % update_rule
     return main_loop(n_epochs=n_epochs, train_model=train_model, val_model=val_model, test_model=test_model,
                      set_zero=set_zero, zero_vec=zero_vec, n_train_batches=n_train_batches, shuffle_batch=shuffle_batch,
-                     validation_only=validation_only)
+                     validation_only=validation_only, predict_model=predict_model)

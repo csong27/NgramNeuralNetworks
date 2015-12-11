@@ -36,7 +36,7 @@ def train_ngram_rec_net(
         clipping=10,
         reverse=False,
         stack=False,
-        word_dropout_rate=0.5
+        word_dropout_rate=0.0
 ):
     rng = np.random.RandomState(23455)
     train_x, train_y, validate_x, validate_y, test_x, test_y = datasets
@@ -51,7 +51,7 @@ def train_ngram_rec_net(
         m = None
 
     print 'size of train, validation, test set are %d, %d, %d' % (train_y.shape[0], validate_y.shape[0], test_x.shape[0])
-    if word_dropout_rate > 0:
+    if word_dropout_rate > 0.0:
         train_x = dropout_rows(rng=rng, input=train_x, p=word_dropout_rate)
 
     train_x, train_y = shared_dataset((train_x, train_y))
