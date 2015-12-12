@@ -19,24 +19,24 @@ def wrapper_ngram(data=TREC, resplit=True, validate_ratio=0.2):
         U=W,
         datasets=datasets,
         n_epochs=10,
-        ngrams=(1, 2),
+        ngrams=(3, 2),
         ngram_out=(150, 50),
         non_static=False,
         input_shape=input_shape,
         concat_out=True,
-        n_kernels=(4, 8),
+        n_kernels=(8, 16),
         use_bias=False,
         lr_rate=0.02,
         dropout=True,
-        dropout_rate=0.,
-        n_hidden=300,
+        dropout_rate=0.5,
+        n_hidden=600,
         n_out=n_out,
         ngram_activation=leaky_relu,
         activation=leaky_relu,
         batch_size=50,
-        l2_ratio=1e-4,
+        l2_ratio=1e-5,
         update_rule='adagrad',
-        skip_gram=True,
+        skip_gram=False,
     )
     return test_accuracy
 
@@ -96,14 +96,14 @@ def wrapper_reversed_rec(data=SST_SENT_POL, resplit=True, validate_ratio=0.2, re
         non_static=False,
         datasets=datasets,
         n_epochs=30,
-        ngrams=(3, 3, 3),
+        ngrams=(1, 2),
         input_shape=input_shape,
-        n_kernels=(4, 4, 4),
-        ngram_out=(300, 250, 200),
+        n_kernels=(4, 4),
+        ngram_out=(300, 250),
         lr_rate=0.015,
         dropout_rate=0.5,
         concat_out=False,
-        rec_hidden=300,
+        rec_hidden=150,
         mlp_hidden=200,
         n_out=n_out,
         ngram_activation=leaky_relu,
@@ -117,6 +117,7 @@ def wrapper_reversed_rec(data=SST_SENT_POL, resplit=True, validate_ratio=0.2, re
         mask=mask,
         mlp=True,
         skip_gram=False,
+        bidirection=True
     )
     return test_accuracy
 
@@ -168,4 +169,4 @@ def error_analysis(data=SST_SENT_POL):
 if __name__ == '__main__':
     # for data in [SST_SENT_POL, SST_SENT, TREC]:
     #     for rec in ['lstm', 'gru']:
-    wrapper_ngram(data=SST_SENT_POL)
+    wrapper_reversed_rec(data=SST_SENT_POL)

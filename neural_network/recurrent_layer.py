@@ -14,7 +14,7 @@ def clip_gradients(variables, clipping):
 
 class LSTM(object):
     def __init__(self, input, n_in, n_out=256, activation=tanh, gate_activation=steeper_sigmoid, init=orthogonal,
-                 truncate_gradient=-1, seq_output=False, p_drop=0., weights=None, mask=None, clipping=5):
+                 truncate_gradient=-1, seq_output=False, p_drop=0., mask=None, clipping=5, backward=False):
         self.settings = locals()
         del self.settings['self']
         self.input = input
@@ -26,10 +26,10 @@ class LSTM(object):
         self.truncate_gradient = truncate_gradient
         self.seq_output = seq_output
         self.p_drop = p_drop
-        self.weights = weights
         self.n_in = n_in
         self.mask = mask
         self.clipping = clipping
+        self.backward = backward
         self.connect()
 
     def connect(self):
@@ -51,10 +51,6 @@ class LSTM(object):
         self.params = [self.w_i, self.w_f, self.w_o, self.w_c, 
                        self.u_i, self.u_f, self.u_o, self.u_c,
                        self.b_i, self.b_f, self.b_o, self.b_c]
-
-        if self.weights is not None:
-            for param, weight in zip(self.params, self.weights):
-                param.set_value(floatX(weight))
 
     def step(self, x_t, h_tm1, c_tm1, u_i, u_f, u_o, u_c):
         # calculate gate input
@@ -84,6 +80,10 @@ class LSTM(object):
 
     def output(self, pool=True):
         X = self.input
+        if self.backward:
+            # flip along second axis
+            X = X[:, ::-1]
+            self.mask = self.mask[:, ::-1]
         # shuffle dimension so scan over axis 1
         X = X.dimshuffle(1, 0, 2)
         if self.mask is not None:
@@ -120,8 +120,7 @@ class LSTM(object):
 
 class GatedRecurrentUnit(object):
     def __init__(self, input, n_in, n_out=256, activation=tanh, gate_activation=steeper_sigmoid, init=orthogonal,
-                 truncate_gradient=-1, seq_output=False, p_drop=0., direction='forward', weights=None, mask=None,
-                 clipping=5):
+                 truncate_gradient=-1, seq_output=False, p_drop=0., mask=None, clipping=5, backward=False):
         self.activation = activation
         self.gate_activation = gate_activation
         self.init = init
@@ -129,12 +128,11 @@ class GatedRecurrentUnit(object):
         self.truncate_gradient = truncate_gradient
         self.seq_output = seq_output
         self.p_drop = p_drop
-        self.weights = weights
-        self.direction = direction
         self.input = input
         self.n_in = n_in
         self.mask = mask
         self.clipping = clipping
+        self.backward = backward
         self.connect()
 
     def connect(self):
@@ -157,10 +155,6 @@ class GatedRecurrentUnit(object):
                        self.w_z, self.w_r, self.w_h,
                        self.u_z, self.u_r, self.u_h,
                        self.b_z, self.b_r, self.b_h]
-
-        if self.weights is not None:
-            for param, weight in zip(self.params, self.weights):
-                param.set_value(floatX(weight))
 
     def step(self, x_t, h_tm1, u_z, u_r, u_h):
         # gate input
@@ -189,8 +183,10 @@ class GatedRecurrentUnit(object):
 
     def output(self, pool=True):
         X = self.input
-        if self.direction == 'backward':
-            X = X[::-1]
+        if self.backward:
+            # flip along second axis
+            X = X[:, ::-1]
+            self.mask = self.mask[:, ::-1]
         # shuffle dimension so scan over axis 1
         X = X.dimshuffle(1, 0, 2)
         if self.mask is not None:
@@ -223,13 +219,53 @@ class GatedRecurrentUnit(object):
         else:
             return out[-1]
 
+
+class BidirectionalRecurrentLayer(object):
+    def __init__(self, input, n_in, n_out=256, activation=tanh, gate_activation=steeper_sigmoid, init=orthogonal,
+                 truncate_gradient=-1, seq_output=False, p_drop=0., mask=None, clipping=5, rec_type='lstm',
+                 concat_out=True, sum_out=True):
+        assert concat_out == seq_output
+        if rec_type == 'lstm':
+            self.forward = LSTM(input=input, n_in=n_in, n_out=n_out, activation=activation, init=init, mask=mask,
+                                gate_activation=gate_activation, truncate_gradient=truncate_gradient, clipping=clipping,
+                                seq_output=seq_output, p_drop=p_drop, backward=False)
+            self.backward = LSTM(input=input, n_in=n_in, n_out=n_out, activation=activation, init=init, mask=mask,
+                                 gate_activation=gate_activation, truncate_gradient=truncate_gradient, clipping=clipping,
+                                 seq_output=seq_output, p_drop=p_drop, backward=True)
+        elif rec_type == 'gru':
+            self.forward = GatedRecurrentUnit(input=input, n_in=n_in, n_out=n_out, activation=activation, init=init,
+                                              mask=mask, gate_activation=gate_activation, clipping=clipping, p_drop=p_drop,
+                                              truncate_gradient=truncate_gradient, seq_output=seq_output, backward=False)
+            self.backward = GatedRecurrentUnit(input=input, n_in=n_in, n_out=n_out, activation=activation, init=init,
+                                               mask=mask, gate_activation=gate_activation, clipping=clipping, p_drop=p_drop,
+                                               truncate_gradient=truncate_gradient, seq_output=seq_output, backward=True)
+        else:
+            raise NotImplementedError('This %s is not implemented' % rec_type)
+
+        self.params = self.forward.params + self.backward.params
+
+        self.concat_out = concat_out
+        self.sum_out = sum_out
+        self.seq_out = seq_output
+
+    def output(self, pool=False):
+        assert pool != self.seq_out
+        forward_out = self.forward.output(pool=pool)
+        backward_out = self.backward.output(pool=pool)
+        # output info
+        if self.concat_out:
+            return T.concatenate((forward_out, backward_out), axis=2)
+        else:
+            output = forward_out + backward_out
+            return output if self.sum_out else output / 2
+
+
 if __name__ == '__main__':
     x = T.tensor3()
     mask = T.matrix()
-    layer = LSTM(input=x, n_in=3, n_out=10, seq_output=True, p_drop=0.5, mask=mask)
-    output = layer.output(pool=False)
+    layer = BidirectionalRecurrentLayer(input=x, n_in=3, n_out=3, seq_output=True, p_drop=0.0, mask=mask)
+    output = layer.output()
     f = theano.function([x, mask], output, on_unused_input='ignore')
     print f([[[1, 2, 3], [2, 3, 4], [3, 4, 5]], [[3, 4, 5], [2, 3, 4], [1, 2, 3]], [[3, 4, 5], [2, 3, 4], [1, 2, 3]]
              , [[3, 4, 5], [2, 3, 4], [1, 2, 3]], [[3, 4, 5], [2, 3, 4], [1, 2, 3]]],
             [[1, 0, 0], [1, 1, 0], [1, 0, 0], [1, 1, 0], [1, 1, 1]])
-    print layer.params

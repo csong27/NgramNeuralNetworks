@@ -31,7 +31,7 @@ def train_ngram_net(
         validation_only=False,
         skip_gram=False,
         word_dropout_rate=0.0,
-        predict=True
+        predict=False
 ):
     rng = np.random.RandomState(23455)
 
