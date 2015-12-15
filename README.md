@@ -1,4 +1,4 @@
-# CS571 Final Project
+# N-gram Neural Networks
 This is the final course project for natural language processing.
 
 ## Neural Networks
