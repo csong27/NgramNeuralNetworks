@@ -103,21 +103,21 @@ def wrapper_reversed_rec(data=SST_SENT_POL, resplit=True, validate_ratio=0.2, re
         lr_rate=0.025,
         dropout_rate=0.,
         concat_out=False,
-        rec_hidden=150,
+        rec_hidden=200,
         mlp_hidden=200,
         n_out=n_out,
         ngram_activation=leaky_relu,
         mlp_activation=leaky_relu,
-        rec_activation=tanh,
+        rec_activation=leaky_relu,
         batch_size=20,
-        update_rule='adadelta',
+        update_rule='adagrad',
         rec_type=rec_type,
         clipping=1,
         l2_ratio=1e-5,
         mask=mask,
         mlp=True,
         skip_gram=False,
-        bidirection=True
+        bidirection=False
     )
     return test_accuracy
 

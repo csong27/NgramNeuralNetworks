@@ -37,7 +37,8 @@ def train_ngram_rec_net(
         reverse=False,
         word_dropout_rate=0.0,
         bidirection=False,
-        sum_out=False
+        sum_out=False,
+        use_bias=True
 ):
     rng = np.random.RandomState(23455)
     train_x, train_y, validate_x, validate_y, test_x, test_y = datasets
@@ -102,7 +103,8 @@ def train_ngram_rec_net(
             clipping=clipping,
             skip_gram=skip_gram,
             bidirection=bidirection,
-            sum_out=sum_out
+            sum_out=sum_out,
+            use_bias=use_bias
         )
     else:
         ngram_net = NgramRecurrentNetwork(

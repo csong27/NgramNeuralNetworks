@@ -132,7 +132,8 @@ def get_ngram_layer(ngram, args):
 
 class MultiKernelNgramNetwork(object):
     def __init__(self, rng, input, input_shape, ngrams=(3, 2, 1), n_kernels=(4, 4, 4), ngram_out=(300, 200, 100),
-                 mean_pool=False, activation=tanh, concat_out=False, skip_gram=False, sum_out=False, mask=None):
+                 mean_pool=False, activation=tanh, concat_out=False, skip_gram=False, sum_out=False, mask=None,
+                 use_bias=True):
         assert len(ngrams) == len(n_kernels) == len(ngram_out)    # need to have same number of layers
         self.layers = []
         prev_out = input
@@ -152,7 +153,8 @@ class MultiKernelNgramNetwork(object):
                 "n_kernels": n_kernels[i],
                 "n_out": n_out,
                 "skip_gram": skip_gram,
-                "mask": mask
+                "mask": mask,
+                "use_bias": use_bias
             }
             ngram_layer = get_ngram_layer(ngram=ngram, args=args)
             self.layers.append(ngram_layer)
@@ -176,7 +178,8 @@ class MultiKernelNgramNetwork(object):
             "n_out": n_out,
             "skip_gram": skip_gram,
             "concat_out": concat_out,
-            "mask": mask
+            "mask": mask,
+            "use_bias": use_bias
         }
         last_layer = get_ngram_layer(ngram=ngram, args=args)
         self.layers.append(last_layer)
@@ -252,7 +255,7 @@ class ReversedNgramRecurrentNetwork(object):
     def __init__(self, rng, input, input_shape, ngrams=(3, 2, 1), n_kernels=(4, 4, 4), mean_pool=False, mask=None,
                  ngram_out=(300, 200, 100), ngram_activation=tanh, rec_type='lstm', rec_hidden=150, n_out=2,
                  dropout_rate=0.5, rec_activation=tanh, mlp=True, mlp_activation=leaky_relu, mlp_hidden=300,
-                 concat_out=False, clipping=10, skip_gram=False, bidirection=False, sum_out=False):
+                 concat_out=False, clipping=10, skip_gram=False, bidirection=False, sum_out=False, use_bias=True):
         assert len(ngrams) == len(n_kernels) == len(ngram_out)    # need to have same number of layers
         # recurrent layer in the bottom
         if bidirection:
@@ -285,7 +288,8 @@ class ReversedNgramRecurrentNetwork(object):
             concat_out=concat_out,
             skip_gram=skip_gram,
             mask=mask,
-            sum_out=sum_out
+            sum_out=sum_out,
+            use_bias=use_bias
         )
         classifier_input = self.ngram_net.output
         n_in = ngram_out[-1] * n_kernels[-1] if concat_out else ngram_out[-1]
@@ -295,7 +299,8 @@ class ReversedNgramRecurrentNetwork(object):
                 input=classifier_input,
                 dropout_rates=[dropout_rate],
                 activations=[mlp_activation],
-                layer_sizes=[n_in, mlp_hidden, n_out]
+                layer_sizes=[n_in, mlp_hidden, n_out],
+                use_bias=use_bias
             )
         else:
             self.classifier = LogisticRegression(
