@@ -36,7 +36,8 @@ def train_ngram_rec_net(
         clipping=10,
         reverse=False,
         word_dropout_rate=0.0,
-        bidirection=False
+        bidirection=False,
+        sum_out=False
 ):
     rng = np.random.RandomState(23455)
     train_x, train_y, validate_x, validate_y, test_x, test_y = datasets
@@ -92,7 +93,7 @@ def train_ngram_rec_net(
             rec_hidden=rec_hidden,
             mlp_hidden=mlp_hidden,
             n_out=n_out,
-            mean=mean_pool,
+            mean_pool=mean_pool,
             ngram_activation=ngram_activation,
             rec_type=rec_type,
             concat_out=concat_out,
@@ -100,7 +101,8 @@ def train_ngram_rec_net(
             mlp=mlp,
             clipping=clipping,
             skip_gram=skip_gram,
-            bidirection=bidirection
+            bidirection=bidirection,
+            sum_out=sum_out
         )
     else:
         ngram_net = NgramRecurrentNetwork(
@@ -114,7 +116,7 @@ def train_ngram_rec_net(
             dropout_rate=dropout_rate,
             rec_hidden=rec_hidden,
             n_out=n_out,
-            mean=mean_pool,
+            mean_pool=mean_pool,
             ngram_activation=ngram_activation,
             mlp_activation=mlp_activation,
             mlp_hidden=mlp_hidden,

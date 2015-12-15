@@ -37,7 +37,6 @@ def main_loop(n_epochs, n_train_batches, train_model, val_model, test_model, set
     return test_accuracy
 
 
-
 def prepare_datasets(data, resplit=True, validation_ratio=0.2):
     datasets, W, mask = read_word2index_data(data=data, google=True, cv=False)
     train_x, train_y, validate_x, validate_y, test_x, test_y = datasets
