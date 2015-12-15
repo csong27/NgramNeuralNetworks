@@ -21,7 +21,7 @@ class MuiltiUnigramLayer(object):
         W_values = get_W_values(rng=rng, activation=activation, fan_in=fan_in, fan_out=fan_out, n_in=n_in, n_out=n_out,
                                 n_kernels=n_kernels)
         self.W = theano.shared(W_values, borrow=True, name="W_cov")
-        self.b = theano.shared(np.zeros(shape=(n_in, ), dtype=theano.config.floatX), borrow=True, name="b_cov")
+        self.b = theano.shared(np.zeros(shape=(n_out, ), dtype=theano.config.floatX), borrow=True, name="b_cov")
         cov_out = T.dot(input, self.W) + self.b if use_bias else T.dot(input, self.W)
         activation_out = activation(cov_out)
 
@@ -63,7 +63,7 @@ class MultiBigramLayer(object):
 
         self.Tr = theano.shared(W_values, borrow=True, name="Tr")
         self.Tl = theano.shared(W_values, borrow=True, name="Tl")
-        self.b = theano.shared(np.zeros(shape=(n_in, ), dtype=theano.config.floatX), borrow=True, name="b_cov")
+        self.b = theano.shared(np.zeros(shape=(n_out, ), dtype=theano.config.floatX), borrow=True, name="b_cov")
 
         offset = 2 if skip_gram else 1
 
@@ -113,7 +113,7 @@ class MultiTrigramLayer(object):
         self.T1 = theano.shared(W_values, borrow=True, name="T1")
         self.T2 = theano.shared(W_values, borrow=True, name="T2")
         self.T3 = theano.shared(W_values, borrow=True, name="T3")
-        self.b = theano.shared(np.zeros(shape=(n_in, ), dtype=theano.config.floatX), borrow=True, name="b_cov")
+        self.b = theano.shared(np.zeros(shape=(n_out, ), dtype=theano.config.floatX), borrow=True, name="b_cov")
 
         offset = 4 if skip_gram else 2
         self.mask = mask[:, : -offset] if mask is not None else None
