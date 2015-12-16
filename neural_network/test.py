@@ -1,24 +1,24 @@
-import theano
+from theano import function, config, shared, sandbox
+import theano.sandbox.cuda.basic_ops
 import theano.tensor as T
-import numpy as np
+import numpy
+import time
 
+vlen = 10 * 30 * 768  # 10 x #cores x # threads per core
+iters = 1000
 
-rng = np.random.RandomState(23455)
-
-x = np.arange(60, dtype='float32').reshape((5, 4, 3))
-print x
-
-t = T.tensor3()
-b = theano.shared(np.ones(shape=(3, ), dtype='float32'))
-
-
-concat = t + b
-
-f = theano.function([t], concat, on_unused_input='ignore')
-
-print f(x)
-
-
-
-
-
+rng = numpy.random.RandomState(22)
+x = shared(numpy.asarray(rng.rand(vlen), 'float32'))
+f = function([], sandbox.cuda.basic_ops.gpu_from_host(T.exp(x)))
+print(f.maker.fgraph.toposort())
+t0 = time.time()
+for i in xrange(iters):
+    r = f()
+t1 = time.time()
+print("Looping %d times took %f seconds" % (iters, t1 - t0))
+print("Result is %s" % (r,))
+print("Numpy result is %s" % (numpy.asarray(r),))
+if numpy.any([isinstance(x.op, T.Elemwise) for x in f.maker.fgraph.toposort()]):
+    print('Used the cpu')
+else:
+    print('Used the gpu')
