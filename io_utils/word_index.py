@@ -131,5 +131,4 @@ def save_index_data(data, google=False, huge=False):
 
 
 if __name__ == '__main__':
-    for data in [ROTTEN_TOMATOES, MPQA, CUSTOMER_REVIEW, SUBJ]:
-        save_index_data(data, google=True)
+    save_index_data(SST_SENT_POL, google=False, huge=True)
