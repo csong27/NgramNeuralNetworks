@@ -37,8 +37,8 @@ def main_loop(n_epochs, n_train_batches, train_model, val_model, test_model, set
     return test_accuracy
 
 
-def prepare_datasets(data, resplit=True, validation_ratio=0.2):
-    datasets, W, mask = read_word2index_data(data=data, google=True, cv=False)
+def prepare_datasets(data, resplit=True, validation_ratio=0.2, google=True):
+    datasets, W, mask = read_word2index_data(data=data, google=google, cv=False, huge=not google)
     train_x, train_y, validate_x, validate_y, test_x, test_y = datasets
     if data == TREC and resplit:
         train_x, train_y, validate_x, validate_y, mask = resplit_train_data(train_x, train_y, validate_x, validate_y,

@@ -45,6 +45,7 @@ def get_word_matrix(model, vocab, k=300, scale=0.25):
         if word in model:
             W[i] = model[word]
         else:
+            print word
             W[i] = np.random.uniform(-scale, scale, k)
         word2index[word] = i
         i += 1
@@ -131,4 +132,4 @@ def save_index_data(data, google=False, huge=False):
 
 
 if __name__ == '__main__':
-    save_index_data(SST_SENT_POL, google=False, huge=True)
+    save_index_data(SST_SENT_POL, google=True, huge=False)

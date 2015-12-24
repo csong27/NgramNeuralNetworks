@@ -83,7 +83,7 @@ def wrapper_rec(data=SST_SENT_POL, resplit=True, validate_ratio=0.2, rec_type='l
 
 def wrapper_reversed_rec(data=SST_SENT_POL, resplit=True, validate_ratio=0.2, rec_type='lstm'):
     train_x, train_y, validate_x, validate_y, test_x, test_y, \
-    W, mask = prepare_datasets(data, resplit=resplit, validation_ratio=validate_ratio)
+    W, mask = prepare_datasets(data, resplit=resplit, validation_ratio=validate_ratio, google=False)
     # get input shape
     input_shape = (train_x[0].shape[0], W.shape[1])
     print "input data shape", input_shape
@@ -108,7 +108,7 @@ def wrapper_reversed_rec(data=SST_SENT_POL, resplit=True, validate_ratio=0.2, re
         mlp_hidden=300,
         n_out=n_out,
         ngram_activation=tanh,
-        mlp_activation=tanh,
+        mlp_activation=leaky_relu,
         rec_activation=tanh,
         batch_size=50,
         update_rule='adagrad',
@@ -118,7 +118,7 @@ def wrapper_reversed_rec(data=SST_SENT_POL, resplit=True, validate_ratio=0.2, re
         mask=mask,
         mlp=True,
         skip_gram=False,
-        bidirection=False
+        bidirection=True
     )
     return test_accuracy
 
